@@ -20,6 +20,8 @@ This plugin requires the following software:
 This plugin also requires a specific directory structure to work
 - TODO find out how the old directory was structured
 
+## Documentation
+To learn more about how TrackStim works, please refer to the [documentation](https://github.com/zhen-lab/TrackStim/edit/master/docs/).
 
 ## Notes
 This software is provided "as is" and there is no warranty of any kind and no support at all.
