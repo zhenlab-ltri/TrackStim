@@ -35,7 +35,7 @@ micro-manager plugin development finicky.  As a result, being able to make chang
 
 ## Building the plugin
 
-1.  In netbeans, find the ```run``` icon/label, and in the submenu, find the ```Clean and Build Project``` submenu.
+1.  In netbeans, find the ```run``` icon/label, and in the submenu, find the ```Clean and Build Project``` command.
 2.  Click ```Clean and Build Project```
 3.  Open the project folder and find the ```dist``` folder
 4.  The ```TrackStim.jar``` file should be found in the ```dist``` folder
