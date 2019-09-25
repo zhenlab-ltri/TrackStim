@@ -18,19 +18,19 @@ micro-manager plugin development finicky.  As a result, being able to make chang
 2. Open NetBeans 7.3.1
 3. Open the downloaded repository in NetBeans 7.3.1
 4. In the ```projects``` panel, there should be a ```libraries``` icon
-      a. right click ```libraries``` and click ```Add JAR/Folder```
-            - navigate to the micromanager plugins 1.4 folder (e.g. /Applications/MicroManager 1.4/Plugins/Micro-Manager/ for Mac)
-            - select all of the JAR files (CMD + A on Mac)
-            - click choose
-      b. right click ```libraries``` and click ```Add JAR/Folder```
-            - navigate to the micromanager 1.4 folder (e.g. /Applications/MicroManager 1.4/ for Mac)
-            - find the imageJ JAR file (ij.jar)
-            - click choose
+    - right click ```libraries``` and click ```Add JAR/Folder```
+         - navigate to the micromanager plugins 1.4 folder (e.g. /Applications/MicroManager 1.4/Plugins/Micro-Manager/ for Mac)
+         - select all of the JAR files (CMD + A on Mac)
+         - click choose
+    - right click ```libraries``` and click ```Add JAR/Folder```
+         - navigate to the micromanager 1.4 folder (e.g. /Applications/MicroManager 1.4/ for Mac)
+         - find the imageJ JAR file (ij.jar)
+         - click choose
 5.  In the ```projects``` panel, there should be a ```libraries``` icon
-      a. expand the libraries icon and scroll to the bottom of the list
-      b. confirm that the JDK version is 1.6
-      c. if the JDK version is not 1.6, right click the JDK icon, and click edit
-      d. choose JDK version 1.6 (see Required Software if JDK version 1.6 is not available)
+    - expand the libraries icon and scroll to the bottom of the list
+    - confirm that the JDK version is 1.6
+    - if the JDK version is not 1.6, right click the JDK icon, and click edit
+    - choose JDK version 1.6 (see Required Software if JDK version 1.6 is not available)
 
 
 ## Building the plugin
