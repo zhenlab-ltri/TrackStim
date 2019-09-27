@@ -34,12 +34,21 @@ micro-manager plugin development finicky.  As a result, being able to make chang
 
 
 ## Building the plugin
+There are two ways to build the plugin:  Using netbeans and using the command line.
 
+#### Netbeans
 1.  In netbeans, find the ```run``` icon/label, and in the submenu, find the ```Clean and Build Project``` command.
 2.  Click ```Clean and Build Project```
 3.  Open the project folder and find the ```dist``` folder
 4.  The ```TrackStim.jar``` file should be found in the ```dist``` folder
 
+#### CommandLine
+You need to get the path to a few jar files and run javac to compile the jar
+
+Here is an example from the legacy version of TrackStim
+```sh
+javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.3nb/ij.jar:/Applications/Micro-Manager1.3nb/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.3nb/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim_03.java
+```
 
 ## Installing the plugin to Micro-Manager
 
