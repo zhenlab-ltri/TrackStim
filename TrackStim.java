@@ -1,13 +1,13 @@
 // Copyright (C) 20100615 Taizo Kawano <tkawano at mshri.on.ca>
 //
-// This program is free software; you can redistribute it and/modify it 
+// This program is free software; you can redistribute it and/modify it
 // under the term of the GNU General Public License as published bythe Free Software Foundation;
 // either version 2, or (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 // without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 // See the GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this file.  If not, write to the Free Software Foundation,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
@@ -15,8 +15,8 @@
 //RealTimeTracker
 //fluorescent object detection and tracking plugin. need motorized stage
 //works with stack
-//compiled with 
-//javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.3nb/ij.jar:/Applications/Micro-Manager1.3nb/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.3nb/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim_03.java
+//compiled with
+//javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.3nb/ij.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim_03.java
 //jar cvf TrackStim_.jar TrackStim_03.class TrackingThread10.class Signalsender.class
 //ver3  initiall release
 //ver4 avarage thresholding. also can choose thresholding method.
@@ -31,7 +31,13 @@
 //TrackerwithStimulater 121108 start. changename to TrackStim
 //how save stimulation info? manual?
 //should check actual potential?
-//ver3 121203 added manual trackig option
+//121203 adding manual trackig option
+
+//cd /Applications/Micro-Manager1.4/plugins/
+//javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.4/ij.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim_03.java
+
+
+//[Serial, /dev/tty.SLAB_USBtoUART, /dev/tty.SLAB_USBtoUART, /dev/tty.SLAB_USBtoUART, Serial, /dev/tty.usbmodem3d21]
 
 import java.util.*;
 import java.util.prefs.Preferences;
@@ -46,7 +52,7 @@ import ij.process.*;
 import ij.gui.*;
 import ij.plugin.*;
 import ij.plugin.filter.*;
-import ij.plugin.frame.PlugInFrame; 
+import ij.plugin.frame.PlugInFrame;
 
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
@@ -58,7 +64,7 @@ import mmcorej.PropertySetting;
 
 public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageListener,MouseListener,ItemListener{
 //public class RealTimeTracker_09 extends PlugInFrame  implements ActionListener,ImageListener{
-    
+
     //globals just in this class
     Preferences prefs;
     TextField framenumtext;
@@ -66,7 +72,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
     //TextField intervaltext;
     //TrackingThread(RealTimeTracker_01 tpf);
     TrackingThread10 tt=null;
-    
+
     //filed used in TrackingThread
     java.awt.Checkbox closest;//target definition method.
     java.awt.Checkbox right;// field for tacking source
@@ -81,11 +87,11 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
     java.awt.Checkbox BF;//Bright field tracking only works with full size
     TextField savedir;
     String dir;
-    
+
     //camera trigger
     java.awt.Choice exposureduration;
     java.awt.Choice cyclelength;
-    
+
     //Stimulation
     java.awt.Checkbox STIM;
     TextField prestimulation;
@@ -97,9 +103,9 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
     TextField rampbase;
     TextField rampstart;
     TextField rampend;
-    
+
     String adportsname;//stimulation port for arduino
-    
+
     //pass to TrackingThread
 	CMMCore mmc_;
     ImagePlus imp;
@@ -107,20 +113,21 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
     String dirforsave;
     int frame=1200;//String defaultframestring;
     boolean ready;
-    
-    
-    
-    
+
+
+
+
     public TrackStim_03()
     {
-		super("TrackerwithStimulater");
+		IJ.log("test1");
+	super("TrackerwithStimulater");
         //First, check if there is mmc.
 		if (mmc_ == null) {
           // if core object is not set attempt to get its global handle
           mmc_ = MMStudioPlugin.getMMCoreInstance();
        }
 	    if (mmc_ == null) {
-          IJ.error("Unable to get Micro-Manager Core API handle.\n" 
+          IJ.error("Unable to get Micro-Manager Core API handle.\n"
 		+ "If this module is used as ImageJ plugin, Micro-Manager Studio must be running first!");
           return;
        }
@@ -129,19 +136,19 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
 		IJ.log("test2");
 		int framewidth= mmcmf.getWidth();
 		IJ.log(String.valueOf(framewidth));
-        IJ.log("test3");
-        
-        prefs = Preferences.userNodeForPackage(this.getClass());//make instance? 
+        //IJ.log("test3");
+
+        prefs = Preferences.userNodeForPackage(this.getClass());//make instance?
         imp=WindowManager.getCurrentImage();
         ImageWindow iw = imp.getWindow();
-        IJ.log("check error");
+        //IJ.log("check error");
         ic= iw.getCanvas();
         ic.addMouseListener(this);
-        
-        //try to get preferences directory and frame 
-        try 
+
+        //try to get preferences directory and frame
+        try
         {
-            dir=prefs.get("DIR", ""); 
+            dir=prefs.get("DIR", "");
             IJ.log("pref dir "+dir);
 		if(prefs.get("FRAME", "")=="")
 		{
@@ -179,16 +186,16 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         }
         IJ.log("current dir "+dir);
         IJ.log("dir number "+String.valueOf(dircount));
-        
+
         ImagePlus.addImageListener(this);
         //addKeyListener(this);
         requestFocus(); //may need for keylistener
-        
+
         //Prepare GUI
         GridBagLayout gbl = new GridBagLayout();
         setLayout(gbl);
         GridBagConstraints gbc = new GridBagConstraints();
-        
+
         Button b=new Button("Ready");
         b.setPreferredSize(new Dimension(100,60));
         b.addActionListener(this);
@@ -198,7 +205,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.gridheight= 2;
         gbl.setConstraints(b,gbc);
         add(b);
-        
+
         Button b2=new Button("Go");
         b2.setPreferredSize(new Dimension(100,60));
         b2.addActionListener(this);
@@ -208,7 +215,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.gridheight= 2;
         gbl.setConstraints(b2,gbc);
         add(b2);
-        
+
         Button b3=new Button("Stop");
         b3.setPreferredSize(new Dimension(100,60));
         b3.addActionListener(this);
@@ -218,11 +225,11 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.gridheight= 2;
         gbl.setConstraints(b3,gbc);
         add(b3);
-        
-        
+
+
         //java.awt.Choice exposureduration;
         //java.awt.Choice cyclelength;
-        
+
         Label labelexpduration=new Label("exposure");
         gbc.gridx=6;
         gbc.gridy=0;
@@ -230,7 +237,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.gridheight= 1;
         gbl.setConstraints(labelexpduration,gbc);
         add(labelexpduration);
-        
+
         exposureduration=new Choice();
         exposureduration.setPreferredSize(new Dimension(80,20));
         gbc.gridx=7;
@@ -246,15 +253,15 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         exposureduration.add("1000");
         exposureduration.addItemListener(this);
         gbl.setConstraints(exposureduration,gbc);
-        add(exposureduration);        
-        
+        add(exposureduration);
+
         Label labelcameracyclelength=new Label("cycle len.");
         gbc.gridx=6;
         gbc.gridy=1;
         gbc.gridwidth= 1;
         gbl.setConstraints(labelcameracyclelength,gbc);
         add(labelcameracyclelength);
-        
+
         cyclelength=new Choice();
         cyclelength.setPreferredSize(new Dimension(80,20));
         gbc.gridx=7;
@@ -269,15 +276,15 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         cyclelength.add("2000");
         cyclelength.addItemListener(this);
         gbl.setConstraints(cyclelength,gbc);
-        add(cyclelength);        
-        
+        add(cyclelength);
+
         Label labelframe=new Label("Frame num");
         gbc.gridx=0;
         gbc.gridy=2;
         gbc.gridwidth= 1;
         gbl.setConstraints(labelframe,gbc);
         add(labelframe);
-        
+
         framenumtext = new TextField(String.valueOf(frame), 5);
         framenumtext.addActionListener(this);
         gbc.gridx=1;
@@ -285,15 +292,15 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.gridwidth= 1;
         gbl.setConstraints(framenumtext,gbc);
         add(framenumtext);
-        
+
         closest = new Checkbox("Just closest", true);
         gbc.gridx=2;
         gbc.gridy=2;
         gbc.gridwidth= 1;
         gbl.setConstraints(closest,gbc);
         add(closest);
-        
-        
+
+
         acceleration=new Choice();
         gbc.gridx=3;
         gbc.gridy=2;
@@ -312,7 +319,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.gridwidth= 1;
         gbl.setConstraints(objective_ten,gbc);
         add(objective_ten);
-        
+
         objective_40 = new Checkbox("40x objective", false);
         gbc.gridx=4;
         gbc.gridy=1;
@@ -325,7 +332,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.gridy=2;
         gbc.gridwidth= 1;
         thresholdmethod.add("Yen");//good for normal
-        
+
         //ip_resized.setAutoThreshold("Default",true,0);
     	//ip_resized.setAutoThreshold("Yen",true,0);//seems good. and fast? 13msec/per->less than 10msec. better than otsu at head
         //need check after median filter if this is better.
@@ -338,7 +345,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
     	//ip_resized.setAutoThreshold("Otsu",true,0);//good and fast 10msec/per. not good for head
         thresholdmethod.add("Triangle");// good for on coli
         thresholdmethod.add("Otsu");//good for ventral cord?
-        
+
         thresholdmethod.add("Default");
         thresholdmethod.add("Huang");
         thresholdmethod.add("Intermodes");
@@ -355,21 +362,21 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         thresholdmethod.setPreferredSize(new Dimension(80, 20));
         gbl.setConstraints(thresholdmethod,gbc);
         add(thresholdmethod);
-        
+
         right = new Checkbox("Use right", false);
         gbc.gridx=5;
         gbc.gridy=2;
         gbc.gridwidth= 1;
         gbl.setConstraints(right,gbc);
         add(right);
-        
+
         textpos = new Checkbox("Save xypos file", false);
         gbc.gridx=6;
         gbc.gridy=2;
         gbc.gridwidth= 2;
         gbl.setConstraints(textpos,gbc);
         add(textpos);
-        
+
         /*
         Label labelinterval=new Label("interval");
         gbc.gridx=0;
@@ -377,7 +384,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.gridwidth= 1;
         gbl.setConstraints(labelinterval,gbc);
         add(labelinterval);
-        
+
         intervaltext = new TextField("0", 3);
         intervaltext.addActionListener(this);
         gbc.gridx=1;
@@ -385,14 +392,14 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.gridwidth= 1;
         gbl.setConstraints(intervaltext,gbc);
         add(intervaltext);*/
-        
+
         Label labelskip=new Label("one of ");
         gbc.gridx=0;
         gbc.gridy=3;
         gbc.gridwidth= 1;
         gbl.setConstraints(labelskip,gbc);
         add(labelskip);
-        
+
         skiptext = new TextField("1", 2);
         skiptext.addActionListener(this);
         gbc.gridx=1;
@@ -400,28 +407,28 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.gridwidth= 1;
         gbl.setConstraints(skiptext,gbc);
         add(skiptext);
-        
+
         CoM = new Checkbox("Center of Mass", false);
         gbc.gridx=2;
         gbc.gridy=3;
         gbc.gridwidth= 1;
         gbl.setConstraints(CoM,gbc);
         add(CoM);
-        
+
         manualtracking = new Checkbox("manual track", false);
         gbc.gridx=3;
         gbc.gridy=3;
         gbc.gridwidth= 2;
         gbl.setConstraints(manualtracking,gbc);
         add(manualtracking);
-        
+
         FULL = new Checkbox("Full field", false);
         gbc.gridx=5;
         gbc.gridy=3;
         gbc.gridwidth= 1;
         gbl.setConstraints(FULL,gbc);
         add(FULL);
-        
+
         BF = new Checkbox("Bright field", false);
         gbc.gridx=6;
         gbc.gridy=3;
@@ -435,7 +442,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.gridwidth= 1;
         gbl.setConstraints(labeldir,gbc);
         add(labeldir);
-        
+
         savedir = new TextField(dir, 40);
         savedir.addActionListener(this);
         gbc.gridx=1;
@@ -445,7 +452,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbl.setConstraints(savedir,gbc);
         add(savedir);
         gbc.fill=GridBagConstraints.NONE;//return to default
-        
+
         Button b4=new Button("Change dir");
         b4.addActionListener(this);
         gbc.gridx=6;
@@ -453,7 +460,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.gridwidth= 2;
         gbl.setConstraints(b4,gbc);
         add(b4);
-        
+
         //gui for stimulation
         STIM = new Checkbox("Light", false);
         gbc.gridx=0;
@@ -464,7 +471,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbl.setConstraints(STIM,gbc);
         add(STIM);
         //gbc.gridheight=1;//return to default
-        
+
         b=new Button("Run");
         b.setPreferredSize(new Dimension(40,20));
         b.addActionListener(this);
@@ -476,7 +483,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbl.setConstraints(b,gbc);
         add(b);
          gbc.gridheight=1;
-        
+
         Label labelpre=new Label("Pre-stim");
         gbc.gridx=1;
         gbc.gridy=5;
@@ -484,8 +491,8 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelpre,gbc);
         add(labelpre);
-        
-        prestimulation = new TextField(String.valueOf(3000),6);
+
+        prestimulation = new TextField(String.valueOf(10000),6);
         //prestimulation.setHorizontalAlignment(JTextField.RIGHT);
         prestimulation.setPreferredSize(new Dimension(50, 30));
         prestimulation.addActionListener(this);
@@ -495,7 +502,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(prestimulation,gbc);
         add(prestimulation);
-        
+
         Label labelstrength=new Label("Strength <63");
         gbc.gridx=1;
         gbc.gridy=6;
@@ -503,7 +510,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelstrength,gbc);
         add(labelstrength);
-        
+
         stimstrength = new TextField(String.valueOf(63),6);
         stimstrength.setPreferredSize(new Dimension(50, 30));
         stimstrength.addActionListener(this);
@@ -513,7 +520,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(stimstrength,gbc);
         add(stimstrength);
-        
+
         Label labelduration=new Label("Duration");
         gbc.gridx=1;
         gbc.gridy=7;
@@ -521,8 +528,8 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelduration,gbc);
         add(labelduration);
-        
-        stimduration = new TextField(String.valueOf(1000),6);
+
+        stimduration = new TextField(String.valueOf(5000),6);
         stimduration.setPreferredSize(new Dimension(50, 30));
         stimduration.addActionListener(this);
         gbc.gridx=2;
@@ -531,7 +538,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(stimduration,gbc);
         add(stimduration);
-        
+
         Label labelcyclelength=new Label("Cycle length");
         gbc.gridx=3;
         gbc.gridy=5;
@@ -539,8 +546,8 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelcyclelength,gbc);
         add(labelcyclelength);
-        
-        stimcyclelength = new TextField(String.valueOf(5000),6);
+
+        stimcyclelength = new TextField(String.valueOf(10000),6);
         stimcyclelength.setPreferredSize(new Dimension(50, 30));
         stimcyclelength.addActionListener(this);
         gbc.gridx=4;
@@ -549,7 +556,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(stimcyclelength,gbc);
         add(stimcyclelength);
-        
+
         Label labelcyclenum=new Label("Cycle num");
         gbc.gridx=3;
         gbc.gridy=6;
@@ -557,8 +564,8 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelcyclenum,gbc);
         add(labelcyclenum);
-        
-        stimcyclenum = new TextField(String.valueOf(10),6);
+
+        stimcyclenum = new TextField(String.valueOf(3),6);
         stimcyclenum.setPreferredSize(new Dimension(50, 30));
         stimcyclenum.addActionListener(this);
         gbc.gridx=4;
@@ -567,7 +574,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(stimcyclenum,gbc);
         add(stimcyclenum);
-        
+
         ramp = new Checkbox("ramp", false);
         gbc.gridx=5;
         gbc.gridy=5;
@@ -576,7 +583,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.NORTH;
         gbl.setConstraints(ramp,gbc);
         add(ramp);
-        
+
         Label labelbase=new Label("base");
         gbc.gridx=6;
         gbc.gridy=5;
@@ -584,7 +591,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelbase,gbc);
         add(labelbase);
-        
+
         rampbase = new TextField(String.valueOf(0),3);
         rampbase.setPreferredSize(new Dimension(30, 30));
         rampbase.addActionListener(this);
@@ -594,7 +601,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(rampbase,gbc);
         add(rampbase);
-        
+
         Label labelrampstart=new Label("start");
         gbc.gridx=6;
         gbc.gridy=6;
@@ -602,7 +609,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelrampstart,gbc);
         add(labelrampstart);
-        
+
         rampstart = new TextField(String.valueOf(0),3);
         rampstart.setPreferredSize(new Dimension(30, 30));
         rampstart.addActionListener(this);
@@ -612,7 +619,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(rampstart,gbc);
         add(rampstart);
-        
+
         Label labelrampend=new Label("end");
         gbc.gridx=6;
         gbc.gridy=7;
@@ -620,7 +627,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelrampend,gbc);
         add(labelrampend);
-        
+
         rampend = new TextField(String.valueOf(63),3);
         rampend.setPreferredSize(new Dimension(30, 30));
         rampend.addActionListener(this);
@@ -630,13 +637,13 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(rampend,gbc);
         add(rampend);
-        
-        
-        
+
+
+
         //GUI.center(this);//dont know what this line does
         setSize(700,225);
         setVisible(true);
-        
+
         //just test enviroment
         //adportsname=getPortLabels()[0];
         ArrayList<String> portslist=getPortLabels();
@@ -648,10 +655,24 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
                 adportsname=portslist.get(i);
             }
         }
+
+        IJ.log("------------");
+        IJ.log("------------");
+        IJ.log("------------");
+
+        IJ.log(Arrays.toString(portslist.toArray()));
+
+        IJ.log("------------");
+        IJ.log("------------");
+        IJ.log("------------");
+
+
+
+
         //adportsname=getPortLabels();
-        
+
         IJ.log("adportsname "+adportsname);
-        
+
         //if(adportsname.equals("/dev/tty.usbmodem1d11"))//when connected it to powermac, it is usbmodemfd411
         if(adportsname.equals(""))
         {
@@ -665,11 +686,11 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
             //testArduino(adportsname);
             //prepSignals(0);
         }
-        
+
 
     }
-    
-    
+
+
     //test function for arduino
     void testArduino(String portsname_)
     {
@@ -690,11 +711,11 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
             catch(java.lang.Exception e){}
             checkSerial(portsname);
             try{
-                Thread.sleep(1000); 
+                Thread.sleep(1000);
             }catch(InterruptedException e){}
         }
     }
-    
+
     void checkSerial(String portsname_)
     {
         String portsname=portsname_;
@@ -710,14 +731,14 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
             //IJ.log("chrvec.size() "+String.valueOf(chrvec.size()));
             /* this is format of data send by DAconverter_03 on arduino
             sendingdata[0]=lowByte(time);
-            sendingdata[1]=lowByte(time>>8);       
-            sendingdata[2]=lowByte(time>>16);       
-            sendingdata[3]=lowByte(time>>24);      
-            sendingdata[4]=lowByte(sensorValue);      
+            sendingdata[1]=lowByte(time>>8);
+            sendingdata[2]=lowByte(time>>16);
+            sendingdata[3]=lowByte(time>>24);
+            sendingdata[4]=lowByte(sensorValue);
             sendingdata[5]=lowByte(sensorValue>>8);
             sendingdata[6]=B00000000;//this line is needed. prep new valiable is not enough to clean?
             sendingdata[7]=PERIOD;
-            
+
             //DAconverter_03 use B00000000 as escape flag to replace B11111111
             */
             if(chrvec.size()==8)
@@ -753,10 +774,10 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
             }
             ans="";
     }
-    
+
     void prepSignals(int channel)
     {
-      //System.out.println("start");
+      System.out.println("prep Signals start");
       IJ.log("start");
       int inputval1=0;
       int inputval2=0;
@@ -780,12 +801,12 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         inputval5 = Integer.parseInt(stimcyclenum.getText());//repeat
         //inputval6 = Integer.parseInt(value6.getText());//base
         inputval6 = Integer.parseInt(rampbase.getText());//base
-        //inputval7 = Integer.parseInt(value7.getText());//start 
-        inputval7 = Integer.parseInt(rampstart.getText());//start 
+        //inputval7 = Integer.parseInt(value7.getText());//start
+        inputval7 = Integer.parseInt(rampstart.getText());//start
         //inputval8 = Integer.parseInt(value8.getText());//end
         inputval8 = Integer.parseInt(rampend.getText());//end
         //ramp
-        
+
         if(ramp.getState())
         {
           int absdiff= Math.abs(inputval8-inputval7);
@@ -801,7 +822,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         }
         //else if(inputval1>=0 && inputval1<=100000)//0 msec to 10 sec
         else
-        { 
+        {
           //return inputval1;
           System.out.println(String.valueOf(inputval1));
           //st.sendSignal(inputval1,inputval2,inputval3);
@@ -825,17 +846,17 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         inputval1=0;
         //return testint;
       }
-      
+
       /*
       for(int i=0;i<300;i++)
       {
                   checkSerial(adportsname);
             try{
-                Thread.sleep(1000); 
+                Thread.sleep(1000);
             }catch(InterruptedException e){}
         }*/
     }
-  
+
     //mili sec, and 0-63
     void setSender(int channel, int timepoint, int signalstrength)
     {
@@ -848,17 +869,30 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         future=ses.schedule(sd, timepoint*1000, TimeUnit.MICROSECONDS);
         //future=ses.scheduleWithFixedDelay(this,0, 1000/processrate, TimeUnit.MICROSECONDS);
     }
-    
+
     //String getStagePortLabel(String stagelabel)
     ArrayList<String> getPortLabels()
     {
         ArrayList<String> portlist=new ArrayList<String>();
+
+        IJ.log("------------");
+        IJ.log("------------");
+        IJ.log("------------");
+
+
+
+
+
+
         //String stagelabel_=stagelabel;
         Configuration conf=mmc_.getSystemState();
         long index=conf.size();
+
+
+
         //print(index);
-        //String PORT="";	
-        String[] tempports=new String[(int)index];	
+        //String PORT="";
+        String[] tempports=new String[(int)index];
         PropertySetting ps=new PropertySetting();
         for(int i=0;i<index;i++)
         {
@@ -867,29 +901,34 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
                 ps=conf.getSetting(i);
             }
             catch(java.lang.Exception e){}
-            String str=ps.getDeviceLabel();
-            IJ.log(str);
+
             IJ.log(ps.Serialize());//this should include port name
-            
+
             //if(ps.Serialize().indexOf(stagelabel_)==0)
             //{
                 //print("^"+ps.Serialize());//this should include port name
                 //just testing enviroment having only one port /dev/tty.usbmodem1d11
                 if(ps.Serialize().indexOf("Port")>0)
                 {
+                    //IJ.log(ps.Serialize());//this should include port name
                     //tempports[i]=ps.Serialize().split(" ")[2];
                     portlist.add(ps.Serialize().split(" ")[2]);
                 }
             //}
         }
+
+        IJ.log("------------");
+        IJ.log("------------");
+        IJ.log("------------");
+
         return portlist;
     }
-    
+
     public void imageOpened(ImagePlus imp) {}
     public void imageUpdated(ImagePlus imp) {}
-    public void imageClosed(ImagePlus impc) 
+    public void imageClosed(ImagePlus impc)
     {
-        //Write logic to clear valables when image closed here 
+        //Write logic to clear valables when image closed here
         if(imp==impc)
         {
             //IJ.log("The image closed");
@@ -904,7 +943,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
             //IJ.log("something else closed");
         }
     }
-    
+
     //old method not using now
     Button addButton(String text){
         Button b;
@@ -913,8 +952,8 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
         add(b);
         return b;
     }
-    
-    boolean checkFrameField()//return true if it ok 
+
+    boolean checkFrameField()//return true if it ok
     {
         int testint;
         try
@@ -927,10 +966,10 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
             framenumtext.setText(String.valueOf(frame));
             return false;
         }
-        
+
     }
-    
-    boolean checkDirField()//return true if it ok 
+
+    boolean checkDirField()//return true if it ok
     {
         File checkdir=new File(savedir.getText());
         if(checkdir.exists())
@@ -945,10 +984,10 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
             savedir.setText(dir);
             return false;
         }
-    
+
     }
-    
-    
+
+
     public void itemStateChanged(ItemEvent e) {
         int selectedindex=0;
         int exposurechoice=0;
@@ -978,7 +1017,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
                 lengthchoice=cyclelength.getSelectedIndex();
             }
             sendingdata=1<<6 | lengthchoice<<3 | exposurechoice;
-            
+
             // sending vale to arduino
             mmcorej.CharVector sendingchrvec=new mmcorej.CharVector();
             IJ.log(String.valueOf(sendingdata));
@@ -991,10 +1030,10 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
             }
             catch(java.lang.Exception exception){}
         }
-        
+
     }
-    
-    
+
+
     public void actionPerformed(ActionEvent e)
     {
         ImagePlus currentimp=WindowManager.getCurrentImage();
@@ -1048,18 +1087,26 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
                     dirforsave=newdir.getPath();//this one doen't have "/" at the end
                     //IJ.log("A new directory "+newdir+ " has made.");//This seems also work.
                     IJ.log("A new directory "+dirforsave+ " has made.");
+
                     if(tt!=null)//stop if already runnning.
                     {
                         //tt.getState();
                         if(tt.isAlive())
                         {
                             IJ.log("Stop! ");
+//if(true){return;}
                             //stop by stopping sequence acquisition. don't know better way but seems work.
                             try
                             {
+                            //probably this code cause lots of death of micromanager?
+                            //cant solve now.
                                 mmc_.stopSequenceAcquisition();
+//if(true){return;}
                             }
-                            catch(java.lang.Exception ex){}
+                            catch(java.lang.Exception ex){
+                            	IJ.log("exception stopsequenceacquisition");
+                    		//if(true){return;}
+                            }
                         }
                         else
                         {
@@ -1110,7 +1157,7 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
                 {
                     IJ.log("tt null");
                 }
-                
+
             }
             else if(lable.equals("Change dir"))
             {
@@ -1124,8 +1171,8 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
             }
         }
     }
-    
-    
+
+
    /** Handle the key typed event from the text field. */
     public void keyTyped(KeyEvent e) {
 	IJ.log("KEY TYPED: ");
@@ -1140,9 +1187,9 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
     public void keyReleased(KeyEvent e) {
 	IJ.log("KEY RELEASED: ");
     }
-    
+
     //mouse event test
-    
+
     public void mouseClicked(MouseEvent e) {
         IJ.log("clicked");
         if(tt!=null)
@@ -1157,17 +1204,17 @@ public class TrackStim_03 extends PlugInFrame  implements ActionListener,ImageLi
     public void mouseExited(MouseEvent e) {}
     public void mousePressed(MouseEvent e) {}
     public void mouseReleased(MouseEvent e) {}
-    
+
 }//public class RealTimeTracker_02 extends PlugInFrame  implements ActionListener,ImageListener, KeyListener{ end
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1181,7 +1228,7 @@ class TrackingThread10 extends Thread {
     String dirforsave;
     int frame;//String defaultframestring;
     boolean ready;
-    
+
     //inside of thread
     static int countslice=0;
     static ImageStack binaryimgstack=null;
@@ -1191,19 +1238,19 @@ class TrackingThread10 extends Thread {
     static int [] threshbuffer=new int[30];
     static int threshsum=0;
     static int threahaverage=0;
-    
+
     static ImageProcessor ip_;
     static ImageProcessor ip_resized;
 	static ImageProcessor ip_resizedori;
 	static ImagePlus impresizedori;
 	static ImageProcessor iplbyte;
-    
+
     double[][] measurespre;
     double[][] measures;
     //targethistory[slicenumber][roi index, x, y]
     double[][] targethistory;
-    
-    
+
+
     /*---------------------------------------  constant variables-------------------------------------------------*/
     //if the shift is larger than limit, move stage.
     double LIMIT=5;
@@ -1214,7 +1261,7 @@ class TrackingThread10 extends Thread {
     static double minanglecos=Math.cos(60.0/180*Math.PI);//45/180=0 because int...... so need to change order or add .0
     //allowance distance change
     static double mindistancechange=0.3;
-    
+
     TrackingThread10(TrackStim_03 tpf)
     {
 	IJ.log("constructor");
@@ -1226,13 +1273,13 @@ class TrackingThread10 extends Thread {
         frame=tpf.frame;//String defaultframestring;
         ready=tpf.ready;
     }
-    
+
     public void run()
     {
         IJ.log("start");
         this.startAcq("from thread");
     }
-    
+
     public void changeTarget()
     {
         //get clicked xy order
@@ -1277,11 +1324,11 @@ class TrackingThread10 extends Thread {
                     minindex=0;
                 }
             }
-            
+
             double correctedx=measurespre[minindex][2];
             double correctedy=measurespre[minindex][3];
             //change the targethistory[slicenum][roiindex,x,y]
-            
+
             targethistory[countslice-1][0]=minindex;
             targethistory[countslice-1][1]=correctedx;
             targethistory[countslice-1][2]=correctedy;
@@ -1326,11 +1373,11 @@ class TrackingThread10 extends Thread {
                 minindex=0;
             }
 		}
-        
+
         double correctedx=measurespre[minindex][2];
         double correctedy=measurespre[minindex][3];
         //change the targethistory[slicenum][roiindex,x,y]
-        
+
         targethistory[countslice-1][0]=minindex;
         targethistory[countslice-1][1]=correctedx;
         targethistory[countslice-1][2]=correctedy;
@@ -1340,15 +1387,15 @@ class TrackingThread10 extends Thread {
         targethistory[countslice][2]=correctedy;
         IJ.log("changed the target to roi " +String.valueOf(minindex) + "; " + String.valueOf(correctedx) + " " +String.valueOf(correctedy));
         //targethistory[countslice-1][0]=(double) closesttopoint;
-        
+
     }
     public void mouseEntered(MouseEvent e) {}
     public void mouseExited(MouseEvent e) {}
     public void mousePressed(MouseEvent e) {}
     public void mouseReleased(MouseEvent e) {}
     */
-    
-    
+
+
     /*----------------------------------------------- functions --------------------------------------------------*/
     //look for stage serial port name to send command
     private String getStagePortLabel(String stagelabel)
@@ -1358,7 +1405,7 @@ class TrackingThread10 extends Thread {
         long index=conf.size();
         //print(index);
         int i;
-        String PORT="";	
+        String PORT="";
         PropertySetting ps=new PropertySetting();
         for(i=0;i<index;i++)
         {
@@ -1381,8 +1428,8 @@ class TrackingThread10 extends Thread {
         }
         return PORT;
     }
-    
-    
+
+
     // second new method to track
     // make bynary image, watershed, detect objects above particular size
     // measure objects positions (and area mean values)
@@ -1396,27 +1443,27 @@ class TrackingThread10 extends Thread {
     //the imp ip must left half or something not full image
 	//ImageProcessor ip_=ip.duplicate();
     ip_=ip.duplicate();
-	
-    
+
+
     //ImageProcessor ip_resized=ip_.resize(ip_.getWidth()/2);
 	//ImageProcessor ip_resizedori=ip_resized.duplicate();
     ip_resized=ip_.resize(ip_.getWidth()/2);
     RankFilters rf = new RankFilters();
     //rf.setup("median",imp);
     rf.rank(ip_resized, 0.0, 4);// median 4 periodic black white noize cause miss thresholding, so eliminate those noize
-    
+
     ip_resizedori=ip_resized.duplicate();
-	
-	//test non resized one 
+
+	//test non resized one
     //seems not able to do more than 2min 50msec....
     //ip_resized=ip_.duplicate();
     //ip_resizedori=ip_.duplicate();
-	
+
 	//print(ip_resized.getWidth());
 	//ImagePlus impresizedori=new ImagePlus("l",ip_resizedori);
     impresizedori=new ImagePlus("l",ip_resizedori);
-	
-    
+
+
     //initiall 31 slice calculate Autothresho at every time
     //also static value doesnt clear after the imaging by "ready" ,use it to reduce calc.?
     //if(countslice<30&&threshsum==0)
@@ -1447,7 +1494,7 @@ class TrackingThread10 extends Thread {
                 threahaverage=threshsum/30;
             }
     }
-    //after 30 slice 
+    //after 30 slice
     else
     {
         //every 50 slice calculate setAutoThreshold
@@ -1462,11 +1509,11 @@ class TrackingThread10 extends Thread {
             threahaverage=threshsum/30;
         }
     }
-    
+
 	//print("th val "+ip_resized.getAutoThreshold());
 	ip_resized.threshold(threahaverage);
 	ImageStatistics imstat;
-	
+
 	//ipleft.invert();
 	//ImageProcessor iplbyte=ip_resized.convertToByte(false);
     iplbyte=ip_resized.convertToByte(false);
@@ -1474,23 +1521,23 @@ class TrackingThread10 extends Thread {
 	//ts= new Thresholder();
 	//ts.run("");
 	//print("is binary "+ipleft.isBinary());
-	
+
 	EDM edm = new EDM();
-	
+
 	edm.toWatershed(iplbyte);
-	
+
 	iplbyte.invert();
-	
+
 	ImagePlus impleftbyte=new ImagePlus("lbyte",iplbyte);
     countslice++;
     if(savebinary)
     {
-        
+
         binaryimgstack.setPixels(iplbyte.getPixelsCopy(),countslice);
     }
 	int widthleft=impleftbyte.getWidth();
 	int heightleft=impleftbyte.getHeight();
-	
+
 	//impleftbyte.show();
 	Wand wand= new Wand(iplbyte);
 	//non resized=60 resized=12. x10 3 try
@@ -1502,14 +1549,14 @@ class TrackingThread10 extends Thread {
 	ArrayList<Roi> roiarraylist = new ArrayList<Roi>();
     preroiarraylist=roiarraylist;
 	Roi roi;
-	
+
 	//this whole image scan loop is too heaby. take 200msec per resized half image
 	//need faster method....
 	// So, don't scan every row/column. every 3 line may enough?
-	// now 0.5/10 slice. 50 msec, 2sec/40 
-	//non resized image with each 6. 2.8sec/40, 70msec. 
+	// now 0.5/10 slice. 50 msec, 2sec/40
+	//non resized image with each 6. 2.8sec/40, 70msec.
     //this might because get()? using pixel arry is better?
-    //...All these methods should only be used if you intend to modify just a few pixels. If you 
+    //...All these methods should only be used if you intend to modify just a few pixels. If you
     //want to modify large parts of the image it is faster to work with the pixel array....yoru
     // Don't need get every time. just have array and pick up
     // every 2line tri in ver2
@@ -1522,7 +1569,7 @@ class TrackingThread10 extends Thread {
 			if(pixels[y*widthleft+x]==0)
 			//if(iplbyte.getPixel(x,y)==0)
 			{
-				
+
 				wand.autoOutline(x,y,0.0,1.0,4);
 				//type polygonroi=2
 				roi = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, 2);
@@ -1539,7 +1586,7 @@ class TrackingThread10 extends Thread {
                     {
                         ImageProcessor drawip=binaryimgstack.getProcessor(countslice);
                         Rectangle r = roi.getBounds();
-                        
+
                         drawip.moveTo(r.x,r.y);
                         drawip.setValue(128);
                         drawip.drawString(String.valueOf(roiarraylist.size()));
@@ -1550,14 +1597,14 @@ class TrackingThread10 extends Thread {
 				//delet already detected roi.
 				iplbyte.fill(roi);
 				//break;
-				
+
 			}
 		}
 	}
-	
+
 	//print(counter);
 	//impleftbyte.show();
-	
+
 	int i;
 	//3 measurement factors, area, mean, centroid
 	double[][] roimeasures=new double[roiarraylist.size()][4];
@@ -1622,16 +1669,16 @@ static double[][] getMinDist(double[][] measurespre_, double[][] measures_)
 			}
 		}
 		returnval[i][0]=minindex;
-		returnval[i][1]=minval;	
-		returnval[i][2]=mindx;	
-		returnval[i][3]=mindy;	
+		returnval[i][1]=minval;
+		returnval[i][2]=mindx;
+		returnval[i][3]=mindy;
 	}
 	return returnval;
 }
 
 
 //arg is measures, or roiorder is also ok
-//return [roi#][order by distance from target, distance, dx, dy] 
+//return [roi#][order by distance from target, distance, dx, dy]
 //roi# is orederd by getObjmeasures, which means top left most is fisrt roi
 static double[][] getRoiOrder(int targetroinum, double[][] measures_)
 {
@@ -1665,11 +1712,11 @@ static double[][] getRoiOrder(int targetroinum, double[][] measures_)
             }
         }
     }
-    
-    
-    
+
+
+
     return returnval;
-    
+
 }
 
 
@@ -1730,7 +1777,7 @@ static double[][] checkDirDis(int slice, double[][] roiorder, double[][] measure
             IJ.log("theta degree "+String.valueOf(theta/Math.PI*180));
             IJ.log("predistance "+String.valueOf(predistance));
             IJ.log("2nd trial angle cos "+String.valueOf(deltaanglecos)+" deltadistanceratio "+String.valueOf(deltadistanceratio));
-            
+
             if(deltaanglecos<minanglecos || deltadistanceratio>mindistancechange)//2nd
             {
                 //try onemore time again. this time initail target and 2nd next roi as direction
@@ -1784,7 +1831,7 @@ static double[][] checkDirDis(int slice, double[][] roiorder, double[][] measure
         predistance=roiorder[adjacentroi][1];
         pretheta=theta;
     }//if(pretheta<10) else if (pretheta==10.0) end
-    
+
     returnvalue=roiorder;
     return returnvalue;
 }
@@ -1827,7 +1874,7 @@ void outputData(double[] xposarray, double[] yposarray)
             aslicestring=String.valueOf(xposarray[i])+","+String.valueOf(yposarray[i]);
             strforsave=strforsave+aslicestring+BR;
         }
-        
+
         //String defdir=IJ.getDirectory("image");
         //String defdir=IJ.getDirectory("");
         //String shorttitle=imp.getShortTitle();
@@ -1852,7 +1899,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
 	ImagePlus imp2=new ImagePlus("subtracted",ip2);
     roi_.setLocation(x,y);
 	imp2.setRoi(roi_);
-    
+
     //median filter ver 7 test
     RankFilters rf = new RankFilters();
     //rf.setup("median",imp);
@@ -1886,7 +1933,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
             pretheta=10.0;//normal radian must beteween =-pi. so this value could use to check if there is pretheta.
             threshsum=0;
             threahaverage=0;
-        
+
         //CMMCore mmc_=mmcmf.getMMCore ();
         if(mmc_.isSequenceRunning())
         {
@@ -1902,7 +1949,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
         }
         long width2=mmc_.getImageWidth ();
         IJ.log(String.valueOf(width2));
-        
+
         String stagelabel=mmc_.getXYStageDevice();
         String zstagelabel=mmc_.getFocusDevice ();
         IJ.log(stagelabel);
@@ -1914,7 +1961,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
         }
          catch( java.lang.Exception e )
          {
-         
+
          }
         IJ.log("zpos "+String.valueOf(zpos));
         double xpos=0;
@@ -1924,7 +1971,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
         }
          catch( java.lang.Exception e )
          {
-         
+
          }
         IJ.log("xpos "+String.valueOf(xpos));
         String PORT=getStagePortLabel(stagelabel);
@@ -1938,7 +1985,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
             IJ.log("stage is not connected");
             return;
         }
-        
+
         //if(true)return;
         //ImagePlus imp;
         ImageProcessor ip;
@@ -1970,7 +2017,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
             roiheight=r.height;
         }
         else
-        { 
+        {
 		if(!tpf.right.getState())
 		{
 			//set roi at left half.
@@ -1982,7 +2029,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
 			//set roi at right half.
         		IJ.log("no roi! set roi = right half");
 			roi=(Roi) rightroi.clone();
-			
+
 		}
         }
         ImageStatistics imstat=imp.getStatistics(16);
@@ -2055,8 +2102,8 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
                 		targethistory[0][1]=measures[target][2];
                 		targethistory[0][2]=measures[target][3];
                     }
-                    
-                    
+
+
                 //return [roi#][order by distance from target, distance, dx, dy]
                 //static double[][] getRoiOrder(int targetroinum, double[][] measures)
                 IJ.log("before getRoiOrder "+ String.valueOf(targethistory[i][0]));
@@ -2091,12 +2138,12 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
                         targethistory[i][0]=newtarget;
                         targethistory[i][1]=measures[newtarget][2];
                         targethistory[i][2]=measures[newtarget][3];
-                        
+
                     }
                     IJ.log("after getRoiOrder "+ String.valueOf(targethistory[i][0]));
                     //void drawRoiOrder(int slice, double[][] roiorder, double[][] measures, boolean trackstatus)
                     drawRoiOrder(i-1, finalroiorder, measures,trackstatus);
-                }//if(measures.length>2) end 
+                }//if(measures.length>2) end
                 //use targethistory[i][0] to calculate distance from centor.
                 measurespre=measures;
             }// for(int i=1;i<=slicenumber;i++) end
@@ -2119,7 +2166,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
             //int frame=1200;
             double[] xposarray=new double[frame];
             double[] yposarray=new double[frame];
-            
+
             //ZStage zs=new ZStage();
             //int zpos=zs.GetPositionUm();
             //50msec wait doesn't work?
@@ -2151,15 +2198,15 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
             String ans="";
             int i=0;
             int skip=Integer.parseInt(tpf.skiptext.getText());//if it 2, keep 1 out of 2 image
-            //int interval= Integer.parseInt(tpf.intervaltext.getText());//msec. if it 0, ignore. 
+            //int interval= Integer.parseInt(tpf.intervaltext.getText());//msec. if it 0, ignore.
             int skipcount=0;
             double[] centorofmass=new double[2];
-            //while imaging... 
+            //while imaging...
             long nanotimecurrent=System.nanoTime();
             long nanotimepre=0;
-            while (mmc_.isSequenceRunning()) 
+            while (mmc_.isSequenceRunning())
             {
-                if (mmc_.getRemainingImageCount() > 0) 
+                if (mmc_.getRemainingImageCount() > 0)
                 {
                     try
                     {
@@ -2180,10 +2227,10 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
                     //I don't get why there are two getXYpos methods in both mmc and gui.
                     try//it seems some case, getting xpos fails. try serial port. not resolved by serial port.
                     {
-                    
+
                         xposarray[i]=mmc_.getXPosition(stagelabel);
                         yposarray[i]=mmc_.getYPosition(stagelabel);
-                        
+
                         /*
                         mmc_.setSerialPortCommand(PORT,"WHERE X Y","\r");
                         ans=mmc_.getSerialPortAnswer(PORT, "\r\n");
@@ -2228,20 +2275,20 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
                         }
                         catch(java.lang.Exception e){}
                     }//if(!ready) end
-                    
+
                     /*gui version. need to look for gui api?
                     stagepos=gui.getXYStagePosition();
 		            xposarray[i]=stagepos.getX();//.x cause error?
 		            yposarray[i]=stagepos.getY();
             		print("stagepos:"+stagepos.x+","+stagepos.y+", at "+i);
                     */
-                    
+
                     //imgstk.setPixels(img,i+1);
                     if(!tpf.manualtracking.getState())
                     {
-                    if(!tpf.CoM.getState() && !tpf.FULL.getState())//for normal thresholding method. 
+                    if(!tpf.CoM.getState() && !tpf.FULL.getState())//for normal thresholding method.
                     {
-			
+
                     imp.setRoi(roi);
                     ImageProcessor ip_current=imp.getProcessor();
                     ImageProcessor ipleft=ip_current.crop();
@@ -2307,7 +2354,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
                 		//for non resised version
                         //distancefromcenter[0]=width/4-measures[newtarget][2];
                         //distancefromcenter[1]=height/2-measures[newtarget][3];
-                        
+
                 	}//after second image end
                 	else//first image
                 	{
@@ -2326,7 +2373,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
                         distancefromcenter[0]=width/4-measures[target][2]*2;
                         distancefromcenter[1]=height/2-measures[target][3]*2;
                     }//first image end
-                    
+
                     //return [roi#][order by distance from target, distance, dx, dy]
                     //static double[][] getRoiOrder(int targetroinum, double[][] measures)
                     if(!tpf.closest.getState())
@@ -2363,19 +2410,19 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
                                 targethistory[i][0]=newtarget;
                                 targethistory[i][1]=measures[newtarget][2];
                                 targethistory[i][2]=measures[newtarget][3];
-                                
+
                             }
                             IJ.log("after getRoiOrder "+ String.valueOf(targethistory[i][0]));
                             //void drawRoiOrder(int slice, double[][] roiorder, double[][] measures, boolean trackstatus)
                             drawRoiOrder(i+1, finalroiorder, measures,trackstatus);
                         }//if(!closest.getState()) end
-                        
+
                         //use targethistory[i][0] to calculate distance from centor.
                         //multiply 2 because resized 1/2
                         //print("target #"+newtarget+" roi at "+measures[newtarget][2]+","+measures[newtarget][3]);
                         distancefromcenter[0]=width/4-measures[(int)targethistory[i][0]][2]*2;
                         distancefromcenter[1]=height/2-measures[(int)targethistory[i][0]][3]*2;
-                    }//if(measures.length>2) end 
+                    }//if(measures.length>2) end
                     //
                     //here put stage control code.
                     }
@@ -2385,7 +2432,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
 			roi=new Roi(4,4,width-8,height-8);//trim edge of image since it may have dark reagion
 			imp.setRoi(roi);
                     	ImageProcessor ip_current=imp.getProcessor();
-                        if(tpf.BF.getState())//for brightfield 
+                        if(tpf.BF.getState())//for brightfield
                         {
                         	ip_current.invert();
                         }
@@ -2416,12 +2463,12 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
 			imp.setRoi(roi);//just for visible.
 			IJ.log("FULL "+String.valueOf(centorofmass[0])+" "+String.valueOf(centorofmass[1]));
 			IJ.log("dis cent "+String.valueOf(distancefromcenter[0])+" "+String.valueOf(distancefromcenter[1]));
-	
+
                     }
                     //if(!tpf.CoM.getState()) center of mass end
                     else //for center of mass method
                     {
-			
+
                     	imp.setRoi(leftroi);
                     	ImageProcessor ip_current=imp.getProcessor();
                     	ImageProcessor ipleft=ip_current.crop();
@@ -2438,7 +2485,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
                             {
                                 int roishiftx=(int)(targethistory[i-1][1]-roiwidth/2.0);
                                 int roishifty=(int)(targethistory[i-1][2]-roiheight/2.0);
-                                centorofmass=getCenterofMass(impleft, ipleft, roi,roishiftx,roishifty);//use the previous roi pos 
+                                centorofmass=getCenterofMass(impleft, ipleft, roi,roishiftx,roishifty);//use the previous roi pos
                             }
 				distancefromcenter[0]=width/4-centorofmass[0];
                             distancefromcenter[1]=height/2-centorofmass[1];
@@ -2520,8 +2567,8 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
                             }
                             catch(java.lang.Exception e){}
                             //follwoing may not need execpt for checking the control
-                            //NO NEED By unknown reason, comment out following cause failure of getting stage position. 
-                            
+                            //NO NEED By unknown reason, comment out following cause failure of getting stage position.
+
                             try
                             {
                                 ans=mmc_.getSerialPortAnswer(PORT, "\r\n");
@@ -2538,7 +2585,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
                                 ans=mmc_.getSerialPortAnswer(PORT, "\r\n");
                             }
                             catch(java.lang.Exception e){}
-                            
+
                         }//if(PORT!="")//demo stage cant do this end
                         //print(ans);
                     }//if(distancescalar>LIMIT) else end
@@ -2549,7 +2596,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
                     }//if(skipcount==0)end
                 }//if (mmc.getRemainingImageCount() > 0)  end
             }//while (mmc.isSequenceRunning()) end
-            
+
             try
             {
                 mmc_.setSerialPortCommand(PORT,"VECTOR X=0 Y=0","\r");
@@ -2571,7 +2618,7 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
                 ans=mmc_.getSerialPortAnswer(PORT, "\r\n");
             }
             catch(java.lang.Exception e){}
-            
+
             Date d2 = new java.util.Date();
             IJ.log( "acquistion end at"+d2.getTime() );
             IJ.log(String.valueOf((d2.getTime()-d1.getTime())/1000.0)+" sec");
@@ -2584,8 +2631,8 @@ static double[] getCenterofMass(ImagePlus imp, ImageProcessor ip, Roi roi, int x
             }
             //ImagePlus imp3=new ImagePlus("binarystack",binaryimgstack);
             //imp3.show();
-            
-            
+
+
         }//image acquisition case end
         //ic.removeMouseListener(this);
 	}//public void  void startAcq(String arg) { end
@@ -2612,32 +2659,32 @@ class Signalsender implements Runnable
   int channel;
   int strength;
   int sendingdata;
-  
+
   int delaytime;
   int dulation;
   int[] changetimepoints;
   int[] changevalues;
   //ScheduledExecutorService ses;
   //ScheduledFuture  future = null;
-  
+
   //Signalsender(ControlPannel cp_)
   Signalsender(TrackStim_03 ts_)
   {
     //cp=cp_;
     ts=ts_;
   }
-  
+
   void setChannel(int channel_)
   {
     channel=channel_;
   }
-  
-  //use this 
+
+  //use this
   void setSignalStrength(int strength_)
   {
     strength=strength_;
   }
-  
+
   //not using now
   //mili sec and 0-255
   void setOrder(int delaytime_, int strength_, int dulation_)
@@ -2645,14 +2692,14 @@ class Signalsender implements Runnable
     delaytime=delaytime_;
     strength=strength_;
     dulation=dulation_;
-    //ScheduledExecutorService 
+    //ScheduledExecutorService
     changetimepoints=new int[] {delaytime, delaytime_+dulation};
     changevalues=new int[] {strength, 0};
     //ses = Executors.newSingleThreadScheduledExecutor();
     //future=ses.schedule(Runnable command, long delay, TimeUnit unit);
     //future=ses.scheduleWithFixedDelay(this,0, 1000/processrate, TimeUnit.MICROSECONDS);
   }
-  
+
   public void run()
   {
     //System.out.println(String.valueOf(System.nanoTime()/1000000) +" "+ String.valueOf(strength));
@@ -2681,8 +2728,8 @@ class Signalsender implements Runnable
         cp.st.port.write(changevalues[count]);
         count++;
       }
-      
+
     }*/
   }
-  
+
 }
