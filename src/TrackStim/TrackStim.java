@@ -1,21 +1,24 @@
 package TrackStim;
 
-import Other.Other;
-
 import javax.swing.JOptionPane;
+
+import java.awt.event.ActionListener;
+import java.awt.event.MouseListener;
+import java.awt.event.ItemListener;
 
 import mmcorej.CMMCore;
 
-import ij.*;
+import ij.plugin.frame.PlugInFrame;
+import ij.ImageListener;
 
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 
 
 public class TrackStim implements MMPlugin {
-   public static final String menuName = new Other().getLabel();
-   public static final String tooltipDescription =
-      "Displays a simple dialog";
+   public static final String menuName = "TrackStim";
+   public static final String tooltipDescription = "Real-time imaging of C.Elegans";
+
 
    // Provides access to the Micro-Manager Java API (for GUI control and high-
    // level functions).
@@ -23,6 +26,8 @@ public class TrackStim implements MMPlugin {
    // Provides access to the Micro-Manager Core API (for direct hardware
    // control)
    private CMMCore core_;
+
+   private TrackStimGUI gui;
 
    @Override
    public void setApp(ScriptInterface app) {
@@ -38,8 +43,9 @@ public class TrackStim implements MMPlugin {
 
    @Override
    public void show() {
-      JOptionPane.showMessageDialog(null, "Hello, world!", "Hello world!",
-            JOptionPane.PLAIN_MESSAGE);
+      // JOptionPane.showMessageDialog(null, "Hello, world!", "Hello world!",
+      //       JOptionPane.PLAIN_MESSAGE);
+      gui = new TrackStimGUI();
    }
 
    @Override
