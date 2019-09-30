@@ -556,29 +556,6 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
         }
     }
 
-    // test function for arduino
-    void testArduino(String portsname_) {
-        String portsname = portsname_;
-        mmcorej.CharVector chrvec = new mmcorej.CharVector();
-        String ans = ".";
-        for (int i = 0; i < 30; i++) {
-            // testing sending vale
-            mmcorej.CharVector sendingchrvec = new mmcorej.CharVector();
-            sendingchrvec.add((char) i);
-            try {
-                // ans=mmc_.getSerialPortAnswer(portsname, "\r\n");
-                mmc_.writeToSerialPort(portsname, sendingchrvec);
-                // ans=mmc_.getSerialPortAnswer(portsname, String.valueOf(0xff));
-            } catch (java.lang.Exception e) {
-            }
-            checkSerial(portsname);
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-            }
-        }
-    }
-
     void checkSerial(String portsname_) {
         String portsname = portsname_;
         mmcorej.CharVector chrvec = new mmcorej.CharVector();
