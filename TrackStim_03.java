@@ -114,7 +114,6 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
     boolean ready;
 
     public TrackStim_03() {
-        IJ.log("test1");
         super("TrackerwithStimulater");
         // First, check if there is mmc.
         if (mmc_ == null) {
