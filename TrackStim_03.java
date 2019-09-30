@@ -699,7 +699,7 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
         Choice cho = (Choice) e.getSource();
         selectedindex = cho.getSelectedIndex();
 
-        IJ.log("index " + String.valueOf(selectedindex));
+        IJ.log("itemStateChanged: the item at index " + String.valueOf(selectedindex) + " has been selected");
 
         if (e.getSource() == exposureduration || e.getSource() == cyclelength) {
             /*
@@ -719,41 +719,54 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
 
             // sending vale to arduino
             mmcorej.CharVector sendingchrvec = new mmcorej.CharVector();
-            IJ.log(String.valueOf(sendingdata));
+            IJ.log("itemStateChanged: sending the following data to the arduino: " + String.valueOf(sendingdata));
             sendingchrvec.add((char) sendingdata);
             try {
                 mmc_.writeToSerialPort(adportsname, sendingchrvec);
-            } catch (java.lang.Exception exception) {
+            } catch (java.lang.Exception ex) {
+                IJ.log("itemStateChanged:  error trying to send data " + String.valueOf(sendingdata) + "to arduino");
+                IJ.log(ex.getMessage());
             }
         }
 
     }
 
+    // handle button presses
     public void actionPerformed(ActionEvent e) {
         ImagePlus currentimp = WindowManager.getCurrentImage();
         String lable = e.getActionCommand();
-        IJ.log(lable);
-        if (lable.equals(framenumtext.getText()))// frame num has changed
-        {
+
+        IJ.log("actionPerformed: button clicked is " + lable);
+
+        // frame num changed
+        if (lable.equals(framenumtext.getText())){
             boolean checkframefield = checkFrameField();
-            IJ.log("frame " + String.valueOf(frame));
-        } else if (lable.equals(savedir.getText()))// savedir has changed
-        {
+            IJ.log("actionPerformed: frame is " + String.valueOf(frame));
+
+            // savedir has changed
+        } else if (lable.equals(savedir.getText())){
             checkDirField();
-            IJ.log(savedir.getText());
-        } else// any botton pushed
-        {
+            IJ.log("actionPerformed: directory is " + savedir.getText());
+
+            // any button pushed
+        } else {
+
+            // ready button pushed
             if (lable.equals("Ready")) {
-                // just start continuous acquision and tracking.
                 ready = true;
                 tt = new TrackingThread10(this);
                 tt.start();
+
+                // go button pressed
             } else if (lable.equals("Go")) {
-                if (checkFrameField() && checkDirField())// if both ok
-                {
+
+                // frame number is valid and directory exists
+                if (checkFrameField() && checkDirField()) {
                     dir = savedir.getText();
                     prefs.put("DIR", dir); // save in the preference
                     prefs.put("FRAME", String.valueOf(frame));
+
+                    // get count number of directories N so that we can create directory N+1
                     File currentdir = new File(dir);
                     File[] filelist = currentdir.listFiles();
                     int dircount = 0;
@@ -762,77 +775,75 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
                             dircount++;
                         }
                     }
-                    IJ.log("dir number " + String.valueOf(dircount));
+
+                    IJ.log("actionPerformed: number for directories in " + dir + " is: " + String.valueOf(dircount));
                     int i = 1;
                     File newdir = new File(dir + "temp" + String.valueOf(dircount + i));
                     while (newdir.exists()) {
                         i++;
                         newdir = new File(dir + "temp" + String.valueOf(dircount + i));
                     }
+
                     newdir.mkdir();
                     dirforsave = newdir.getPath();// this one doen't have "/" at the end
-                    // IJ.log("A new directory "+newdir+ " has made.");//This seems also work.
-                    IJ.log("A new directory " + dirforsave + " has made.");
+                    IJ.log("actionPerformed: created new directory " + dirforsave);
 
-                    if (tt != null)// stop if already runnning.
-                    {
-                        // tt.getState();
+                    // check if the tracking thread is running
+                    if (tt != null){
                         if (tt.isAlive()) {
-                            IJ.log("Stop! ");
-                            // if(true){return;}
+                            IJ.log("actionPerformed: GO was pressed but the tracking thread is still running, stopping sequence acquisition");
+
                             // stop by stopping sequence acquisition. don't know better way but seems work.
                             try {
                                 // probably this code cause lots of death of micromanager?
                                 // cant solve now.
                                 mmc_.stopSequenceAcquisition();
-                                // if(true){return;}
                             } catch (java.lang.Exception ex) {
-                                IJ.log("exception stopsequenceacquisition");
-                                // if(true){return;}
+                                IJ.log("actionPerformed: GO was pressed but could not stop previous thread sequence acquisition");
+                                IJ.log(ex.getMessage());
                             }
                         } else {
-                            IJ.log("tt is not alive");
+                            IJ.log("actionPerformed: GO was pressed and the tracking thread is not active, nothing needs to be done");
                         }
+
+                        IJ.log("actionPerformed: GO was pressed, setting tracking thread to null before creating new tracking thread");
                         tt = null;
                     } else {
-                        IJ.log("tt null");
+                        IJ.log("actionPerformed: GO was pressed and tracking thread is null, nothing to do before creating new tracking thread");
                     }
+
                     ready = false;
                     if (STIM.getState()) {
-                        // just channle0 for now. STIM2 will be second channel in the future
                         prepSignals(0);
                     }
+
                     tt = new TrackingThread10(this);
                     tt.start();
                 }
             } else if (lable.equals("Stop")) {
-                // test code to check choice
-                // if(acceleration.getSelectedItem()==)
-                // IJ.log(acceleration.getSelectedItem());
-                // if(true) return;
-                // TO DO Stop child thread and image acquisition.
+
                 if (tt != null) {
-                    // tt.getState();
                     if (tt.isAlive()) {
-                        IJ.log("Stop! ");
-                        // stop by stopping sequence acquisition. don't know better way but seems work.
+                        IJ.log("actionPerformed: STOP was pressed, stopping sequence acquisition");
                         try {
                             mmc_.stopSequenceAcquisition();
                         } catch (java.lang.Exception ex) {
+                            IJ.log("actionPerformed: STOP was pressed but could not stop previous thread sequence acquisition");
+                            IJ.log(ex.getMessage());
                         }
                     } else {
-                        IJ.log("tt is not alive");
+                        IJ.log("actionPerformed: STOP was pressed, but the tracking thread is not alive, nothing to do");
                     }
                 } else {
-                    IJ.log("tt null");
+                    IJ.log("actionPerformed: STOP was pressed, but the tracking thread is null, nothing to do");
                 }
 
             } else if (lable.equals("Change dir")) {
                 DirectoryChooser dc = new DirectoryChooser("Directory for temp folder");
                 String dcdir = dc.getDirectory();
                 savedir.setText(dcdir);
-            } else if (lable.equals("Run"))// run the stimulation program
-            {
+            } else if (lable.equals("Run")){
+                IJ.log("actionPerformed: RUN was pressed, calling prepSignals...");
                 prepSignals(0);
             }
         }
@@ -858,6 +869,7 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
         IJ.log("mouseClicked: ");
         if (tt != null) {
             if (tt.isAlive()) {
+                IJ.log("mouseClicked: tracking thread is active, changing target...");
                 tt.changeTarget();
             }
         }
