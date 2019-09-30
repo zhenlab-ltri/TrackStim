@@ -939,7 +939,7 @@ class TrackingThread10 extends Thread {
     static double mindistancechange = 0.3;
 
     TrackingThread10(TrackStim_03 tpf) {
-        IJ.log("constructor");
+        IJ.log("TrackingThread constructor");
         this.tpf = tpf;
         mmc_ = tpf.mmc_;
         imp = tpf.imp;
@@ -950,23 +950,24 @@ class TrackingThread10 extends Thread {
     }
 
     public void run() {
-        IJ.log("start");
+        IJ.log("TrackingThread run start");
         this.startAcq("from thread");
     }
 
     public void changeTarget() {
-        // get clicked xy order
+        // this is called when a click event is triggered
         Point cursorpoint = ic.getCursorLoc();
-        IJ.log("clicked at " + String.valueOf(cursorpoint.x) + " " + String.valueOf(cursorpoint.y));
-        if (tpf.closest.getState())// center of mass method
-        {
+        IJ.log("changeTarget: x is " + String.valueOf(cursorpoint.x) + ", y is " + String.valueOf(cursorpoint.y));
+
+        // center of mass method
+        if (tpf.closest.getState()){
             targethistory[countslice - 1][1] = cursorpoint.x;
             targethistory[countslice - 1][2] = cursorpoint.y;
             // also change current slice's data...
             targethistory[countslice][1] = cursorpoint.x;
             targethistory[countslice][2] = cursorpoint.y;
-        } else// normal thresholding method
-        {
+        } else {
+            // normal thresholding method
             // compare with measurespre[roinumber][area,mean,x,y]
             double distancescalar = 0;
             double minval = 0;
@@ -1003,67 +1004,40 @@ class TrackingThread10 extends Thread {
             targethistory[countslice][0] = minindex;
             targethistory[countslice][1] = correctedx;
             targethistory[countslice][2] = correctedy;
-            IJ.log("changed the target to roi " + String.valueOf(minindex) + "; " + String.valueOf(correctedx) + " "
+            IJ.log("changeTarget: changed the target to roi " + String.valueOf(minindex) + "; " + String.valueOf(correctedx) + " "
                     + String.valueOf(correctedy));
         }
     }
-    /*
-     * public void mouseClicked(MouseEvent e) { //get clicked xy order Point
-     * cursorpoint=ic.getCursorLoc();
-     * IJ.log("clicked at "+String.valueOf(cursorpoint.x)+ " "
-     * +String.valueOf(cursorpoint.y)); //compare with
-     * measurespre[roinumber][area,mean,x,y] double distancescalar=0; double
-     * minval=0; int minindex=0; double dx=0; double dy=0; double mindx=0; double
-     * mindy=0; for(int i=0; i<measurespre.length; i++) {
-     * dx=cursorpoint.x-measurespre[i][2]; dy=cursorpoint.y-measurespre[i][3];
-     * distancescalar=Math.sqrt(dx * dx + dy * dy); if(i!=0) {
-     * if(minval>distancescalar) { minval=distancescalar; minindex=i; mindx=dx;
-     * mindy=dy; } } else { minval=distancescalar; minindex=0; } }
-     *
-     * double correctedx=measurespre[minindex][2]; double
-     * correctedy=measurespre[minindex][3]; //change the
-     * targethistory[slicenum][roiindex,x,y]
-     *
-     * targethistory[countslice-1][0]=minindex;
-     * targethistory[countslice-1][1]=correctedx;
-     * targethistory[countslice-1][2]=correctedy; //also change current slice's
-     * data... targethistory[countslice][0]=minindex;
-     * targethistory[countslice][1]=correctedx;
-     * targethistory[countslice][2]=correctedy; IJ.log("changed the target to roi "
-     * +String.valueOf(minindex) + "; " + String.valueOf(correctedx) + " "
-     * +String.valueOf(correctedy)); //targethistory[countslice-1][0]=(double)
-     * closesttopoint;
-     *
-     * } public void mouseEntered(MouseEvent e) {} public void
-     * mouseExited(MouseEvent e) {} public void mousePressed(MouseEvent e) {} public
-     * void mouseReleased(MouseEvent e) {}
-     */
 
-    /*----------------------------------------------- functions --------------------------------------------------*/
     // look for stage serial port name to send command
     private String getStagePortLabel(String stagelabel) {
         String stagelabel_ = stagelabel;
         Configuration conf = mmc_.getSystemState();
         long index = conf.size();
-        // print(index);
         int i;
         String PORT = "";
         PropertySetting ps = new PropertySetting();
+
         for (i = 0; i < index; i++) {
             try {
                 ps = conf.getSetting(i);
             } catch (java.lang.Exception e) {
+                IJ.log("getStagePortLabel: could not get property " + String.valueOf(i) + " from property settings");
+                IJ.log(e.getMessage());
             }
+
             String str = ps.getDeviceLabel();
-            IJ.log(str);
-            IJ.log(ps.Serialize());// this should include port name
+            IJ.log("getStagePortLabel: device label is " + str);
+            IJ.log("getStagePortLabel: serialized device label is " + ps.Serialize());// this should include port name
+
             if (ps.Serialize().indexOf(stagelabel_) == 0) {
-                // print("^"+ps.Serialize());//this should include port name
                 if (ps.Serialize().indexOf("Port") > 0) {
                     PORT = ps.Serialize().split(" ")[2];
                 }
             }
         }
+
+        IJ.log("getStagePortLabel: returning found port " + PORT);
         return PORT;
     }
 
@@ -2208,5 +2182,4 @@ class Signalsender implements Runnable {
             IJ.log(e.getMessage());
         }
     }
-
 }
