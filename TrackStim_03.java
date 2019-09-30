@@ -1,43 +1,3 @@
-// Copyright (C) 20100615 Taizo Kawano <tkawano at mshri.on.ca>
-//
-// This program is free software; you can redistribute it and/modify it
-// under the term of the GNU General Public License as published bythe Free Software Foundation;
-// either version 2, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// See the GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this file.  If not, write to the Free Software Foundation,
-// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-
-//RealTimeTracker
-//fluorescent object detection and tracking plugin. need motorized stage
-//works with stack
-//compiled with
-//javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.3nb/ij.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim_03.java
-//jar cvf TrackStim_.jar TrackStim_03.class TrackingThread10.class Signalsender.class
-//ver3  initiall release
-//ver4 avarage thresholding. also can choose thresholding method.
-// ver5 implement change roi function by clicking image.
-// ver6 add non-thresholding (centor of mass) method. may or may not draw a roi.
-// ver7 added skip funtion? forgot
-// ver8 recompile since TrackingThread_07 class was overwritten 111214
-// also re-incoorporated bright field function once developed in branch version and lost.
-// check brightfiled checkbox and set full size roi.
-// ver9 add full size filed and bright filed only works with full size field option
-//
-//TrackerwithStimulater 121108 start. changename to TrackStim
-//how save stimulation info? manual?
-//should check actual potential?
-//121203 adding manual trackig option
-
-//cd /Applications/Micro-Manager1.4/plugins/
-//javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.4/ij.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim_03.java
-
-//[Serial, /dev/tty.SLAB_USBtoUART, /dev/tty.SLAB_USBtoUART, /dev/tty.SLAB_USBtoUART, Serial, /dev/tty.usbmodem3d21]
-
 import java.util.*;
 import java.util.prefs.Preferences;
 import java.util.concurrent.*;
@@ -125,17 +85,13 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
                     + "If this module is used as ImageJ plugin, Micro-Manager Studio must be running first!");
             return;
         }
+        IJ.log("TrackStim Constructor: MMCore initialized");
+
         MMStudioMainFrame mmcmf = MMStudioPlugin.frame_;
-        mmcmf.isRunning();
-        IJ.log("test2");
-        int framewidth = mmcmf.getWidth();
-        IJ.log(String.valueOf(framewidth));
-        // IJ.log("test3");
 
         prefs = Preferences.userNodeForPackage(this.getClass());// make instance?
         imp = WindowManager.getCurrentImage();
         ImageWindow iw = imp.getWindow();
-        // IJ.log("check error");
         ic = iw.getCanvas();
         ic.addMouseListener(this);
 
@@ -148,9 +104,12 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
             } else {
                 frame = Integer.parseInt(prefs.get("FRAME", ""));
             }
-            IJ.log("frame " + String.valueOf(frame));
-        } catch (java.lang.Exception e) {
+            IJ.log("TrackStim Constructor: Frame value is " + String.valueOf(frame));
+        } catch (java.lang.Exception e){
+            IJ.log("TrackStim Constructor: Could not get frame value from preferences obj");
+            IJ.log(e.getMessage());
         }
+
         int dircount = 0;
         if (dir == "") {
             // check directry in the current
@@ -158,7 +117,7 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
             if (dir == null) {
                 dir = IJ.getDirectory("home");
             }
-            IJ.log("dir? " + dir);
+            IJ.log("TrackStim Constructor: initial dir is " + dir);
             File currentdir = new File(dir);
             File[] filelist = currentdir.listFiles();
             if (filelist != null) {
@@ -169,11 +128,10 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
                 }
             }
         }
-        IJ.log("current dir " + dir);
-        IJ.log("dir number " + String.valueOf(dircount));
+        IJ.log("TrackStim Constructor: initial dir is " + dir);
+        IJ.log("TrackStim Constructor: number of directories is " + String.valueOf(dircount));
 
         ImagePlus.addImageListener(this);
-        // addKeyListener(this);
         requestFocus(); // may need for keylistener
 
         // Prepare GUI
@@ -210,9 +168,6 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
         gbc.gridheight = 2;
         gbl.setConstraints(b3, gbc);
         add(b3);
-
-        // java.awt.Choice exposureduration;
-        // java.awt.Choice cyclelength;
 
         Label labelexpduration = new Label("exposure");
         gbc.gridx = 6;
@@ -295,33 +250,12 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
         acceleration.add("6x");
         gbl.setConstraints(acceleration, gbc);
         add(acceleration);
-        /*
-         * objective_ten = new Checkbox("10x objective", false); gbc.gridx=3;
-         * gbc.gridy=1; gbc.gridwidth= 1; gbl.setConstraints(objective_ten,gbc);
-         * add(objective_ten);
-         *
-         * objective_40 = new Checkbox("40x objective", false); gbc.gridx=4;
-         * gbc.gridy=1; gbc.gridwidth= 1; gbl.setConstraints(objective_40,gbc);
-         * add(objective_40);
-         */
+
         thresholdmethod = new Choice();
         gbc.gridx = 4;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
         thresholdmethod.add("Yen");// good for normal
-
-        // ip_resized.setAutoThreshold("Default",true,0);
-        // ip_resized.setAutoThreshold("Yen",true,0);//seems good. and fast?
-        // 13msec/per->less than 10msec. better than otsu at head
-        // need check after median filter if this is better.
-        // ip_resized.setAutoThreshold("Intermodes",true,0);//too small tend lost
-        // ip_resized.setAutoThreshold("MaxEntropy",true,0);//looks good
-        // ip_resized.setAutoThreshold("Minimum",true,0);//too small tend lost
-        // ip_resized.setAutoThreshold("RenyiEntropy",true,0);//looks good
-        // ip_resized.setAutoThreshold("Shanbhag",true,0);//seems unstabel lost.
-        // ip_resized.setAutoThreshold("Triangle",true,0);//bit big
-        // ip_resized.setAutoThreshold("Otsu",true,0);//good and fast 10msec/per. not
-        // good for head
         thresholdmethod.add("Triangle");// good for on coli
         thresholdmethod.add("Otsu");// good for ventral cord?
 
@@ -355,15 +289,6 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
         gbc.gridwidth = 2;
         gbl.setConstraints(textpos, gbc);
         add(textpos);
-
-        /*
-         * Label labelinterval=new Label("interval"); gbc.gridx=0; gbc.gridy=3;
-         * gbc.gridwidth= 1; gbl.setConstraints(labelinterval,gbc); add(labelinterval);
-         *
-         * intervaltext = new TextField("0", 3); intervaltext.addActionListener(this);
-         * gbc.gridx=1; gbc.gridy=3; gbc.gridwidth= 1;
-         * gbl.setConstraints(intervaltext,gbc); add(intervaltext);
-         */
 
         Label labelskip = new Label("one of ");
         gbc.gridx = 0;
@@ -438,11 +363,9 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
-        // gbc.gridheight=3;
         gbc.anchor = GridBagConstraints.NORTH;
         gbl.setConstraints(STIM, gbc);
         add(STIM);
-        // gbc.gridheight=1;//return to default
 
         b = new Button("Run");
         b.setPreferredSize(new Dimension(40, 20));
@@ -465,7 +388,6 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
         add(labelpre);
 
         prestimulation = new TextField(String.valueOf(10000), 6);
-        // prestimulation.setHorizontalAlignment(JTextField.RIGHT);
         prestimulation.setPreferredSize(new Dimension(50, 30));
         prestimulation.addActionListener(this);
         gbc.gridx = 2;
@@ -609,13 +531,11 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(rampend, gbc);
         add(rampend);
-
-        // GUI.center(this);//dont know what this line does
         setSize(700, 225);
         setVisible(true);
 
-        // just test enviroment
-        // adportsname=getPortLabels()[0];
+
+        // find the port that the xy stage is on
         ArrayList<String> portslist = getPortLabels();
         adportsname = "";
         for (int i = 0; i < portslist.size(); i++) {
@@ -625,32 +545,15 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
             }
         }
 
-        IJ.log("------------");
-        IJ.log("------------");
-        IJ.log("------------");
-
+        IJ.log("TrackStim Constructor: port list");
         IJ.log(Arrays.toString(portslist.toArray()));
+        IJ.log("TrackStim Constructor: adportsname is" + adportsname);
 
-        IJ.log("------------");
-        IJ.log("------------");
-        IJ.log("------------");
-
-        // adportsname=getPortLabels();
-
-        IJ.log("adportsname " + adportsname);
-
-        // if(adportsname.equals("/dev/tty.usbmodem1d11"))//when connected it to
-        // powermac, it is usbmodemfd411
         if (adportsname.equals("")) {
-            IJ.log("stimulater is not assigned");
-            // return;
+            IJ.log("TrackStim Constructor: adportsname is empty string.  stimulator is not assigned");
         } else {
-            IJ.log("stimulater is assigned at " + adportsname);
-            return;
-            // testArduino(adportsname);
-            // prepSignals(0);
+            IJ.log("TrackStim Constructor: stimulator is assigned at adportsname: " + adportsname);
         }
-
     }
 
     // test function for arduino
