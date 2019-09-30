@@ -1,0 +1,39 @@
+// Copyright (C) 20100615 Taizo Kawano <tkawano at mshri.on.ca>
+//
+// This program is free software; you can redistribute it and/modify it
+// under the term of the GNU General Public License as published bythe Free Software Foundation;
+// either version 2, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+// without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this file.  If not, write to the Free Software Foundation,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+//RealTimeTracker
+//fluorescent object detection and tracking plugin. need motorized stage
+//works with stack
+//compiled with
+//javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.3nb/ij.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim_03.java
+//jar cvf TrackStim_.jar TrackStim_03.class TrackingThread10.class Signalsender.class
+//ver3  initiall release
+//ver4 avarage thresholding. also can choose thresholding method.
+// ver5 implement change roi function by clicking image.
+// ver6 add non-thresholding (centor of mass) method. may or may not draw a roi.
+// ver7 added skip funtion? forgot
+// ver8 recompile since TrackingThread_07 class was overwritten 111214
+// also re-incoorporated bright field function once developed in branch version and lost.
+// check brightfiled checkbox and set full size roi.
+// ver9 add full size filed and bright filed only works with full size field option
+//
+//TrackerwithStimulater 121108 start. changename to TrackStim
+//how save stimulation info? manual?
+//should check actual potential?
+//121203 adding manual trackig option
+
+//cd /Applications/Micro-Manager1.4/plugins/
+//javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.4/ij.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim_03.java
+
+//[Serial, /dev/tty.SLAB_USBtoUART, /dev/tty.SLAB_USBtoUART, /dev/tty.SLAB_USBtoUART, Serial, /dev/tty.usbmodem3d21]
