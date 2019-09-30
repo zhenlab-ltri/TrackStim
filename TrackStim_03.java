@@ -2169,7 +2169,6 @@ class TrackingThread10 extends Thread {
 
 /// for stimulation using arduino DA converter
 class Signalsender implements Runnable {
-    // ControlPannel cp;
     TrackStim_03 ts;
     int channel;
     int strength;
@@ -2179,12 +2178,8 @@ class Signalsender implements Runnable {
     int dulation;
     int[] changetimepoints;
     int[] changevalues;
-    // ScheduledExecutorService ses;
-    // ScheduledFuture future = null;
 
-    // Signalsender(ControlPannel cp_)
     Signalsender(TrackStim_03 ts_) {
-        // cp=cp_;
         ts = ts_;
     }
 
@@ -2197,46 +2192,21 @@ class Signalsender implements Runnable {
         strength = strength_;
     }
 
-    // not using now
-    // mili sec and 0-255
-    void setOrder(int delaytime_, int strength_, int dulation_) {
-        delaytime = delaytime_;
-        strength = strength_;
-        dulation = dulation_;
-        // ScheduledExecutorService
-        changetimepoints = new int[] { delaytime, delaytime_ + dulation };
-        changevalues = new int[] { strength, 0 };
-        // ses = Executors.newSingleThreadScheduledExecutor();
-        // future=ses.schedule(Runnable command, long delay, TimeUnit unit);
-        // future=ses.scheduleWithFixedDelay(this,0, 1000/processrate,
-        // TimeUnit.MICROSECONDS);
-    }
-
     public void run() {
-        // System.out.println(String.valueOf(System.nanoTime()/1000000) +" "+
-        // String.valueOf(strength));
-        IJ.log(String.valueOf(System.nanoTime() / 1000000) + " " + String.valueOf(strength));
-        // cp.st.port.write(strength);
+        IJ.log("signalSender: system time is " + String.valueOf(System.nanoTime() / 1000000));
+        IJ.log("signalSender: strength is " + String.valueOf(strength));
+
         // testing sending vale
         sendingdata = channel << 7 | strength;
         mmcorej.CharVector sendingchrvec = new mmcorej.CharVector();
-        // sendingchrvec.add((char) i);
         sendingchrvec.add((char) sendingdata);
+
         try {
-            // ans=mmc_.getSerialPortAnswer(adportsname, "\r\n");
             ts.mmc_.writeToSerialPort(ts.adportsname, sendingchrvec);
-            // ans=mmc_.getSerialPortAnswer(adportsname, String.valueOf(0xff));
         } catch (java.lang.Exception e) {
+            IJ.log("signalSender: error trying to write data " + String.valueOf(sendingdata) + " to the serial port " + ts.adportsname);
+            IJ.log(e.getMessage());
         }
-        /*
-         * int count=0; long starttime = System.nanoTime();
-         * while(count<changevalues.length) {
-         * if((starttime-System.nanoTime())/1000000>changetimepoints[count]) {
-         * System.out.println(String.valueOf(changetimepoints[count]));
-         * cp.st.port.write(changevalues[count]); count++; }
-         *
-         * }
-         */
     }
 
 }
