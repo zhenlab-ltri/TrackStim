@@ -557,7 +557,7 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
     }
 
     void prepSignals(int channel) {
-        IJ.log("TrackStim prepSignals: parsing/validating UI values to send through channel " + Integer.toString(channel));
+        IJ.log("prepSignals: parsing/validating UI values to send through channel " + Integer.toString(channel));
 
         int inputval1 = 0;
         int inputval2 = 0;
@@ -595,13 +595,14 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
                     setSender(channel, inputval1 + inputval3 + i * inputval4, inputval6);
                 }
             }
-        } catch (Exception ex) {
-            IJ.log("TrackStim prepSignals: error sending signals to channel " + Integer.toString(channel));
+        } catch (java.lang.Exception e) {
+            IJ.log("prepSignals: error sending signals to channel " + Integer.toString(channel));
             IJ.log(e.getMessage());
         }
     }
 
     // mili sec, and 0-63
+    // helper function for prepSignals
     void setSender(int channel, int timepoint, int signalstrength) {
         Signalsender sd = new Signalsender(this);
         sd.setChannel(channel);
@@ -610,49 +611,34 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
         ScheduledFuture future = null;
         ses = Executors.newSingleThreadScheduledExecutor();
         future = ses.schedule(sd, timepoint * 1000, TimeUnit.MICROSECONDS);
-        // future=ses.scheduleWithFixedDelay(this,0, 1000/processrate,
-        // TimeUnit.MICROSECONDS);
     }
 
-    // String getStagePortLabel(String stagelabel)
     ArrayList<String> getPortLabels() {
         ArrayList<String> portlist = new ArrayList<String>();
-
-        IJ.log("------------");
-        IJ.log("------------");
-        IJ.log("------------");
-
-        // String stagelabel_=stagelabel;
         Configuration conf = mmc_.getSystemState();
         long index = conf.size();
-
-        // print(index);
-        // String PORT="";
         String[] tempports = new String[(int) index];
         PropertySetting ps = new PropertySetting();
+
         for (int i = 0; i < index; i++) {
             try {
                 ps = conf.getSetting(i);
             } catch (java.lang.Exception e) {
+                IJ.log("getPortLabels: error getting config value");
+                IJ.log(e.getMessage());
             }
 
-            IJ.log(ps.Serialize());// this should include port name
+            IJ.log("getPortLabels: property setting ps is " + ps.Serialize());
 
-            // if(ps.Serialize().indexOf(stagelabel_)==0)
-            // {
-            // print("^"+ps.Serialize());//this should include port name
             // just testing enviroment having only one port /dev/tty.usbmodem1d11
             if (ps.Serialize().indexOf("Port") > 0) {
-                // IJ.log(ps.Serialize());//this should include port name
                 // tempports[i]=ps.Serialize().split(" ")[2];
+                String parsedPort = ps.Serialize().split(" ")[2];
+
+                IJ.log("getPortLabels: parsedPort is " + parsedPort);
                 portlist.add(ps.Serialize().split(" ")[2]);
             }
-            // }
         }
-
-        IJ.log("------------");
-        IJ.log("------------");
-        IJ.log("------------");
 
         return portlist;
     }
@@ -663,59 +649,48 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
     public void imageUpdated(ImagePlus imp) {
     }
 
+    // Write logic to clear valables when image closed here
     public void imageClosed(ImagePlus impc) {
-        // Write logic to clear valables when image closed here
+        IJ.log("imageClosed: cleaning up");
         if (imp == impc) {
-            // IJ.log("The image closed");
             imp = null;
-            // output=null;
-            // averagelrshift=null;
-            // leftim=null;
-            // impratio=null;
-        } else {
-            // IJ.log("something else closed");
+            IJ.log("imageClosed: imp set to null");
         }
     }
 
-    // old method not using now
-    Button addButton(String text) {
-        Button b;
-        b = new Button(text);
-        b.addActionListener(this);
-        add(b);
-        return b;
-    }
-
-    boolean checkFrameField()// return true if it ok
-    {
+    // validate the frame field in the UI
+    boolean checkFrameField(){
         int testint;
+
         try {
             testint = Integer.parseInt(framenumtext.getText());
             frame = testint;
             return true;
-        } catch (Exception ex) {
-            IJ.log("It is not valid as a number.");
+        } catch (java.lang.Exception e) {
+            IJ.log("checkFrameField: the current value of the frame field is not an int");
+            IJ.log(e.getMessage());
             framenumtext.setText(String.valueOf(frame));
             return false;
         }
-
     }
 
-    boolean checkDirField()// return true if it ok
-    {
-        File checkdir = new File(savedir.getText());
+    // validate the directory field in the UI
+    boolean checkDirField(){
+        String dirName = savedir.getText();
+        File checkdir = new File(dirName);
+
         if (checkdir.exists()) {
-            IJ.log("The directory is exist");
+            IJ.log("checkDirField: directory " + dirName + " exists");
             dir = savedir.getText();
             return true;
         } else {
-            IJ.log("The directory is NOT exist ! Please make directory first");
+            IJ.log("checkDirField: directory " + dirName + " DOES NOT EXIST! Please create the directory first");
             savedir.setText(dir);
             return false;
         }
-
     }
 
+    // method required by ItemListener
     public void itemStateChanged(ItemEvent e) {
         int selectedindex = 0;
         int exposurechoice = 0;
@@ -723,7 +698,9 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
         int sendingdata = 0;
         Choice cho = (Choice) e.getSource();
         selectedindex = cho.getSelectedIndex();
+
         IJ.log("index " + String.valueOf(selectedindex));
+
         if (e.getSource() == exposureduration || e.getSource() == cyclelength) {
             /*
              * arduino code int triggerlengtharray[]={ 0,1,10,50,100,200,500,1000};//3bit 8
@@ -745,9 +722,7 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
             IJ.log(String.valueOf(sendingdata));
             sendingchrvec.add((char) sendingdata);
             try {
-                // ans=mmc_.getSerialPortAnswer(portsname, "\r\n");
                 mmc_.writeToSerialPort(adportsname, sendingchrvec);
-                // ans=mmc_.getSerialPortAnswer(portsname, String.valueOf(0xff));
             } catch (java.lang.Exception exception) {
             }
         }
@@ -865,23 +840,22 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
 
     /** Handle the key typed event from the text field. */
     public void keyTyped(KeyEvent e) {
-        IJ.log("KEY TYPED: ");
+        IJ.log("keyTyped: " + KeyEvent.getKeyText(e.getKeyCode()));
     }
 
     /** Handle the key-pressed event from the text field. */
     public void keyPressed(KeyEvent e) {
-        IJ.log("KEY PRESSED: ");
+        IJ.log("keyPressed: " + KeyEvent.getKeyText(e.getKeyCode()));
     }
 
     /** Handle the key-released event from the text field. */
     public void keyReleased(KeyEvent e) {
-        IJ.log("KEY RELEASED: ");
+        IJ.log("keyReleased: " + KeyEvent.getKeyText(e.getKeyCode()));
     }
 
-    // mouse event test
-
+    // Handle mouse click
     public void mouseClicked(MouseEvent e) {
-        IJ.log("clicked");
+        IJ.log("mouseClicked: ");
         if (tt != null) {
             if (tt.isAlive()) {
                 tt.changeTarget();
