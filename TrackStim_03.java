@@ -556,60 +556,9 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
         }
     }
 
-    void checkSerial(String portsname_) {
-        String portsname = portsname_;
-        mmcorej.CharVector chrvec = new mmcorej.CharVector();
-        String ans = ".";
-        try {
-            // ans=mmc_.getSerialPortAnswer(portsname, "\r\n");
-            chrvec = mmc_.readFromSerialPort(portsname);
-            // ans=mmc_.getSerialPortAnswer(portsname, String.valueOf(0xff));
-        } catch (java.lang.Exception e) {
-        }
-        // IJ.log("chrvec.size() "+String.valueOf(chrvec.size()));
-        /*
-         * this is format of data send by DAconverter_03 on arduino
-         * sendingdata[0]=lowByte(time); sendingdata[1]=lowByte(time>>8);
-         * sendingdata[2]=lowByte(time>>16); sendingdata[3]=lowByte(time>>24);
-         * sendingdata[4]=lowByte(sensorValue); sendingdata[5]=lowByte(sensorValue>>8);
-         * sendingdata[6]=B00000000;//this line is needed. prep new valiable is not
-         * enough to clean? sendingdata[7]=PERIOD;
-         *
-         * //DAconverter_03 use B00000000 as escape flag to replace B11111111
-         */
-        if (chrvec.size() == 8) {
-            byte[] bytevector = new byte[8];
-            for (int j = 0; j < 8; j++) {
-                // bytevector[j]=chrvec.get(j)&0x00ff;
-                // char is 2byte but upper byte must not have information when use with
-                // DAconverter_03, so can ignored.
-                bytevector[j] = (byte) (chrvec.get(j) & 0x00ff);
-            }
-            int MASK = 1;// 4byte
-            int escapeflag = bytevector[6] & 0x00;// DAconverter_03 use B00000000 as escape flag to replace B11111111
-            for (int j = 0; j < 7; j++) {
-                int flagchecker = escapeflag & (MASK << j);
-                if (flagchecker != 0) {
-                    // print("Escaped at ");
-                    // println(i);
-                    bytevector[j] = (byte) 0xff;
-                }
-            }
-            // 4 byte are time in microsec next 2 bytes are sensorvalue 10bit
-            int timedata = (bytevector[0] & 0xff) | ((bytevector[1] & 0xff) << 8) | ((bytevector[2] & 0xff) << 16)
-                    | ((bytevector[3] & 0xff) << 24);
-            int sensordata = (bytevector[4] & 0xff) | ((bytevector[5] & 0xff) << 8);
-            ans = String.valueOf(timedata / 1000) + " " + String.valueOf(sensordata);
-            IJ.log(ans);
-        } else {
-            IJ.log("chrvec.size " + String.valueOf(chrvec.size()));
-        }
-        ans = "";
-    }
-
     void prepSignals(int channel) {
-        System.out.println("prep Signals start");
-        IJ.log("start");
+        IJ.log("TrackStim prepSignals: parsing/validating UI values to send through channel " + Integer.toString(channel));
+
         int inputval1 = 0;
         int inputval2 = 0;
         int inputval3 = 0;
@@ -619,27 +568,20 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
         int inputval7 = 0;
         int inputval8 = 0;
         try {
-            // inputval1 = Integer.parseInt(value1.getText());//initial delay
             inputval1 = Integer.parseInt(prestimulation.getText());// initial delay
-            // inputval2 = Integer.parseInt(value2.getText());//strength
             inputval2 = Integer.parseInt(stimstrength.getText());// strength
-            // inputval3 = Integer.parseInt(value3.getText());//duration
             inputval3 = Integer.parseInt(stimduration.getText());// duration
-            // inputval4 = Integer.parseInt(value4.getText());//cycle time
             inputval4 = Integer.parseInt(stimcyclelength.getText());// cycle time
-            // inputval5 = Integer.parseInt(value5.getText());//repeat
             inputval5 = Integer.parseInt(stimcyclenum.getText());// repeat
-            // inputval6 = Integer.parseInt(value6.getText());//base
             inputval6 = Integer.parseInt(rampbase.getText());// base
-            // inputval7 = Integer.parseInt(value7.getText());//start
             inputval7 = Integer.parseInt(rampstart.getText());// start
-            // inputval8 = Integer.parseInt(value8.getText());//end
             inputval8 = Integer.parseInt(rampend.getText());// end
             // ramp
 
             if (ramp.getState()) {
                 int absdiff = Math.abs(inputval8 - inputval7);
                 int signoframp = Integer.signum(inputval8 - inputval7);
+
                 for (int i = 0; i < inputval5; i++) {
                     for (int j = 0; j < absdiff + 1; j++) {
                         setSender(channel, inputval1 + i * inputval4 + j * (inputval3 / absdiff),
@@ -647,36 +589,16 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
                     }
                     setSender(channel, inputval1 + inputval3 + i * inputval4, inputval6);
                 }
-            }
-            // else if(inputval1>=0 && inputval1<=100000)//0 msec to 10 sec
-            else {
-                // return inputval1;
-                System.out.println(String.valueOf(inputval1));
-                // st.sendSignal(inputval1,inputval2,inputval3);
-                // setSender(inputval1,inputval2);
-                // setSender(inputval1+inputval3,0);
+            } else {
                 for (int i = 0; i < inputval5; i++) {
                     setSender(channel, inputval1 + i * inputval4, inputval2);
                     setSender(channel, inputval1 + inputval3 + i * inputval4, inputval6);
                 }
             }
-            // else
-            // {
-            // System.out.println("not valid range");
-            // testint[0]=1;
-            // return testint;
-            // }
         } catch (Exception ex) {
-            System.out.println(ex);
-            System.out.println("It is not valid as a number.");
-            inputval1 = 0;
-            // return testint;
+            IJ.log("TrackStim prepSignals: error sending signals to channel " + Integer.toString(channel));
+            IJ.log(e.getMessage());
         }
-
-        /*
-         * for(int i=0;i<300;i++) { checkSerial(adportsname); try{ Thread.sleep(1000);
-         * }catch(InterruptedException e){} }
-         */
     }
 
     // mili sec, and 0-63
