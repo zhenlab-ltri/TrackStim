@@ -923,14 +923,11 @@ class TrackingThread10 extends Thread {
 
     double[][] measurespre;
     double[][] measures;
-    // targethistory[slicenumber][roi index, x, y]
     double[][] targethistory;
 
     /*---------------------------------------  constant variables-------------------------------------------------*/
     // if the shift is larger than limit, move stage.
     double LIMIT = 5;
-    // adhoc coefficencty for x10=6.3. x63=1.0
-    // double coef=6.3;
     double COEF = 1.0;
     // allowance angle change
     static double minanglecos = Math.cos(60.0 / 180 * Math.PI);// 45/180=0 because int...... so need to change order or
@@ -950,7 +947,7 @@ class TrackingThread10 extends Thread {
     }
 
     public void run() {
-        IJ.log("TrackingThread run start");
+        IJ.log("TrackingThread: run start");
         this.startAcq("from thread");
     }
 
@@ -1052,60 +1049,35 @@ class TrackingThread10 extends Thread {
     static double[][] getObjmeasures(ImagePlus imp, ImageProcessor ip, boolean savebinary, String method) {
         String thresholdmethodstring = method;
         // the imp ip must left half or something not full image
-        // ImageProcessor ip_=ip.duplicate();
         ip_ = ip.duplicate();
-
-        // ImageProcessor ip_resized=ip_.resize(ip_.getWidth()/2);
-        // ImageProcessor ip_resizedori=ip_resized.duplicate();
         ip_resized = ip_.resize(ip_.getWidth() / 2);
         RankFilters rf = new RankFilters();
-        // rf.setup("median",imp);
         rf.rank(ip_resized, 0.0, 4);// median 4 periodic black white noize cause miss thresholding, so eliminate
                                     // those noize
 
         ip_resizedori = ip_resized.duplicate();
-
-        // test non resized one
-        // seems not able to do more than 2min 50msec....
-        // ip_resized=ip_.duplicate();
-        // ip_resizedori=ip_.duplicate();
-
-        // print(ip_resized.getWidth());
-        // ImagePlus impresizedori=new ImagePlus("l",ip_resizedori);
         impresizedori = new ImagePlus("l", ip_resizedori);
 
         // initiall 31 slice calculate Autothresho at every time
         // also static value doesnt clear after the imaging by "ready" ,use it to reduce
         // calc.?
-        // if(countslice<30&&threshsum==0)
         // changed to clear every time. since hard to clear manually
         if (countslice < 30) {
-            // ip_resized.setAutoThreshold("Default",true,0);
             ip_resized.setAutoThreshold(thresholdmethodstring, true, 0);// seems good. and fast? 13msec/per->less than
                                                                         // 10msec. better than otsu at head
             // need check after median filter if this is better.
-            // ip_resized.setAutoThreshold("Intermodes",true,0);//too small tend lost
-            // ip_resized.setAutoThreshold("MaxEntropy",true,0);//looks good
-            // ip_resized.setAutoThreshold("Minimum",true,0);//too small tend lost
-            // ip_resized.setAutoThreshold("RenyiEntropy",true,0);//looks good
-            // ip_resized.setAutoThreshold("Shanbhag",true,0);//seems unstabel lost.
-            // ip_resized.setAutoThreshold("Triangle",true,0);//bit big
-            // ip_resized.setAutoThreshold("Otsu",true,0);//good and fast 10msec/per. not
             // good for head
             threshbuffer[countslice] = (int) ip_resized.getMinThreshold();
             threahaverage = (int) ip_resized.getMinThreshold();
             if (countslice == 29) {
-                IJ.log("threshsum" + String.valueOf(threshsum));
+                IJ.log("getObjMeasures: threshsum is " + String.valueOf(threshsum));
                 // sum and average threshold
-                int i;
-                for (i = 0; i < 30; i++) {
+                for (int i = 0; i < 30; i++) {
                     threshsum = threshsum + threshbuffer[i];
                 }
                 threahaverage = threshsum / 30;
             }
-        }
-        // after 30 slice
-        else {
+        } else {
             // every 50 slice calculate setAutoThreshold
             if (countslice % 50 == 0) {
                 ip_resized.setAutoThreshold(thresholdmethodstring, true, 0);
@@ -1117,41 +1089,25 @@ class TrackingThread10 extends Thread {
                 threahaverage = threshsum / 30;
             }
         }
-
-        // print("th val "+ip_resized.getAutoThreshold());
         ip_resized.threshold(threahaverage);
         ImageStatistics imstat;
-
-        // ipleft.invert();
-        // ImageProcessor iplbyte=ip_resized.convertToByte(false);
         iplbyte = ip_resized.convertToByte(false);
-        // convertToByte(true);
-        // ts= new Thresholder();
-        // ts.run("");
-        // print("is binary "+ipleft.isBinary());
-
         EDM edm = new EDM();
-
         edm.toWatershed(iplbyte);
-
         iplbyte.invert();
 
         ImagePlus impleftbyte = new ImagePlus("lbyte", iplbyte);
         countslice++;
         if (savebinary) {
-
             binaryimgstack.setPixels(iplbyte.getPixelsCopy(), countslice);
         }
         int widthleft = impleftbyte.getWidth();
         int heightleft = impleftbyte.getHeight();
 
-        // impleftbyte.show();
         Wand wand = new Wand(iplbyte);
-        // non resized=60 resized=12. x10 3 try
         int minimamarea = 6;
         int x;
         int y;
-        // int counter=0;
         iplbyte.setValue(255);
         ArrayList<Roi> roiarraylist = new ArrayList<Roi>();
         preroiarraylist = roiarraylist;
@@ -1172,54 +1128,29 @@ class TrackingThread10 extends Thread {
         byte[] pixels = (byte[]) iplbyte.getPixels();
         for (y = 0; y < heightleft; y = y + 3) {
             for (x = 0; x < widthleft; x = x + 3) {
-                // if(iplbyte.get(x,y)==0)
-                if (pixels[y * widthleft + x] == 0)
-                // if(iplbyte.getPixel(x,y)==0)
-                {
+
+                if (pixels[y * widthleft + x] == 0){
 
                     wand.autoOutline(x, y, 0.0, 1.0, 4);
-                    // type polygonroi=2
                     roi = new PolygonRoi(wand.xpoints, wand.ypoints, wand.npoints, 2);
-                    // print(x+" "+y);
                     impleftbyte.setRoi(roi);
                     imstat = impleftbyte.getStatistics(1);// area 1 mean 2
                     if (imstat.area > minimamarea) {
-                        // roiarray=roiarray+
-                        // roiarray[counter]=roi;
                         roiarraylist.add(roi);
-                        /*
-                         * if(savebinary) { ImageProcessor
-                         * drawip=binaryimgstack.getProcessor(countslice); Rectangle r =
-                         * roi.getBounds();
-                         *
-                         * drawip.moveTo(r.x,r.y); drawip.setValue(128);
-                         * drawip.drawString(String.valueOf(roiarraylist.size())); //counter++; }
-                         */
                     }
                     // delet already detected roi.
                     iplbyte.fill(roi);
-                    // break;
-
                 }
             }
         }
 
-        // print(counter);
-        // impleftbyte.show();
-
-        int i;
         // 3 measurement factors, area, mean, centroid
         double[][] roimeasures = new double[roiarraylist.size()][4];
         Roi roi_;
-        for (i = 0; i < roiarraylist.size(); i++) {
+        for (int i = 0; i < roiarraylist.size(); i++) {
             roi_ = (Roi) roiarraylist.get(i);
             impresizedori.setRoi(roi_);
             imstat = impresizedori.getStatistics(1 + 2 + 32 + 4 + 64);// area 1 mean 2, sd 4, centerofmass 64
-            // print("roi "+i+" "+imstat.area+" "+imstat.mean+" "+imstat.xCentroid+"
-            // "+imstat.yCentroid);
-            // IJ.log("roi "+String.valueOf(i)+" "+String.valueOf(imstat.area)+"
-            // "+String.valueOf(imstat.mean)
-            // +" "+String.valueOf(imstat.xCentroid)+" "+String.valueOf(imstat.yCentroid));
             roimeasures[i][0] = imstat.area;
             roimeasures[i][1] = imstat.mean;
             roimeasures[i][2] = imstat.xCentroid;
@@ -1241,7 +1172,7 @@ class TrackingThread10 extends Thread {
         double dy = 0;
         double mindx = 0;
         double mindy = 0;
-        IJ.log("measurespre_.length " + String.valueOf(measurespre_.length));
+        IJ.log("getMinDist: measurespre_ length is " + String.valueOf(measurespre_.length));
         double[][] returnval = new double[measurespre_.length][4];
         for (i = 0; i < measurespre_.length; i++) {
             for (j = 0; j < measures_.length; j++) {
@@ -1278,8 +1209,9 @@ class TrackingThread10 extends Thread {
         double[][] returnval = new double[measures_.length][4];
         targetcoordinate[0] = measures_[targetroinum][2];// x
         targetcoordinate[1] = measures_[targetroinum][3];// y
-        IJ.log("target num " + String.valueOf(targetroinum) + " x " + String.valueOf(targetcoordinate[0]) + " y "
-                + String.valueOf(targetcoordinate[1]));
+        IJ.log("getRoiOrder: target num is" + String.valueOf(targetroinum));
+        IJ.log("getRoiOrder: target coordinate is (x: " + String.valueOf(targetcoordinate[0]) + ", y: " + String.valueOf(targetcoordinate[1]) + ")");
+
         double[] distancescaler = new double[measures_.length];
         for (int i = 0; i < measures_.length; i++) {
             dx = targetcoordinate[0] - measures_[i][2];
@@ -1288,7 +1220,8 @@ class TrackingThread10 extends Thread {
             returnval[i][3] = dy;
             distancescaler[i] = Math.sqrt(dx * dx + dy * dy);
             returnval[i][1] = distancescaler[i];
-            IJ.log("distance " + String.valueOf(distancescaler[i]) + " roi " + String.valueOf(i));
+            IJ.log("getRoiOrder: distance is " + String.valueOf(distancescaler[i]) + " roi " + String.valueOf(i));
+            IJ.log("getRoiOrder: current roi index is " + String.valueOf(i));
         }
         double[] copydistance = distancescaler.clone();
         Arrays.sort(copydistance);// is there any method to get sorted index?
@@ -1301,7 +1234,6 @@ class TrackingThread10 extends Thread {
         }
 
         return returnval;
-
     }
 
     // roiorder [roi#][order by distance from target, distance, dx, dy]
@@ -1313,33 +1245,36 @@ class TrackingThread10 extends Thread {
         boolean trackstatus = false;
         int adjacentroi = 0;
         for (int j = 0; j < roiorder.length; j++) {
-            if ((int) (roiorder[j][0]) == 1)// ==1 means the closest roi. 0 is target.
-            {
+            // == 1 means the closest roi. 0 is target.
+            if ((int) (roiorder[j][0]) == 1){
                 adjacentroi = j;
             }
         }
         double theta = Math.atan2(roiorder[adjacentroi][2], roiorder[adjacentroi][3]);// 2 x, 3y, ???? this should be
                                                                                       // mistake? atan2(Y,X) not (X,Y)
-        IJ.log("theta " + String.valueOf(theta / Math.PI * 180));
-        if (pretheta < 10)// pretheta<10 means there is slice having more than 2 rois and processed before
-                          // than this slice
-        {
+        IJ.log("checkDirDis: theta is" + String.valueOf(theta / Math.PI * 180));
+
+        // pretheta<10 means there is slice having more than 2 rois and processed before
+        // than this slice
+        if (pretheta < 10){
             // minanglecos
             double deltaanglecos = Math.cos(pretheta - theta);
             double deltadistanceratio = Math.abs(predistance - roiorder[adjacentroi][1]) / predistance;
-            IJ.log("pretheta degree " + String.valueOf(pretheta / Math.PI * 180));
-            IJ.log("theta degree " + String.valueOf(theta / Math.PI * 180));
-            IJ.log("deltaanglecos " + String.valueOf(deltaanglecos) + " deltadistanceratio "
-                    + String.valueOf(deltadistanceratio));
-            IJ.log("minanglecos " + String.valueOf(minanglecos));
-            IJ.log("predistance " + String.valueOf(predistance));
+            IJ.log("checkDirDis: pretheta degree " + String.valueOf(pretheta / Math.PI * 180));
+            IJ.log("checkDirDis: theta degree " + String.valueOf(theta / Math.PI * 180));
+            IJ.log("checkDirDis: deltaanglecos " + String.valueOf(deltaanglecos));
+            IJ.log("checkDirDis: deltadistanceratio "+ String.valueOf(deltadistanceratio));
+            IJ.log("checkDirDis: minanglecos " + String.valueOf(minanglecos));
+            IJ.log("checkDirDis: predistance " + String.valueOf(predistance));
+
             if (deltaanglecos < minanglecos || deltadistanceratio > mindistancechange)// 1st time
             {
                 if (deltaanglecos < minanglecos) {
-                    IJ.log("wrong direction");
+                    IJ.log("checkDirDis: wrong direction because deltaanglecos < minanglecos");
                 } else {
-                    IJ.log("distance change is large");
+                    IJ.log("checkDirDis: distance change is large because deltaanglecos >= minanglecos");
                 }
+
                 // try getroiorder again using next roi as target
                 // return [roi#][order by distance from target, distance, dx, dy]
                 // static double[][] getRoiOrder(int targetroinum, double[][] measures_)
@@ -1353,74 +1288,64 @@ class TrackingThread10 extends Thread {
                 theta = Math.atan2(roiorder2[adjacentroi2][2], roiorder2[adjacentroi2][3]);
                 deltaanglecos = Math.cos(pretheta - theta);
                 deltadistanceratio = Math.abs(predistance - roiorder2[adjacentroi2][1]) / predistance;
-                IJ.log("pretheta degree " + String.valueOf(pretheta / Math.PI * 180));
-                IJ.log("theta degree " + String.valueOf(theta / Math.PI * 180));
-                IJ.log("predistance " + String.valueOf(predistance));
-                IJ.log("2nd trial angle cos " + String.valueOf(deltaanglecos) + " deltadistanceratio "
-                        + String.valueOf(deltadistanceratio));
+                IJ.log("checkDirDis: pretheta degree " + String.valueOf(pretheta / Math.PI * 180));
+                IJ.log("checkDirDis: theta degree " + String.valueOf(theta / Math.PI * 180));
+                IJ.log("checkDirDis: predistance " + String.valueOf(predistance));
+                IJ.log("checkDirDis: 2nd trial angle cos " + String.valueOf(deltaanglecos));
+                IJ.log("checkDirDis: deltadistanceratio " + String.valueOf(deltadistanceratio));
 
-                if (deltaanglecos < minanglecos || deltadistanceratio > mindistancechange)// 2nd
-                {
+                if (deltaanglecos < minanglecos || deltadistanceratio > mindistancechange){
                     // try onemore time again. this time initail target and 2nd next roi as
                     // direction
                     int adjacentroi3 = 0;
                     for (int j = 0; j < roiorder.length; j++) {
-                        if ((int) (roiorder[j][0]) == 2)// here is 2nd next closser roi.
-                        {
+                        // here is 2nd next closser roi.
+                        if ((int) (roiorder[j][0]) == 2){
                             adjacentroi3 = j;
                         }
                     }
                     theta = Math.atan2(roiorder[adjacentroi3][2], roiorder[adjacentroi3][3]);
                     deltaanglecos = Math.cos(pretheta - theta);
                     deltadistanceratio = Math.abs(predistance - roiorder[adjacentroi3][1]) / predistance;
-                    IJ.log("theta degree " + String.valueOf(theta / Math.PI * 180));
-                    IJ.log("3rd trial angle cos " + String.valueOf(deltaanglecos) + " deltadistanceratio "
-                            + String.valueOf(deltadistanceratio));
-                    if (deltaanglecos < minanglecos || deltadistanceratio > mindistancechange)// 3rd if still strange..
-                                                                                              // give up this slice
-                    {
-                        IJ.log("give up. see next slice");
+                    IJ.log("checkDirDis: theta degree " + String.valueOf(theta / Math.PI * 180));
+                    IJ.log("checkDirDis: 3rd trial angle cos " + String.valueOf(deltaanglecos));
+                    IJ.log("checkDirDis: deltadistanceratio " + String.valueOf(deltadistanceratio));
+
+                    // 3rd if still strange..
+                    // give up this slice
+                    if (deltaanglecos < minanglecos || deltadistanceratio > mindistancechange){
+                        IJ.log("checkDirDis: third slice check has failed, giving up");
                         trackstatus = false;
                         roiorder = new double[][] { { -1 } };// return negative value because failed
-                    } else// 3rd
-                    {
-                        IJ.log("ok at 3rd");
+                    } else {
+                        IJ.log("checkDirDis: third slice check has passed");
                         predistance = roiorder[adjacentroi][1];
                         pretheta = theta;
                         trackstatus = true;
-                    } // if(deltaanglecos<minanglecos || deltadistanceratio>mindistancechange) 3rd
-                      // time end
-                      // targethistory[i-1][0]=;//don't need to change target in this case
-                } else// 2nd
-                {
-                    IJ.log("ok at 2nd");
-                    // targethistory[slice-1][0]=adjacentroi;//change the target// This should done
-                    // at calling code.
+                    }
+                } else {
+                    IJ.log("checkDirDis: second slice check has passed");
                     predistance = roiorder2[adjacentroi2][1];
                     pretheta = theta;
                     roiorder = roiorder2;
                     trackstatus = true;
-                } //// if(deltaanglecos<minanglecos || deltadistanceratio>mindistancechange) else
-                  //// 2nd time end
+                }
             } else {
                 predistance = roiorder[adjacentroi][1];
                 pretheta = theta;
                 trackstatus = true;
-            } // if(deltaanglecos<minanglecos || deltadistanceratio>mindistancechange) else
-              // 1st time end
-        } else if (pretheta == 10.0)// if this is the first slice having 2 or more rois.
-        {
+            }
+        } else if (pretheta == 10.0) {
+            // if this is the first slice having 2 or more rois.{
             predistance = roiorder[adjacentroi][1];
             pretheta = theta;
-        } // if(pretheta<10) else if (pretheta==10.0) end
-
+        }
         returnvalue = roiorder;
         return returnvalue;
     }
 
     void drawRoiOrder(int slice, double[][] roiorder, double[][] measures_, boolean trackstatus) {
         ImageProcessor drawip = binaryimgstack.getProcessor(slice);
-        // Rectangle r = roi.getBounds();
         for (int j = 0; j < roiorder.length; j++) {
             String order = String.valueOf((int) roiorder[j][0]);
             IJ.log(order + " slice " + String.valueOf(slice));
@@ -1447,14 +1372,9 @@ class TrackingThread10 extends Thread {
             aslicestring = String.valueOf(xposarray[i]) + "," + String.valueOf(yposarray[i]);
             strforsave = strforsave + aslicestring + BR;
         }
-
-        // String defdir=IJ.getDirectory("image");
-        // String defdir=IJ.getDirectory("");
-        // String shorttitle=imp.getShortTitle();
-        // IJ.saveString(strforsave,defdir+shorttitle+"pos.txt");
         // show dialog
         IJ.saveString(strforsave, "");
-        IJ.log("Output is saved in; ");
+        IJ.log("outputData: Output is saved");
     }
 
     // for non-thresholding method
@@ -1466,7 +1386,6 @@ class TrackingThread10 extends Thread {
         ImageStatistics imstat_ = imp_.getStatistics(2);
         int backgroundvalue = (int) imstat_.mean;
         ImageProcessor ip2 = ip_.duplicate();
-        // ip2.add(-backgroundvalue);
         ip2.add(-backgroundvalue * 1.5);
         ImagePlus imp2 = new ImagePlus("subtracted", ip2);
         roi_.setLocation(x, y);
@@ -1474,18 +1393,9 @@ class TrackingThread10 extends Thread {
 
         // median filter ver 7 test
         RankFilters rf = new RankFilters();
-        // rf.setup("median",imp);
         rf.rank(ip2, 0.0, 4);// median 4 periodic black white noize cause miss thresholding, so eliminate
                              // those noize
         ImageStatistics imstat2 = imp2.getStatistics(64 + 32);
-        // xcom=imstat2.xCenterOfMass;
-        // ycom=imstat2.yCenterOfMass;
-        // print("center of mass:"+imstat2.xCenterOfMass+","+imstat2.yCenterOfMass);
-        // print("center of roi:"+imstat2.xCentroid+","+imstat2.yCentroid);
-        // double xshift=imstat2.xCenterOfMass-imstat2.xCentroid;
-        // double yshift=imstat2.yCenterOfMass-imstat2.yCentroid;
-        // print("shift:"+xshift+","+yshift);
-        // double[] shift={xshift,yshift};
         double[] returnval = { imstat2.xCenterOfMass, imstat2.yCenterOfMass };
         countslice++;
         return (returnval);
@@ -1505,56 +1415,46 @@ class TrackingThread10 extends Thread {
         threshsum = 0;
         threahaverage = 0;
 
-        // CMMCore mmc_=mmcmf.getMMCore ();
         if (mmc_.isSequenceRunning()) {
             try {
-                IJ.log("tried stopSequenceAcquisition");
+                IJ.log("startAcq: previous acquisition running, trying stopSequenceAcquisition");
                 mmc_.stopSequenceAcquisition(); // need to be catched
-            } catch (java.lang.Exception e) // the arg must be differ by method
-            {
-                IJ.log("failed stopSequenceAcquisition");
+            } catch (java.lang.Exception e) {
+                IJ.log("startAcq: error trying to stop sequence acquisition");
+                IJ.log(e.getMessage());
             }
         }
-        long width2 = mmc_.getImageWidth();
-        IJ.log(String.valueOf(width2));
-
         String stagelabel = mmc_.getXYStageDevice();
         String zstagelabel = mmc_.getFocusDevice();
-        IJ.log(stagelabel);
-        IJ.log(zstagelabel);
+        IJ.log("startAcq: stagelabel is " + stagelabel);
+        IJ.log("startAcq: zstagelabel is " + zstagelabel);
         double zpos = 0;
         try {
             zpos = mmc_.getPosition(zstagelabel);
         } catch (java.lang.Exception e) {
-
+            IJ.log("startAcq: error getting z position from zstage " + zstagelabel);
+            IJ.log(e.getMessage());
         }
-        IJ.log("zpos " + String.valueOf(zpos));
+        IJ.log("startAcq: zpos is " + String.valueOf(zpos));
         double xpos = 0;
         try {
             xpos = mmc_.getXPosition(stagelabel);
         } catch (java.lang.Exception e) {
-
+            IJ.log("startAcq: error getting x position from stage " + stagelabel);
+            IJ.log(e.getMessage());
         }
-        IJ.log("xpos " + String.valueOf(xpos));
+        IJ.log("startAcq: xpos is " + String.valueOf(xpos));
         String PORT = getStagePortLabel(stagelabel);
         // actually not null, "" will be returned.
-        if (PORT != null) {
-            IJ.log("PORT" + PORT);
+        if (PORT != "") {
+            IJ.log("startAcq: PORT is " + PORT);
         } else {
-            IJ.log("stage is not connected");
+            IJ.log("startAcq: PORT is not found");
             return;
         }
 
-        // if(true)return;
-        // ImagePlus imp;
         ImageProcessor ip;
         // get info. from the live window
-        // why imp need to getCurrentImage? it should be given by RealTimeTracker?
-        /*
-         * imp=WindowManager.getCurrentImage(); ImageWindow iw = imp.getWindow();
-         * IJ.log("check error"); ic= iw.getCanvas(); ic.addMouseListener(this);
-         */
-        // java.awt.Component.addMouseListener(ic);
         ip = imp.getProcessor();
         Roi roi = imp.getRoi();
         int width = imp.getWidth();
@@ -1573,29 +1473,22 @@ class TrackingThread10 extends Thread {
         } else {
             if (!tpf.right.getState()) {
                 // set roi at left half.
-                IJ.log("no roi! set roi = left half");
+                IJ.log("startAcq: no roi! set roi = left half");
                 roi = (Roi) leftroi.clone();
             } else {
                 // set roi at right half.
-                IJ.log("no roi! set roi = right half");
+                IJ.log("startAcq: no roi! set roi = right half");
                 roi = (Roi) rightroi.clone();
 
             }
         }
         ImageStatistics imstat = imp.getStatistics(16);
-        // imp.close();
-        // imp.setRoi(roi);
-        // ImageProcessor ipleft=ip.crop();
-        // ImagePlus impleft=new ImagePlus("l",ipleft);
-        // double[][] measures=getObjmeasures(impleft, ipleft);
-        /*
-         * ypos=mmc.getYPosition(stagelabel); print(ypos);
-         */
+
         // If there is stack, process it without stage control.
         if (imp.getImageStackSize() > 1) {
             // get start time
             Date d1 = new java.util.Date();
-            IJ.log("start at" + d1.getTime());
+            IJ.log("startAcq: processing image stack at start time" + d1.getTime());
             ImageStack imgstack = imp.getStack();
             int slicenumber = imp.getNSlices();
             binaryimgstack = new ImageStack(width / 4, height / 2, slicenumber);// out put to check how look like
@@ -1603,7 +1496,6 @@ class TrackingThread10 extends Thread {
             measurespre = new double[][] { { 0 }, { 0 } };
             // measures;
             double[][] mindist;
-            // targethistory[slicenumber][roi index, x, y]
             targethistory = new double[slicenumber][3];
             double[] shift = new double[2];
             double roiorder[][] = null;
@@ -1614,15 +1506,12 @@ class TrackingThread10 extends Thread {
                 ImagePlus impleft = new ImagePlus("l", ipleft);
                 String thresholdmethod = tpf.thresholdmethod.getSelectedItem();
                 measures = getObjmeasures(impleft, ipleft, true, thresholdmethod);
-                if (measures.length == 0)// if lost any cells
-                {
-                    IJ.log("target lost");
+
+                // if lost any cells
+                if (measures.length == 0){
+                    IJ.log("startAcq: target lost while processing image stack");
                     // test to continue imaging
                     measures = measurespre;
-                    /*
-                     * ImagePlus imp3=new ImagePlus("binarystack",binaryimgstack); imp3.show();
-                     * return;
-                     */
                 }
                 if (i != 0) {
                     mindist = getMinDist(measurespre, measures);
@@ -1641,7 +1530,7 @@ class TrackingThread10 extends Thread {
                     double[][] mock = { { 0, 0, ipleft.getWidth() / 4, ipleft.getHeight() / 4 } };
                     double[][] initialtarget = getMinDist(mock, measures);
                     int target = (int) initialtarget[0][0];
-                    IJ.log("target #" + String.valueOf(target) + " roi at " + String.valueOf(measures[target][2]) + ","
+                    IJ.log("startAcq: target #" + String.valueOf(target) + " roi at " + String.valueOf(measures[target][2]) + ","
                             + String.valueOf(measures[target][3]));
                     targethistory[0][0] = target;
                     targethistory[0][1] = measures[target][2];
@@ -1650,7 +1539,7 @@ class TrackingThread10 extends Thread {
 
                 // return [roi#][order by distance from target, distance, dx, dy]
                 // static double[][] getRoiOrder(int targetroinum, double[][] measures)
-                IJ.log("before getRoiOrder " + String.valueOf(targethistory[i][0]));
+                IJ.log("startAqc: calling getRoiOrder with arg " + String.valueOf(targethistory[i][0]));
                 roiorder = getRoiOrder((int) targethistory[i][0], measures);
                 // check target is collect or not by direcion/distance towards next roi. if
                 // there are more than 2 rois.
@@ -1682,7 +1571,7 @@ class TrackingThread10 extends Thread {
                         targethistory[i][2] = measures[newtarget][3];
 
                     }
-                    IJ.log("after getRoiOrder " + String.valueOf(targethistory[i][0]));
+                    IJ.log("startAcq: targethistory after calling getRoiOrder " + String.valueOf(targethistory[i][0]));
                     // void drawRoiOrder(int slice, double[][] roiorder, double[][] measures,
                     // boolean trackstatus)
                     drawRoiOrder(i - 1, finalroiorder, measures, trackstatus);
@@ -1691,39 +1580,36 @@ class TrackingThread10 extends Thread {
                 measurespre = measures;
             } // for(int i=1;i<=slicenumber;i++) end
             Date d2 = new java.util.Date();
-            IJ.log("end at" + d2.getTime());
+            IJ.log("startAcq: finished processing image stack at" + d2.getTime());
             IJ.log(String.valueOf((d2.getTime() - d1.getTime()) / 1000.0) + " sec");
+
             ImagePlus imp3 = new ImagePlus("binarystack", binaryimgstack);
             imp3.show();
-            // imp3.setDisplayRange(imstat.min,imstat.max);
             return;
         } // if(imp.getImageStackSize()>1) end
           // image acquisition
         else {
+            // start acquisition
+
             File outfile = null;
             OutputStream outstream = null;
             FileInfo fi = imp.getFileInfo();
             TiffEncoder tiffencoder = new TiffEncoder(fi);
-            // start acquisition
-            // int frame=1200;
             double[] xposarray = new double[frame];
             double[] yposarray = new double[frame];
 
-            // ZStage zs=new ZStage();
-            // int zpos=zs.GetPositionUm();
             // 50msec wait doesn't work?
             try {
                 mmc_.startSequenceAcquisition(frame, 0, false);
             } catch (java.lang.Exception e) {
+                IJ.log("startAcq: error calling MMCore startSequenceAcquisition");
+                IJ.log(e.getMessage());
             }
-            // ip=new ShortProcessor(width,height);//Hamcam 16bit short
-            // imp=new ImagePlus("stream",ip);
-            // ImageStack imgstk=new ImageStack(width, height, frame);
-            // binaryimgstack=new ImageStack(width/4, height/2, frame);
+
             imp.setDisplayRange(imstat.min, imstat.max);
             imp.show();
             Date d1 = new java.util.Date();
-            IJ.log("start at" + d1.getTime());
+            IJ.log("startAcq: starting image acquisition at time " + d1.getTime());
             measurespre = new double[][] { { 0 }, { 0 } };
             // measures;
             double[][] mindist;
@@ -1751,12 +1637,11 @@ class TrackingThread10 extends Thread {
                     try {
                         img = mmc_.popNextImage();// img is byte array,[B, or Short array [S
                     } catch (java.lang.Exception e) {
+                        IJ.log("startAcq: error calling MMCore popNextImage");
+                        IJ.log(e.getMessage());
                     }
                     skipcount = (skipcount + 1) % skip;
-                    // nanotimepre= nanotimecurrent;
                     nanotimecurrent = System.nanoTime();
-                    // IJ.log("time diff "+String.valueOf((nanotimepre-nanotimecurrent)/1000000));
-                    // if(interval==0 || (nanotimecurrent -nanotimepre)> interval*1000000)//else
                     // throw the data
                     if (skipcount == 0)// else throw the data
                     {
@@ -1771,19 +1656,11 @@ class TrackingThread10 extends Thread {
 
                             xposarray[i] = mmc_.getXPosition(stagelabel);
                             yposarray[i] = mmc_.getYPosition(stagelabel);
-
-                            /*
-                             * mmc_.setSerialPortCommand(PORT,"WHERE X Y","\r");
-                             * ans=mmc_.getSerialPortAnswer(PORT, "\r\n"); String[]
-                             * ansvalues=ans.split(" "); xposarray[i]=Double.parseDouble(ansvalues[1]);
-                             * yposarray[i]=Double.parseDouble(ansvalues[2]); IJ.log("serialport x "+
-                             * ansvalues[1]+" y "+ ansvalues[2]);
-                             */
-                            // IJ.log("mmc get x "+ String.valueOf(xposarray[i])+" y "+
-                            // String.valueOf(yposarray[i]));
                             zpos = mmc_.getPosition(zstagelabel);
-                            // zpos=mme_.
+
                         } catch (java.lang.Exception e) {
+                            IJ.log("startAcq: error calling MMCore getPosition");
+                            IJ.log(e.getMessage());
                         }
                         if (!ready)// if this is runnning as real imaging process, save images.
                         {
@@ -1792,33 +1669,33 @@ class TrackingThread10 extends Thread {
                             try {
                                 outfile.createNewFile();
                             } catch (java.lang.Exception e) {
+                                IJ.log("startAcq: error creating outfile");
+                                IJ.log(e.getMessage());
                             }
                             try {
                                 outstream = new FileOutputStream(outfile);
                             } catch (java.lang.Exception e) {
+                                IJ.log("startAcq: error creating FileOutputStream");
+                                IJ.log(e.getMessage());
                             }
                             fi = imp.getFileInfo();
-                            // fi.info="xpos1.0913341ypos0.13325";//here put stage position data.
                             fi.info = "xpos=" + String.valueOf(xposarray[i]) + ",ypos=" + String.valueOf(yposarray[i])
                                     + ",zpos=" + String.valueOf(zpos);
                             tiffencoder = new TiffEncoder(fi);
                             try {
                                 tiffencoder.write(outstream);
                             } catch (java.lang.Exception e) {
+                                IJ.log("startAcq: error writing outstream to tiff encoder");
+                                IJ.log(e.getMessage());
                             }
                             try {
                                 outstream.close();
                             } catch (java.lang.Exception e) {
+                                IJ.log("startAcq: error closing outstream");
+                                IJ.log(e.getMessage());
                             }
                         } // if(!ready) end
 
-                        /*
-                         * gui version. need to look for gui api? stagepos=gui.getXYStagePosition();
-                         * xposarray[i]=stagepos.getX();//.x cause error? yposarray[i]=stagepos.getY();
-                         * print("stagepos:"+stagepos.x+","+stagepos.y+", at "+i);
-                         */
-
-                        // imgstk.setPixels(img,i+1);
                         if (!tpf.manualtracking.getState()) {
                             if (!tpf.CoM.getState() && !tpf.FULL.getState())// for normal thresholding method.
                             {
@@ -1827,25 +1704,13 @@ class TrackingThread10 extends Thread {
                                 ImageProcessor ip_current = imp.getProcessor();
                                 ImageProcessor ipleft = ip_current.crop();
                                 ImagePlus impleft = new ImagePlus("l", ipleft);
-                                // measures=getObjmeasures(impleft, ipleft, false);//true saves binaly image
                                 String thresholdmethod = tpf.thresholdmethod.getSelectedItem();
                                 measures = getObjmeasures(impleft, ipleft, false, thresholdmethod);
                                 if (measures.length == 0)// if lost any cells
                                 {
-                                    IJ.log("target lost");
+                                    IJ.log("startAcq: target lost when not manual tracking");
                                     // test to continue imaging
                                     measures = measurespre;
-                                    /*
-                                     * try { mmc_.stopSequenceAcquisition(); } catch(java.lang.Exception e){}
-                                     * if(PORT!="")//demo stage cant do this { try {
-                                     * mmc_.setSerialPortCommand(PORT,"VECTOR X=0 Y=0","\r"); }
-                                     * catch(java.lang.Exception e){} try { ans=mmc_.getSerialPortAnswer(PORT,
-                                     * "\r\n"); } catch(java.lang.Exception e){} //print(ans); try {
-                                     * mmc_.setSerialPortCommand(PORT,"VECTOR X? Y?","\r"); }
-                                     * catch(java.lang.Exception e){} try { ans=mmc_.getSerialPortAnswer(PORT,
-                                     * "\r\n"); } catch(java.lang.Exception e){} } //outputData(xposarray,
-                                     * yposarray); return;
-                                     */
                                 }
                                 if (i != 0)// after second image
                                 {
@@ -1860,11 +1725,9 @@ class TrackingThread10 extends Thread {
                                     shift[1] = mindist[previoustarget][3];
                                     IJ.log(shift[0] + "," + shift[1]);
                                     // multiply 2 because resized 1/2
-                                    // print("target #"+newtarget+" roi at
-                                    // "+measures[newtarget][2]+","+measures[newtarget][3]);
                                     distancefromcenter[0] = width / 4 - measures[newtarget][2] * 2;
                                     distancefromcenter[1] = height / 2 - measures[newtarget][3] * 2;
-                                    // for non resised version
+                                    // for non resised version:
                                     // distancefromcenter[0]=width/4-measures[newtarget][2];
                                     // distancefromcenter[1]=height/2-measures[newtarget][3];
 
@@ -1875,10 +1738,8 @@ class TrackingThread10 extends Thread {
                                     double[][] mock = { { 0, 0, ipleft.getWidth() / 4, ipleft.getHeight() / 4 } };
                                     double[][] initialtarget = getMinDist(mock, measures);
                                     // for non resised version
-                                    // double[][] mock= {{0,0,ipleft.getWidth()/2,ipleft.getHeight()/2}};
-                                    // double[][] initialtarget=getMinDist(mock, measures);
                                     int target = (int) initialtarget[0][0];
-                                    IJ.log("target #" + String.valueOf(target) + " roi at "
+                                    IJ.log("startAcq: not manual tracking - target #" + String.valueOf(target) + " roi at "
                                             + String.valueOf(measures[target][2]) + ","
                                             + String.valueOf(measures[target][3]));
                                     targethistory[0][0] = target;
@@ -1892,7 +1753,7 @@ class TrackingThread10 extends Thread {
                                 // return [roi#][order by distance from target, distance, dx, dy]
                                 // static double[][] getRoiOrder(int targetroinum, double[][] measures)
                                 if (!tpf.closest.getState()) {
-                                    IJ.log("before getRoiOrder " + String.valueOf(targethistory[i][0]));
+                                    IJ.log("startAcq: before getRoiOrder " + String.valueOf(targethistory[i][0]));
                                     roiorder = getRoiOrder((int) targethistory[i][0], measures);
                                     // check target is collect or not by direcion/distance towards next roi. if
                                     // there are more than 2 rois.
@@ -1924,7 +1785,7 @@ class TrackingThread10 extends Thread {
                                             targethistory[i][2] = measures[newtarget][3];
 
                                         }
-                                        IJ.log("after getRoiOrder " + String.valueOf(targethistory[i][0]));
+                                        IJ.log("startAcq: after getRoiOrder " + String.valueOf(targethistory[i][0]));
                                         // void drawRoiOrder(int slice, double[][] roiorder, double[][] measures,
                                         // boolean trackstatus)
                                         drawRoiOrder(i + 1, finalroiorder, measures, trackstatus);
@@ -1941,7 +1802,6 @@ class TrackingThread10 extends Thread {
                                   // here put stage control code.
                             } else if (tpf.FULL.getState())// full field
                             {
-                                // imp.setRoi(roi);
                                 roi = new Roi(4, 4, width - 8, height - 8);// trim edge of image since it may have dark
                                                                            // reagion
                                 imp.setRoi(roi);
@@ -1954,9 +1814,6 @@ class TrackingThread10 extends Thread {
                                 // get data and put it into double[] distancefromcenter =new double[2];
                                 if (i != 0)// after second image
                                 {
-                                    // IJ.log("roiwidth "+String.valueOf(roiwidth)+" width/2
-                                    // "+String.valueOf(width/2));
-                                    // centorofmass=getCenterofMass(impinv, ip_current, roi,0,0);
                                     centorofmass = getCenterofMass(impinv, ip_current, roi, 4, 4);// trim 4 pix?
                                     distancefromcenter[0] = width / 2 - centorofmass[0];
                                     distancefromcenter[1] = height / 2 - centorofmass[1];
@@ -1975,9 +1832,9 @@ class TrackingThread10 extends Thread {
                                     targethistory[i][2] = centorofmass[1];
                                 }
                                 imp.setRoi(roi);// just for visible.
-                                IJ.log("FULL " + String.valueOf(centorofmass[0]) + " "
+                                IJ.log("startAcq: center of mass values " + String.valueOf(centorofmass[0]) + " "
                                         + String.valueOf(centorofmass[1]));
-                                IJ.log("dis cent " + String.valueOf(distancefromcenter[0]) + " "
+                                IJ.log("startAcq: distance from center " + String.valueOf(distancefromcenter[0]) + " "
                                         + String.valueOf(distancefromcenter[1]));
 
                             }
@@ -1992,8 +1849,6 @@ class TrackingThread10 extends Thread {
                                 // get data and put it into double[] distancefromcenter =new double[2];
                                 if (i != 0)// after second image
                                 {
-                                    // IJ.log("roiwidth "+String.valueOf(roiwidth)+" width/2
-                                    // "+String.valueOf(width/2));
                                     if (roiwidth == width / 2 && roiheight == height)// usr didn't drow a roi
                                     {
                                         centorofmass = getCenterofMass(impleft, ipleft, roi, 0, 0);// the roi should be
@@ -2023,21 +1878,17 @@ class TrackingThread10 extends Thread {
                                     // targethistory[slicenumber][roi index, x, y]
                                     targethistory[i][0] = -1;// for center of mass method, the roi index use -1,
                                     targethistory[i][1] = centorofmass[0];
-                                    // targethistory[i][1]=width/4;
                                     targethistory[i][2] = centorofmass[1];
-                                    // targethistory[i][2]=height/2;
                                 }
                                 imp.setRoi(roi);// just for visible.
-                                IJ.log("CoM " + String.valueOf(centorofmass[0]) + " "
+                                IJ.log("startAcq: center of mass is " + String.valueOf(centorofmass[0]) + " "
                                         + String.valueOf(centorofmass[1]));
-                                IJ.log("dis cent " + String.valueOf(distancefromcenter[0]) + " "
+                                IJ.log("startAcq: distance from center is " + String.valueOf(distancefromcenter[0]) + " "
                                         + String.valueOf(distancefromcenter[1]));
                             }
                             double distancescalar = Math.sqrt((distancefromcenter[0]) * (distancefromcenter[0])
                                     + (distancefromcenter[1]) * (distancefromcenter[1]));
                             if (distancescalar > LIMIT) {
-                                // print("distancefromcenter "+distancefromcenter[0]+","+distancefromcenter[1]+"
-                                // distancescalar"+distancescalar);
                                 // 100 msec 0.0018?
                                 xv = Math.round(-distancefromcenter[0] * 0.0018 * 1000.0) / 1000.0;
                                 yv = Math.round(distancefromcenter[1] * 0.0018 * 1000.0) / 1000.0;
@@ -2056,26 +1907,33 @@ class TrackingThread10 extends Thread {
                                 }
                                 xv = xv * accelint;
                                 yv = yv * accelint;
-                                IJ.log("xv;" + String.valueOf(xv) + " yv;" + String.valueOf(yv));
+                                IJ.log("startAcq: xv is " + String.valueOf(xv));
+                                IJ.log("startAcq: yv is " + String.valueOf(yv));
                                 if (PORT != "")// demo stage cant do this
                                 {
+                                    String command = "VECTOR X=" + String.valueOf(xv) + " Y=" + String.valueOf(yv);
                                     try {
-                                        mmc_.setSerialPortCommand(PORT,
-                                                "VECTOR X=" + String.valueOf(xv) + " Y=" + String.valueOf(yv), "\r");
+                                        mmc_.setSerialPortCommand(PORT, command, "\r");
                                     } catch (java.lang.Exception e) {
+                                        IJ.log("startAcq: error setting serial port command " + command);
+                                        IJ.log(e.getMessage());
                                     }
                                     try {
                                         ans = mmc_.getSerialPortAnswer(PORT, "\r\n");
                                     } catch (java.lang.Exception e) {
+                                        IJ.log("startAcq: error getting serial port answer from " + command);
+                                        IJ.log(e.getMessage());
                                     }
                                 } // if(PORT!="")//demo stage cant do this end
-                                IJ.log("ans " + ans + " moving");
+                                IJ.log("startAcq: ans is " + ans);
                             } else {
                                 if (PORT != "")// demo stage cant do this
                                 {
                                     try {
                                         mmc_.setSerialPortCommand(PORT, "VECTOR X=0 Y=0", "\r");
                                     } catch (java.lang.Exception e) {
+                                        IJ.log("startAcq: error setting serial port command to device at port " + PORT );
+                                        IJ.log(e.getMessage());
                                     }
                                     // follwoing may not need execpt for checking the control
                                     // NO NEED By unknown reason, comment out following cause failure of getting
@@ -2084,15 +1942,21 @@ class TrackingThread10 extends Thread {
                                     try {
                                         ans = mmc_.getSerialPortAnswer(PORT, "\r\n");
                                     } catch (java.lang.Exception e) {
+                                        IJ.log("startAcq: error getting serial port answer from device at port " + PORT );
+                                        IJ.log(e.getMessage());
                                     }
                                     // print(ans);
                                     try {
                                         mmc_.setSerialPortCommand(PORT, "VECTOR X? Y?", "\r");
                                     } catch (java.lang.Exception e) {
+                                        IJ.log("startAcq: error setting serial port command to device at port " + PORT );
+                                        IJ.log(e.getMessage());
                                     }
                                     try {
                                         ans = mmc_.getSerialPortAnswer(PORT, "\r\n");
                                     } catch (java.lang.Exception e) {
+                                        IJ.log("startAcq: error getting serial port answer from device at port " + PORT );
+                                        IJ.log(e.getMessage());
                                     }
 
                                 } // if(PORT!="")//demo stage cant do this end
@@ -2110,23 +1974,31 @@ class TrackingThread10 extends Thread {
             try {
                 mmc_.setSerialPortCommand(PORT, "VECTOR X=0 Y=0", "\r");
             } catch (java.lang.Exception e) {
+                IJ.log("startAcq: error setting serial port command to device at port " + PORT );
+                IJ.log(e.getMessage());
             }
             try {
                 ans = mmc_.getSerialPortAnswer(PORT, "\r\n");
             } catch (java.lang.Exception e) {
+                IJ.log("startAcq: error getting serial port answer from device at port " + PORT );
+                IJ.log(e.getMessage());
             }
             // print(ans);
             try {
                 mmc_.setSerialPortCommand(PORT, "VECTOR X? Y?", "\r");
             } catch (java.lang.Exception e) {
+                IJ.log("startAcq: error setting serial port command to device at port " + PORT );
+                IJ.log(e.getMessage());
             }
             try {
                 ans = mmc_.getSerialPortAnswer(PORT, "\r\n");
             } catch (java.lang.Exception e) {
+                IJ.log("startAcq: error getting serial port answer from device at port " + PORT );
+                IJ.log(e.getMessage());
             }
 
             Date d2 = new java.util.Date();
-            IJ.log("acquistion end at" + d2.getTime());
+            IJ.log("startAcq: finished image acquisition at" + d2.getTime());
             IJ.log(String.valueOf((d2.getTime() - d1.getTime()) / 1000.0) + " sec");
             if (!ready) {
                 if (tpf.textpos.getState()) {
