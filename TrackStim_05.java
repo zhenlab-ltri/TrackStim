@@ -50,9 +50,8 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.PolygonRoi;
 
-import ij.plugin.*; // not sure if needed
-import ij.plugin.filter.*; // not sure if needed
-
+import ij.plugin.filter.EDM;
+import ij.plugin.filter.RankFilters;
 import ij.plugin.frame.PlugInFrame;
 
 import mmcorej.CMMCore;
