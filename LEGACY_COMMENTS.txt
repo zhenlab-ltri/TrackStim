@@ -16,8 +16,8 @@
 //fluorescent object detection and tracking plugin. need motorized stage
 //works with stack
 //compiled with
-//javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.3nb/ij.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim_03.java
-//jar cvf TrackStim_.jar TrackStim_03.class TrackingThread10.class Signalsender.class
+//javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.3nb/ij.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim_04.java
+//jar cvf TrackStim_.jar TrackStim_04.class TrackingThread11.class SignalSender01.class
 //ver3  initiall release
 //ver4 avarage thresholding. also can choose thresholding method.
 // ver5 implement change roi function by clicking image.
@@ -34,6 +34,6 @@
 //121203 adding manual trackig option
 
 //cd /Applications/Micro-Manager1.4/plugins/
-//javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.4/ij.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim_03.java
+//javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.4/ij.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.4/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim_04.java
 
 //[Serial, /dev/tty.SLAB_USBtoUART, /dev/tty.SLAB_USBtoUART, /dev/tty.SLAB_USBtoUART, Serial, /dev/tty.usbmodem3d21]

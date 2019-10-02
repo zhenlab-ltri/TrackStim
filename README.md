@@ -23,7 +23,7 @@ javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.3/ij.jar:/
 Then, run the following command:
 
 ```sh
-jar cvf TrackStim_.jar TrackStim_03.class TrackingThread10.class Signalsender.class
+jar cvf TrackStim_.jar TrackStim_04.class TrackingThread11.class SignalSender01.class
 ```
 
 

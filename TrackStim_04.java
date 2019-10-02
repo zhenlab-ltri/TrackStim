@@ -20,7 +20,7 @@ import org.micromanager.*;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 
-public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageListener, MouseListener, ItemListener {
+public class TrackStim_04 extends PlugInFrame implements ActionListener, ImageListener, MouseListener, ItemListener {
     // public class RealTimeTracker_09 extends PlugInFrame implements
     // ActionListener,ImageListener{
 
@@ -30,7 +30,7 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
     TextField skiptext;
     // TextField intervaltext;
     // TrackingThread(RealTimeTracker_01 tpf);
-    TrackingThread10 tt = null;
+    TrackingThread11 tt = null;
 
     // filed used in TrackingThread
     java.awt.Checkbox closest;// target definition method.
@@ -73,7 +73,7 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
     int frame = 1200;// String defaultframestring;
     boolean ready;
 
-    public TrackStim_03() {
+    public TrackStim_04() {
         super("TrackerwithStimulater");
         // First, check if there is mmc.
         if (mmc_ == null) {
@@ -604,7 +604,7 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
     // mili sec, and 0-63
     // helper function for prepSignals
     void setSender(int channel, int timepoint, int signalstrength) {
-        Signalsender sd = new Signalsender(this);
+        SignalSender01 sd = new SignalSender01(this);
         sd.setChannel(channel);
         sd.setSignalStrength(signalstrength);
         ScheduledExecutorService ses;
@@ -754,7 +754,7 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
             // ready button pushed
             if (lable.equals("Ready")) {
                 ready = true;
-                tt = new TrackingThread10(this);
+                tt = new TrackingThread11(this);
                 tt.start();
 
                 // go button pressed
@@ -817,7 +817,7 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
                         prepSignals(0);
                     }
 
-                    tt = new TrackingThread10(this);
+                    tt = new TrackingThread11(this);
                     tt.start();
                 }
             } else if (lable.equals("Stop")) {
@@ -894,9 +894,9 @@ public class TrackStim_03 extends PlugInFrame implements ActionListener, ImageLi
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // To watch the process during data collection, use different thread.
-class TrackingThread10 extends Thread {
+class TrackingThread11 extends Thread {
     // vaiables recieve from RealTimeTracker
-    TrackStim_03 tpf;
+    TrackStim_04 tpf;
     CMMCore mmc_;
     ImagePlus imp;
     ImageCanvas ic;
@@ -935,7 +935,7 @@ class TrackingThread10 extends Thread {
     // allowance distance change
     static double mindistancechange = 0.3;
 
-    TrackingThread10(TrackStim_03 tpf) {
+    TrackingThread11(TrackStim_04 tpf) {
         IJ.log("TrackingThread constructor");
         this.tpf = tpf;
         mmc_ = tpf.mmc_;
@@ -2014,8 +2014,8 @@ class TrackingThread10 extends Thread {
 }// class TrackingThread9 extends Thread { end
 
 /// for stimulation using arduino DA converter
-class Signalsender implements Runnable {
-    TrackStim_03 ts;
+class SignalSender01 implements Runnable {
+    TrackStim_04 ts;
     int channel;
     int strength;
     int sendingdata;
@@ -2025,7 +2025,7 @@ class Signalsender implements Runnable {
     int[] changetimepoints;
     int[] changevalues;
 
-    Signalsender(TrackStim_03 ts_) {
+    SignalSender01(TrackStim_04 ts_) {
         ts = ts_;
     }
 
@@ -2039,8 +2039,8 @@ class Signalsender implements Runnable {
     }
 
     public void run() {
-        IJ.log("signalSender: system time is " + String.valueOf(System.nanoTime() / 1000000));
-        IJ.log("signalSender: strength is " + String.valueOf(strength));
+        IJ.log("SignalSender01: system time is " + String.valueOf(System.nanoTime() / 1000000));
+        IJ.log("SignalSender01: strength is " + String.valueOf(strength));
 
         // testing sending vale
         sendingdata = channel << 7 | strength;
@@ -2050,7 +2050,7 @@ class Signalsender implements Runnable {
         try {
             ts.mmc_.writeToSerialPort(ts.adportsname, sendingchrvec);
         } catch (java.lang.Exception e) {
-            IJ.log("signalSender: error trying to write data " + String.valueOf(sendingdata) + " to the serial port " + ts.adportsname);
+            IJ.log("SignalSender01: error trying to write data " + String.valueOf(sendingdata) + " to the serial port " + ts.adportsname);
             IJ.log(e.getMessage());
         }
     }
