@@ -16,14 +16,14 @@ In this repository is a file called TrackStim.java
 You must use this command to take TrackStim.java and other packages that TrackStim.java depends on to build the plugin (macOSX specific):
 
 ```sh
-javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.3/ij.jar:/Applications/Micro-Manager1.3/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.3/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim.java
+javac -source 1.5 -target 1.5 -classpath /Applications/Micro-Manager1.3/ij.jar:/Applications/Micro-Manager1.3/plugins/Micro-Manager/MMCoreJ.jar:/Applications/Micro-Manager1.3/plugins/Micro-Manager/MMJ_.jar -Xlint:unchecked TrackStim_05.java
 
 ```
 
 Then, run the following command:
 
 ```sh
-jar cvf TrackStim_.jar TrackStim_04.class TrackingThread11.class SignalSender01.class
+jar cvf TrackStim_.jar TrackStim_05.class TrackingThread12.class SignalSender02.class
 ```
 
 
