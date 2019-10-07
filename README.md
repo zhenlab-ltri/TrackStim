@@ -8,6 +8,7 @@ This program is a micro manager plugin that provides:
 
 ## Requirements
 - Micro-Manager 1.3
+- [usb to uart vcp driver for ASI MS-2000 XY stage](https://www.silabs.com/products/development-tools/software/usb-to-uart-bridge-vcp-drivers)
 
 ## Building the plugin
 
