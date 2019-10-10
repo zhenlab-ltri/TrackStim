@@ -11,6 +11,11 @@ This program is a micro manager plugin that provides:
 - [usb to uart vcp driver for ASI MS-2000 XY stage](https://www.silabs.com/products/development-tools/software/usb-to-uart-bridge-vcp-drivers)
 - [hamamatsu dcam api](https://dcam-api.com/)
 
+
+### MacOSX specific requirements
+- [Java SE 6 Legacy](https://support.apple.com/kb/dl1572?locale=en_GB)
+- [hamamatsu dcam api mac](https://ftp.hostedftp.com/~hamamatsu/DCAM-API/2013/13.11/DCAM-API%20for%20Mac%20OS%20X%20%2813.11.4451%29.zip)
+
 ## Building the plugin
 
 In this repository is a file called TrackStim.java
