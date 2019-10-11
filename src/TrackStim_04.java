@@ -618,32 +618,15 @@ public class TrackStim_04 extends PlugInFrame implements ActionListener, ImageLi
 
     ArrayList<String> getPortLabels() {
         ArrayList<String> portlist = new ArrayList<String>();
-        Configuration conf = mmc_.getSystemState();
-        long index = conf.size();
-        String[] tempports = new String[(int) index];
-        PropertySetting ps = new PropertySetting();
 
-        for (int i = 0; i < index; i++) {
-            try {
-                ps = conf.getSetting(i);
-            } catch (java.lang.Exception e) {
-                IJ.log("getPortLabels: error getting config value");
-                IJ.log(e.getMessage());
-            }
-            
-            
-            String propertyName = ps.getPropertyName();
-            String propertyValue = ps.getPropertyValue();
-
-            // just testing enviroment having only one port /dev/tty.usbmodem1d11
-            if (propertyName == "Port") {
-                IJ.log("getPortLabels: adding port label " + propertyValue);
-
-                portlist.add(propertyValue);
-
-            }
+        try {
+            java.awt.geom.Point2D.Double a = mmc_.getXYStagePosition();
+            double g = mmc_.getPosition();
+            IJ.log(String.valueOf(a));
+            IJ.log(String.valueOf(g));    
+        } catch (Exception e){
+            IJ.log(e.getMessage());
         }
-
         return portlist;
     }
 
