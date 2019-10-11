@@ -617,6 +617,7 @@ public class TrackStim_04 extends PlugInFrame implements ActionListener, ImageLi
     }
 
     ArrayList<String> getPortLabels() {
+        ArrayList<String> portlist = new ArrayList<String>();
         Configuration conf = mmc_.getSystemState();
         long index = conf.size();
         String[] tempports = new String[(int) index];
@@ -641,7 +642,9 @@ public class TrackStim_04 extends PlugInFrame implements ActionListener, ImageLi
                 portlist.add(propertyValue);
 
             }
-        
+        }
+        return portlist;
+
     }
 
     public void imageOpened(ImagePlus imp) {
