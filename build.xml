@@ -7,9 +7,15 @@
 <!-- the Compile on Save feature is turned off for the project. -->
 <!-- You can turn off the Compile on Save (or Deploy on Save) setting -->
 <!-- in the project's Project Properties dialog box.-->
-<project name="TrackStim" default="default" basedir=".">
-    <description>Builds, tests, and runs the project TrackStim.</description>
+<project name="TrackStim_mm2" default="default" basedir=".">
+    <description>Builds, tests, and runs the project TrackStim_mm2.</description>
     <import file="nbproject/build-impl.xml"/>
+        <property name="pluginsDir"  location="C:\Program Files\Micro-Manager-2.0gamma\mmplugins" />
+       <target name="-post-jar">
+       <echo message="--Copied MM plugin JAR to basedir: ${basedir}" />
+       <copy file="${basedir}/${dist.jar}" toDir="${pluginsDir}" />
+       </target>
+    
     <!--
 
     There exist several targets which are by default empty and which can be 
@@ -51,15 +57,14 @@
       -init-macrodef-junit:     defines macro for junit execution
       -init-macrodef-debug:     defines macro for class debugging
       -init-macrodef-java:      defines macro for class execution
-      -do-jar-with-manifest:    JAR building (if you are using a manifest)
-      -do-jar-without-manifest: JAR building (if you are not using a manifest)
+      -do-jar:                  JAR building
       run:                      execution of project 
       -javadoc-build:           Javadoc generation
       test-report:              JUnit report generation
 
     An example of overriding the target for project execution could look like this:
 
-        <target name="run" depends="TrackStim-impl.jar">
+        <target name="run" depends="TrackStim_mm2-impl.jar">
             <exec dir="bin" executable="launcher.exe">
                 <arg file="${dist.jar}"/>
             </exec>
