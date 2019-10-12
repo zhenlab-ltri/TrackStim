@@ -18,14 +18,14 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = MenuPlugin.class)
 public class TrackStim implements SciJavaPlugin, MenuPlugin {
    private TrackStimGUI gui;
-   private Studio studio_;
-   private CMMCore mmc_;
+   private Studio studio;
+   private CMMCore mmc;
    private LogManager log;
 
    @Override
    public void setContext(Studio studio) {
-      studio_ = studio;
-      mmc_ = studio.getCMMCore();
+      studio = studio;
+      mmc = studio.getCMMCore();
       log = studio.getLogManager();
    }
 
@@ -38,21 +38,37 @@ public class TrackStim implements SciJavaPlugin, MenuPlugin {
       this.start();
    }
 
+
+   // acquire 100 images, snapping an image every 100ms to acquire 10 images every second
    public void start() {
       int numImages = 100;
       double intervalMs = 100.0;
 
       try {
-        mmc_.startSequenceAcquisition(numImages, intervalMs, false);
+        mmc.startSequenceAcquisition(numImages, intervalMs, false);
       } catch (java.lang.Exception e) {
         log.logMessage("error starting sequence acquisition");
         log.logMessage(e.getMessage());
       }
 
-      while(mmc_.isSequenceRunning()) {
+      int numImagesPopped = 0;
+      while(mmc.isSequenceRunning()) {
+         int imagesRemaining = mmc.getRemainingImageCount();
+         log.logMessage(String.valueOf(imagesRemaining) + " images in queue");
+
+         if( imagesRemaining > 0 ){
+
+            try {
+               mmc.popNextImage();
+               numImagesPopped++;
+            } catch (java.lang.Exception e ){
+               log.logMessage(e.getMessage());
+            }
+         }
          log.logMessage("sequence running");
       }
 
+      log.logMessage(String.valueOf(numImagesPopped));
    }
 
    /**
