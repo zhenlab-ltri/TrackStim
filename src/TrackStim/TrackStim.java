@@ -16,7 +16,7 @@ import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
-public class TrackStim implements SciJavaPlugin, MenuPlugin {   
+public class TrackStim implements SciJavaPlugin, MenuPlugin {
    private TrackStimGUI gui;
    private Studio studio_;
    private CMMCore mmc_;
@@ -52,7 +52,7 @@ public class TrackStim implements SciJavaPlugin, MenuPlugin {
       while(mmc_.isSequenceRunning()) {
          log.logMessage("sequence running");
       }
-   
+
    }
 
    /**
