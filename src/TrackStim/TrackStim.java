@@ -19,6 +19,10 @@ import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 
+import org.micromanager.display.DisplayManager;
+import org.micromanager.display.DisplayWindow;
+
+
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -28,12 +32,16 @@ public class TrackStim implements SciJavaPlugin, MenuPlugin {
    private Studio studio;
    private CMMCore mmc;
    private LogManager log;
+   private DataManager dm;
+   private DisplayManager dism;
 
    @Override
    public void setContext(Studio studio) {
       studio = studio;
       mmc = studio.getCMMCore();
       log = studio.getLogManager();
+      dm = studio.data();
+      dism = studio.displays();
    }
 
    /**
@@ -84,10 +92,8 @@ public class TrackStim implements SciJavaPlugin, MenuPlugin {
       int numImages = 100;
       int curImage = 0;
       double intervalMs = 100.0;
-      DataManager dm = studio.data();
       Datastore store = dm.createRAMDatastore();
-
-      studio.displays().createDisplay();
+      DisplayWindow ds = dism.createDisplay(store);
 
       try {
          mmc.startSequenceAcquisition(numImages, intervalMs, false);
@@ -125,7 +131,7 @@ public class TrackStim implements SciJavaPlugin, MenuPlugin {
       } catch (java.lang.Exception e ){
          log.logMessage(e.getMessage());
       }
-      studio.displays().manage(store);
+      dism.manage(store);
    }
 
 
