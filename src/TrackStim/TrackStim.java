@@ -7,10 +7,17 @@ import java.awt.event.MouseListener;
 import java.awt.event.ItemListener;
 
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.LogManager;
+
+import org.micromanager.data.Datastore;
+import org.micromanager.data.DataManager;
+import org.micromanager.data.Coordinates;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
@@ -35,12 +42,12 @@ public class TrackStim implements SciJavaPlugin, MenuPlugin {
    @Override
    public void onPluginSelected() {
       gui = new TrackStimGUI();
-      this.start();
+      this.startImageProcessingLoopAlt();
    }
 
 
    // acquire 100 images, snapping an image every 100ms to acquire 10 images every second
-   public void start() {
+   public void startImageProcessingLoop() {
       int numImages = 100;
       double intervalMs = 100.0;
 
@@ -70,6 +77,57 @@ public class TrackStim implements SciJavaPlugin, MenuPlugin {
 
       log.logMessage(String.valueOf(numImagesPopped));
    }
+
+
+   // alternative way to process images
+   public void startImageProcessingLoopAlt() {
+      int numImages = 100;
+      int curImage = 0;
+      double intervalMs = 100.0;
+      DataManager dm = studio.data();
+      Datastore store = dm.createRAMDatastore();
+
+      studio.displays().createDisplay();
+
+      try {
+         mmc.startSequenceAcquisition(numImages, intervalMs, false);
+      } catch (java.lang.Exception e) {
+         log.logMessage("error starting sequence acquisition");
+         log.logMessage(e.getMessage());
+      }
+
+      Coords.Builder builder = Coordinates.builder().z(0).channel(0).stagePosition(0);
+
+      while(mmc.isSequenceRunning()) {
+         int imagesRemaining = mmc.getRemainingImageCount();
+         log.logMessage(String.valueOf(imagesRemaining) + " images in queue");
+
+         if( imagesRemaining > 0 ){
+
+            try {
+               TaggedImage tImg = mmc.popNextTaggedImage();
+               Image img = studio.data().convertTaggedImage(
+                  tImg,
+                  builder.time(curImage).build(),
+                  null
+               );
+               store.putImage(img);
+               curImage++;
+            } catch (java.lang.Exception e ){
+               log.logMessage(e.getMessage());
+            }
+         }
+         log.logMessage("sequence running");
+      }
+
+      try {
+         mmc.stopSequenceAcquisition();
+      } catch (java.lang.Exception e ){
+         log.logMessage(e.getMessage());
+      }
+      studio.displays().manage(store);
+   }
+
 
    /**
     * This method determines which sub-menu of the Plugins menu we are placed
