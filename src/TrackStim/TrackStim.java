@@ -28,12 +28,12 @@ import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
 public class TrackStim implements SciJavaPlugin, MenuPlugin {
-   private TrackStimGUI gui;
-   private Studio studio;
-   private CMMCore mmc;
-   private LogManager log;
-   private DataManager dm;
-   private DisplayManager dism;
+   public TrackStimGUI gui;
+   public Studio studio;
+   public CMMCore mmc;
+   public LogManager log;
+   public DataManager dm;
+   public DisplayManager dism;
 
    @Override
    public void setContext(Studio studio) {
@@ -42,6 +42,8 @@ public class TrackStim implements SciJavaPlugin, MenuPlugin {
       log = studio.getLogManager();
       dm = studio.data();
       dism = studio.displays();
+
+      gui = new TrackStimGUI(studio);
    }
 
    /**
@@ -49,47 +51,11 @@ public class TrackStim implements SciJavaPlugin, MenuPlugin {
     */
    @Override
    public void onPluginSelected() {
-      gui = new TrackStimGUI();
-      this.startImageProcessingLoopAlt();
+      gui.setVisible(true);
    }
 
-
-   // acquire 100 images, snapping an image every 100ms to acquire 10 images every second
-   public void startImageProcessingLoop() {
-      int numImages = 100;
-      double intervalMs = 100.0;
-
-      try {
-        mmc.startSequenceAcquisition(numImages, intervalMs, false);
-      } catch (java.lang.Exception e) {
-        log.logMessage("error starting sequence acquisition");
-        log.logMessage(e.getMessage());
-      }
-
-      int numImagesPopped = 0;
-      while(mmc.isSequenceRunning()) {
-         int imagesRemaining = mmc.getRemainingImageCount();
-         log.logMessage(String.valueOf(imagesRemaining) + " images in queue");
-
-         if( imagesRemaining > 0 ){
-
-            try {
-               mmc.popNextImage();
-               numImagesPopped++;
-            } catch (java.lang.Exception e ){
-               log.logMessage(e.getMessage());
-            }
-         }
-         log.logMessage("sequence running");
-      }
-
-      log.logMessage(String.valueOf(numImagesPopped));
-   }
-
-
-   // alternative way to process images
-   public void startImageProcessingLoopAlt() {
-      int nrFrames = 10;
+   public void start() {     
+      int nrFrames = 100;
       double exposureMs = 100.00;
       String savePath = "C:\\Users\\Mei Zhen\\Desktop\\temp4\\a\\";
 
@@ -148,7 +114,6 @@ public class TrackStim implements SciJavaPlugin, MenuPlugin {
    public String getSubMenu() {
       return "";
       // Indicates that we should show up in the root Plugins menu.
-//      return "";
    }
 
    @Override
