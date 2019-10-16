@@ -13,10 +13,12 @@ import org.micromanager.LogManager;
 
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.JFileChooser;
-/**
- *
- * @author Mei Zhen
- */
+
+// UI related code handles:
+//  - UI value changes
+//  - UI value validation
+//  - UI disabling/enabling based on current values
+//  - sending/receiving commands to TrackStimController (e.g. start image acquisition with these parameters, stop image acquisition)
 public class TrackStimGUI extends javax.swing.JFrame {
     public Studio studio;
     public LogManager lm;
@@ -43,6 +45,9 @@ public class TrackStimGUI extends javax.swing.JFrame {
         directoryPath = ""; // ensure that the user chooses a directory
         
         initComponents();
+
+        run.setEnabled(true);
+        stop.setEnabled(false);
     }
 
     /**
@@ -223,11 +228,28 @@ public class TrackStimGUI extends javax.swing.JFrame {
             return;
         }
 
+        // disable all ui while running except for the stop button
+        run.setEnabled(false);
+        stop.setEnabled(true);
+        jFileChooser1.setEnabled(false);
+        exposure.setEnabled(false);
+        chooseDirectory.setEnabled(false);
+        frames.setEnabled(false);
+
         running = true;
         lm.logMessage(String.valueOf(running));
     }//GEN-LAST:event_runActionPerformed
 
     private void stopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopActionPerformed
+
+        // enable all ui except for the stop button
+        run.setEnabled(true);
+        stop.setEnabled(false);
+        jFileChooser1.setEnabled(true);
+        exposure.setEnabled(true);
+        chooseDirectory.setEnabled(true);
+        frames.setEnabled(true);
+
         running = false;
         lm.logMessage(String.valueOf(running));
     }//GEN-LAST:event_stopActionPerformed
