@@ -7,6 +7,8 @@ package TrackStim;
 
 import java.io.File;
 
+import mmcorej.CMMCore;
+
 import org.micromanager.Studio;
 import org.micromanager.LogManager;
 
@@ -23,6 +25,7 @@ public class TrackStimGUI extends javax.swing.JFrame {
     public Studio studio;
     public LogManager lm;
 
+    public TrackStimController tsc;
 
     // UI state that will be sent as arguments to the sequence acquisition function
     public int numberOfFrames;
@@ -34,8 +37,8 @@ public class TrackStimGUI extends javax.swing.JFrame {
      * Creates new form TrackStimGUI
      */
     public TrackStimGUI(Studio studio_) {
-        studio = studio_;
-        lm = studio.logs();
+        tsc = new TrackStimController(studio_, this);
+        lm = studio_.logs();
 
         // set intial state
         // TODO: derive the state from the ui text or derive the ui text from state
@@ -46,6 +49,7 @@ public class TrackStimGUI extends javax.swing.JFrame {
         
         initComponents();
 
+        // intially disable stop button because no task is running
         run.setEnabled(true);
         stop.setEnabled(false);
     }
@@ -238,6 +242,8 @@ public class TrackStimGUI extends javax.swing.JFrame {
 
         running = true;
         lm.logMessage(String.valueOf(running));
+
+        tsc.startImageAcquisitionTask(numberOfFrames, exposureMs, directoryPath);
     }//GEN-LAST:event_runActionPerformed
 
     private void stopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopActionPerformed
