@@ -39,19 +39,31 @@ public class TrackStimGUI extends javax.swing.JFrame {
     public TrackStimGUI(Studio studio_) {
         tsc = new TrackStimController(studio_, this);
         lm = studio_.logs();
-
-        // set intial state
-        // TODO: derive the state from the ui text or derive the ui text from state
-        numberOfFrames = 100; 
-        exposureMs = 100.0;
-        running = false;
-        directoryPath = ""; // ensure that the user chooses a directory
         
         initComponents();
 
         // intially disable stop button because no task is running
         run.setEnabled(true);
         stop.setEnabled(false);
+
+        // set intial state
+        numberOfFrames = Integer.parseInt(frames.getText());
+        exposureMs = Double.parseDouble(exposure.getText());
+        running = false;
+        directoryPath = ""; // ensure that the user chooses a directory
+    }
+
+    public void taskDone(){
+        // enable all ui except for the stop button
+        run.setEnabled(true);
+        stop.setEnabled(false);
+        jFileChooser1.setEnabled(true);
+        exposure.setEnabled(true);
+        chooseDirectory.setEnabled(true);
+        frames.setEnabled(true);
+
+        running = false;
+        lm.logMessage(String.valueOf(running));
     }
 
     /**
@@ -196,8 +208,6 @@ public class TrackStimGUI extends javax.swing.JFrame {
             lm.showMessage("exposure must be a decimal number e.g. 100.0");
         }
     }//GEN-LAST:event_exposureActionPerformed
-
-
 
     private void directoryActionPerformed(java.awt.event.ActionEvent evt) {                                                
     }                                               

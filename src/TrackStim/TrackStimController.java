@@ -36,10 +36,13 @@ public class TrackStimController {
     public DataManager dm;
     public DisplayManager dism;
 
+    private String currentSavePath;
+
 
     public TrackStimController(Studio studio_, TrackStimGUI gui_){
         gui = gui_;
                 
+        // get micro manager scripting utilities and the micro manager core
         studio = studio_;
         mmc = studio.getCMMCore();
         lm = studio.logs();
@@ -49,19 +52,37 @@ public class TrackStimController {
 
     // call this when a image acquisition task is done/errored so the UI can update
     public void taskDoneNotifyUI(){
+        gui.taskDone();
     }
 
     public void stopImageAcquisitionTask(){
     }
 
+    // set camera properties
+    // exposure should be in ms
+    // binning should be one of "1x1", "2x2", or "4x4"
+    public void setCameraProperties(double exposureMs, String binning){
+        String cameraName = mmc.getCameraDevice();
+        try {
+            mmc.setExposure(exposureMs);
+            mmc.setProperty(cameraName, "Binning", binning);
+        } catch (Exception ex) {
+            lm.logMessage("unable to set camera properties");
+            lm.logMessage(ex.getMessage());
+        }
+    }
+
     public void startImageAcquisitionTask(int numFrames, double exposureMs, String directoryToSave){
         Path directoryPath = Paths.get(directoryToSave);
         String savePath = Paths.get(directoryToSave, "temp-" + String.valueOf(new Date().getTime())).toString();
+        currentSavePath = savePath;
+
+        this.setCameraProperties(exposureMs, "4x4");
 
         // Create a Datastore for the images to be stored in, in RAM.
         Datastore store = dm.createRAMDatastore();
         // Create a display to show images as they are acquired.
-        DisplayWindow ds = dism.createDisplay(store);
+        // DisplayWindow ds = dism.createDisplay(store);
 
         Coords.CoordsBuilder builder = dm.getCoordsBuilder().time(0);
 
@@ -82,10 +103,9 @@ public class TrackStimController {
                     builder.time(curFrame).build(), null);
                 store.putImage(image);
                 curFrame++;
-                }
-                else {
-                // Wait for another image to arrive.
-                mmc.sleep(Math.min(.5 * exposureMs, 20));
+                } else {
+                    // Wait for another image to arrive.
+                    mmc.sleep(Math.min(.5 * exposureMs, 20));
                 }
             }
 
