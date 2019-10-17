@@ -79,11 +79,11 @@ public class TrackStimController implements Runnable {
 
     @Override
     public void run(){
-
+        studio.live().setLiveMode(false);
         // Create a Datastore for the images to be stored in, in RAM.
         Datastore store = dm.createRAMDatastore();
         // Create a display to show images as they are acquired.
-        // DisplayWindow ds = dism.createDisplay(store);
+        DisplayWindow ds = dism.createDisplay(store);
 
         Coords.CoordsBuilder builder = dm.getCoordsBuilder().time(0);
 
@@ -128,5 +128,6 @@ public class TrackStimController implements Runnable {
         gui.taskDone();
 
         lm.showMessage("Finished imaging task");
+        studio.live().setLiveMode(true);
     }
 }

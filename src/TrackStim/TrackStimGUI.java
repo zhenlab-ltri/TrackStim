@@ -234,7 +234,7 @@ public class TrackStimGUI extends javax.swing.JFrame {
             lm.showMessage("exposure must be a decimal number e.g. 100.0");
         }
 
-        valid = exposureMs > 10.0;
+        valid = exposureMs > 0.0;
 
         if(!valid){
             lm.showMessage("exposure must be greater than 10.0");
