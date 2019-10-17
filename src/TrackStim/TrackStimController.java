@@ -64,7 +64,7 @@ public class TrackStimController {
     public void setCameraProperties(double exposureMs, String binning){
         String cameraName = mmc.getCameraDevice();
         try {
-            mmc.setExposure(exposureMs);
+            mmc.setProperty(cameraName, "Exposure", String.valueOf(exposureMs));
             mmc.setProperty(cameraName, "Binning", binning);
         } catch (Exception ex) {
             lm.logMessage("unable to set camera properties");
@@ -105,7 +105,7 @@ public class TrackStimController {
                 curFrame++;
                 } else {
                     // Wait for another image to arrive.
-                    mmc.sleep(Math.min(.5 * exposureMs, 20));
+                    // mmc.sleep(Math.min(.5 * exposureMs, 20));
                 }
             }
 
