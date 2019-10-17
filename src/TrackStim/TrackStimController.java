@@ -87,6 +87,8 @@ public class TrackStimController implements Runnable {
 
         Coords.CoordsBuilder builder = dm.getCoordsBuilder().time(0);
 
+
+        int skipCount = 10;  // keep 1 out of 10 images
         // Start collecting images.
         // Arguments are the number of images to collect, the amount of time to wait
         // between images, and whether or not to halt the acquisition if the
@@ -95,16 +97,22 @@ public class TrackStimController implements Runnable {
             mmc.startSequenceAcquisition(numFrames, 0, true);
             // Set up a Coords.CoordsBuilder for applying coordinates to each image.
             int curFrame = 0;
+            int curImage = 0;
             // check that there are still images to get or check if TrackStimGUI has cancelled this imaging task
             // TrackStimGUI cancels this task by calling thread.interrupt().  We can check if the thread was interrupted by using isInterrupted()
             while ((mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning(mmc.getCameraDevice())) && !Thread.currentThread().isInterrupted()) {
                 if (mmc.getRemainingImageCount() > 0) {
                 TaggedImage tagged = mmc.popNextTaggedImage();
                 // Convert to an Image at the desired timepoint.
-                Image image = dm.convertTaggedImage(tagged,
+
+                if( curImage % skipCount == 0 ) {
+                    Image image = dm.convertTaggedImage(tagged,
                     builder.time(curFrame).build(), null);
-                store.putImage(image);
-                curFrame++;
+                    store.putImage(image);
+                    curFrame++;
+                }
+                
+                curImage++;
                 } else {
                     // Wait for another image to arrive.
                     // mmc.sleep(Math.min(.5 * exposureMs, 20));
