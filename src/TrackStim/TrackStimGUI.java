@@ -30,39 +30,20 @@ public class TrackStimGUI extends javax.swing.JFrame {
     public int numberOfFrames;
     public double exposureMs;
     public String directoryPath;
-    public boolean running;
 
     /**
      * Creates new form TrackStimGUI
      */
     public TrackStimGUI(Studio studio_) {
-        tsc = new TrackStimController(studio_, this);
+        studio = studio_;
         lm = studio_.logs();
 
         initComponents();
 
-        // intially disable stop button because no task is running
-        run.setEnabled(true);
-        stop.setEnabled(false);
-
         // set intial state
         numberOfFrames = Integer.parseInt(frames.getText());
         exposureMs = Double.parseDouble(exposure.getText());
-        running = false;
         directoryPath = ""; // ensure that the user chooses a directory
-    }
-
-    public void taskDone(){
-        // enable all ui except for the stop button
-        run.setEnabled(true);
-        stop.setEnabled(false);
-        jFileChooser1.setEnabled(true);
-        exposure.setEnabled(true);
-        chooseDirectory.setEnabled(true);
-        frames.setEnabled(true);
-
-        running = false;
-        lm.logMessage(String.valueOf(running));
     }
 
     /**
@@ -260,33 +241,12 @@ public class TrackStimGUI extends javax.swing.JFrame {
 
     private void runActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runActionPerformed
         if( validateDirectory() && validateFrames() && validateExposure() ){
-            // disable all ui while running except for the stop button
-            run.setEnabled(false);
-            stop.setEnabled(true);
-            jFileChooser1.setEnabled(false);
-            exposure.setEnabled(false);
-            chooseDirectory.setEnabled(false);
-            frames.setEnabled(false);
-
-            running = true;
-            lm.logMessage(String.valueOf(running));
-
-            tsc.startImageAcquisitionTask(numberOfFrames, exposureMs, directoryPath);
+            tsc = new TrackStimController(studio, this, numberOfFrames, exposureMs, directoryPath);
+            tsc.run();
         }
     }//GEN-LAST:event_runActionPerformed
 
     private void stopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopActionPerformed
-
-        // enable all ui except for the stop button
-        run.setEnabled(true);
-        stop.setEnabled(false);
-        jFileChooser1.setEnabled(true);
-        exposure.setEnabled(true);
-        chooseDirectory.setEnabled(true);
-        frames.setEnabled(true);
-
-        running = false;
-        lm.logMessage(String.valueOf(running));
     }//GEN-LAST:event_stopActionPerformed
 
 

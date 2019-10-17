@@ -27,7 +27,7 @@ import org.micromanager.display.DisplayWindow;
 // Performs image acqusition, analysis, and tracking
 // - receives commands to start/stop image acquisitions
 // - once image acquisition tasks are finished, notifies the UI
-public class TrackStimController {
+public class TrackStimController implements Runnable {
     public TrackStimGUI gui;
 
     public Studio studio;    
@@ -36,10 +36,11 @@ public class TrackStimController {
     public DataManager dm;
     public DisplayManager dism;
 
-    private String currentSavePath;
+    private int numFrames;
+    private double exposureMs;
+    private String savePath;
 
-
-    public TrackStimController(Studio studio_, TrackStimGUI gui_){
+    public TrackStimController(Studio studio_, TrackStimGUI gui_, int numFrames_, double exposureMs_, String directoryPath_){
         gui = gui_;
                 
         // get micro manager scripting utilities and the micro manager core
@@ -48,6 +49,14 @@ public class TrackStimController {
         lm = studio.logs();
         dm = studio.data();
         dism = studio.displays();
+
+        numFrames = numFrames_;
+        exposureMs = exposureMs_;
+        Path directoryPath = Paths.get(directoryPath_);
+        savePath = Paths.get(directoryPath_, "temp-" + String.valueOf(new Date().getTime())).toString();
+
+        // hard code binning for now
+        this.setCameraProperties(exposureMs, "4x4");
     }
 
     // call this when a image acquisition task is done/errored so the UI can update
@@ -72,12 +81,8 @@ public class TrackStimController {
         }
     }
 
-    public void startImageAcquisitionTask(int numFrames, double exposureMs, String directoryToSave){
-        Path directoryPath = Paths.get(directoryToSave);
-        String savePath = Paths.get(directoryToSave, "temp-" + String.valueOf(new Date().getTime())).toString();
-        currentSavePath = savePath;
-
-        this.setCameraProperties(exposureMs, "4x4");
+    @Override
+    public void run(){
 
         // Create a Datastore for the images to be stored in, in RAM.
         Datastore store = dm.createRAMDatastore();
@@ -90,7 +95,6 @@ public class TrackStimController {
         // Arguments are the number of images to collect, the amount of time to wait
         // between images, and whether or not to halt the acquisition if the
         // sequence buffer overflows.
-
         try {
             mmc.startSequenceAcquisition(numFrames, 0, true);
             // Set up a Coords.CoordsBuilder for applying coordinates to each image.
