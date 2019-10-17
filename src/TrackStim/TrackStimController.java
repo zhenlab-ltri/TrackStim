@@ -59,10 +59,6 @@ public class TrackStimController implements Runnable {
         this.setCameraProperties(exposureMs, "4x4");
     }
 
-    // call this when a image acquisition task is done/errored so the UI can update
-    public void taskDoneNotifyUI(){
-        gui.taskDone();
-    }
 
     public void stopImageAcquisitionTask(){
     }
@@ -127,6 +123,6 @@ public class TrackStimController implements Runnable {
         }
         dism.manage(store);
 
-        taskDoneNotifyUI();
+        lm.showMessage("Finished imaging task");
     }
 }

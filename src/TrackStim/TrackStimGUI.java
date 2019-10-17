@@ -169,7 +169,7 @@ public class TrackStimGUI extends javax.swing.JFrame {
     private void chooseDirectoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chooseDirectoryActionPerformed
         // TODO add your handling code here:
         jFileChooser1.setCurrentDirectory(new java.io.File("."));
-        jFileChooser1.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+       jFileChooser1.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         int fileChosen = jFileChooser1.showOpenDialog(this);
 
         if( fileChosen == JFileChooser.APPROVE_OPTION){
