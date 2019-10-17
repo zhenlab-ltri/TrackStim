@@ -24,7 +24,7 @@ public class TrackStimGUI extends javax.swing.JFrame {
     public Studio studio;
     public LogManager lm;
 
-    public TrackStimController tsc;
+    public Thread imageAcquisitionThread;
 
     // UI state that will be sent as arguments to the sequence acquisition function
     public int numberOfFrames;
@@ -241,12 +241,17 @@ public class TrackStimGUI extends javax.swing.JFrame {
 
     private void runActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runActionPerformed
         if( validateDirectory() && validateFrames() && validateExposure() ){
-            tsc = new TrackStimController(studio, this, numberOfFrames, exposureMs, directoryPath);
-            tsc.run();
+            lm.logMessage("Input is valid.  Running image acquisition task");
+            imageAcquisitionThread = new Thread(new TrackStimController(studio, this, numberOfFrames, exposureMs, directoryPath));
+            imageAcquisitionThread.start();
         }
     }//GEN-LAST:event_runActionPerformed
 
     private void stopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopActionPerformed
+        if( imageAcquisitionThread != null ){
+            lm.logMessage("Stopping image acquisition task");
+            imageAcquisitionThread.interrupt();
+        }
     }//GEN-LAST:event_stopActionPerformed
 
 

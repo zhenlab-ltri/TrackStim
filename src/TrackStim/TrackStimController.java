@@ -95,7 +95,9 @@ public class TrackStimController implements Runnable {
             mmc.startSequenceAcquisition(numFrames, 0, true);
             // Set up a Coords.CoordsBuilder for applying coordinates to each image.
             int curFrame = 0;
-            while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning(mmc.getCameraDevice())) {
+            // check that there are still images to get or check if TrackStimGUI has cancelled this imaging task
+            // TrackStimGUI cancels this task by calling thread.interrupt().  We can check if the thread was interrupted by using isInterrupted()
+            while ((mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning(mmc.getCameraDevice())) && !Thread.currentThread().isInterrupted()) {
                 if (mmc.getRemainingImageCount() > 0) {
                 TaggedImage tagged = mmc.popNextTaggedImage();
                 // Convert to an Image at the desired timepoint.
