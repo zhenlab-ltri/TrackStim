@@ -40,6 +40,10 @@ public class TrackStimGUI extends javax.swing.JFrame {
 
         initComponents();
 
+        // intially disable stop button because no task is running
+        run.setEnabled(true);
+        stop.setEnabled(false);
+
         // set intial state
         numberOfFrames = Integer.parseInt(frames.getText());
         exposureMs = Double.parseDouble(exposure.getText());
@@ -239,8 +243,26 @@ public class TrackStimGUI extends javax.swing.JFrame {
         return valid;
     }
 
+    public void taskDone(){
+        // enable all ui except for the stop button
+        run.setEnabled(true);
+        stop.setEnabled(false);
+        jFileChooser1.setEnabled(true);
+        exposure.setEnabled(true);
+        chooseDirectory.setEnabled(true);
+        frames.setEnabled(true);
+    }
+
     private void runActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runActionPerformed
         if( validateDirectory() && validateFrames() && validateExposure() ){
+
+            run.setEnabled(false);
+            stop.setEnabled(true);
+            jFileChooser1.setEnabled(false);
+            exposure.setEnabled(false);
+            chooseDirectory.setEnabled(false);
+            frames.setEnabled(false);
+
             lm.logMessage("Input is valid.  Running image acquisition task");
             imageAcquisitionThread = new Thread(new TrackStimController(studio, this, numberOfFrames, exposureMs, directoryPath));
             imageAcquisitionThread.start();
@@ -249,6 +271,15 @@ public class TrackStimGUI extends javax.swing.JFrame {
 
     private void stopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopActionPerformed
         if( imageAcquisitionThread != null ){
+
+            // enable all ui except for the stop button
+            run.setEnabled(true);
+            stop.setEnabled(false);
+            jFileChooser1.setEnabled(true);
+            exposure.setEnabled(true);
+            chooseDirectory.setEnabled(true);
+            frames.setEnabled(true);
+
             lm.logMessage("Stopping image acquisition task");
             imageAcquisitionThread.interrupt();
         }

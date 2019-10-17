@@ -125,6 +125,8 @@ public class TrackStimController implements Runnable {
         }
         dism.manage(store);
 
+        gui.taskDone();
+
         lm.showMessage("Finished imaging task");
     }
 }
