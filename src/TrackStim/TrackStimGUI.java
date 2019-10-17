@@ -13,7 +13,6 @@ import org.micromanager.Studio;
 import org.micromanager.LogManager;
 
 
-import javax.swing.filechooser.FileSystemView;
 import javax.swing.JFileChooser;
 
 // UI related code handles:
@@ -39,7 +38,7 @@ public class TrackStimGUI extends javax.swing.JFrame {
     public TrackStimGUI(Studio studio_) {
         tsc = new TrackStimController(studio_, this);
         lm = studio_.logs();
-        
+
         initComponents();
 
         // intially disable stop button because no task is running
@@ -90,20 +89,10 @@ public class TrackStimGUI extends javax.swing.JFrame {
         framesLabel.setText("Number of frames:");
 
         frames.setText("300");
-        frames.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                framesActionPerformed(evt);
-            }
-        });
 
         exposureLabel.setText("Exposure (ms): ");
 
         exposure.setText("100.0");
-        exposure.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                exposureActionPerformed(evt);
-            }
-        });
 
         chooseDirectory.setText("Choose directory");
         chooseDirectory.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -189,25 +178,6 @@ public class TrackStimGUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void framesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_framesActionPerformed
-        try {
-            numberOfFrames = Integer.parseInt(frames.getText());
-            lm.logMessage("number of frames set to " + String.valueOf(numberOfFrames));
-        } catch (java.lang.Exception e){
-            lm.logMessage(e.getMessage());
-            lm.showMessage("number of frames must be an integer e.g. 100");
-        }
-    }//GEN-LAST:event_framesActionPerformed
-
-    private void exposureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exposureActionPerformed
-        try {
-            exposureMs = Double.parseDouble(exposure.getText());
-            lm.logMessage("exposure ms set to " + String.valueOf(exposureMs));
-        } catch (java.lang.Exception e){
-            lm.logMessage(e.getMessage());
-            lm.showMessage("exposure must be a decimal number e.g. 100.0");
-        }
-    }//GEN-LAST:event_exposureActionPerformed
 
     private void directoryActionPerformed(java.awt.event.ActionEvent evt) {                                                
     }                                               
@@ -225,35 +195,84 @@ public class TrackStimGUI extends javax.swing.JFrame {
             java.io.File f = jFileChooser1.getSelectedFile();
             String fPath = f.getAbsolutePath();
             directory.setText(fPath);
-            directoryPath = fPath;
         }
         
     }//GEN-LAST:event_chooseDirectoryActionPerformed
 
-    private void runActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runActionPerformed
-        File f = new File(directoryPath);
+    private boolean validateDirectory(){
+        File f = new File(directory.getText());
+
+        boolean valid = true;
 		if(!f.exists()){
             lm.showMessage("Directory " + directoryPath + " does not exist. Please select a directory");
-            return;
+            valid = false;
         }
 
         if(!f.isDirectory()){
             lm.showMessage("Directory " + directoryPath + " is a file.  Please select a directory");
-            return;
+            valid = false;
         }
 
-        // disable all ui while running except for the stop button
-        run.setEnabled(false);
-        stop.setEnabled(true);
-        jFileChooser1.setEnabled(false);
-        exposure.setEnabled(false);
-        chooseDirectory.setEnabled(false);
-        frames.setEnabled(false);
+        if( valid ){
+            directoryPath = f.getAbsolutePath();
+        }
 
-        running = true;
-        lm.logMessage(String.valueOf(running));
+        return valid;
+    }
 
-        tsc.startImageAcquisitionTask(numberOfFrames, exposureMs, directoryPath);
+    private boolean validateFrames(){
+        boolean valid = true;
+
+        try {
+            numberOfFrames = Integer.parseInt(frames.getText());
+            lm.logMessage("number of frames set to " + String.valueOf(numberOfFrames));
+        } catch (java.lang.Exception e){
+            lm.logMessage(e.getMessage());
+            lm.showMessage("number of frames must be an integer e.g. 100");
+        }
+
+        valid = numberOfFrames > 0;
+        if(!valid){
+            lm.showMessage("number of frames must be greater than 0");
+        }
+
+        return valid;
+    }
+
+    private boolean validateExposure(){
+        boolean valid = true;
+        try {
+            exposureMs = Double.parseDouble(exposure.getText());
+            lm.logMessage("exposure ms set to " + String.valueOf(exposureMs));
+        } catch (java.lang.Exception e){
+            lm.logMessage(e.getMessage());
+            lm.showMessage("exposure must be a decimal number e.g. 100.0");
+        }
+
+        valid = exposureMs > 10.0;
+
+        if(!valid){
+            lm.showMessage("exposure must be greater than 10.0");
+        }
+
+        return valid;
+    }
+
+    private void runActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runActionPerformed
+        if( validateDirectory() && validateFrames() && validateExposure() ){
+            // disable all ui while running except for the stop button
+            run.setEnabled(false);
+            stop.setEnabled(true);
+            jFileChooser1.setEnabled(false);
+            exposure.setEnabled(false);
+            chooseDirectory.setEnabled(false);
+            frames.setEnabled(false);
+
+            running = true;
+            lm.logMessage(String.valueOf(running));
+
+            tsc.startImageAcquisitionTask(numberOfFrames, exposureMs, directoryPath);
+        }
     }//GEN-LAST:event_runActionPerformed
 
     private void stopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopActionPerformed
