@@ -40,6 +40,8 @@ public class TrackStimController implements Runnable {
     private double exposureMs;
     private String savePath;
 
+    private final int skipCount = 10;
+
     public TrackStimController(Studio studio_, TrackStimGUI gui_, int numFrames_, double exposureMs_, String directoryPath_){
         gui = gui_;
                 
@@ -50,17 +52,13 @@ public class TrackStimController implements Runnable {
         dm = studio.data();
         dism = studio.displays();
 
-        numFrames = numFrames_;
+        numFrames = numFrames_ * skipCount; // we need num frames to be 10x more because we are taking 1 image every 10 frames
         exposureMs = exposureMs_;
         Path directoryPath = Paths.get(directoryPath_);
         savePath = Paths.get(directoryPath_, "temp-" + String.valueOf(new Date().getTime())).toString();
 
         // hard code binning for now
         this.setCameraProperties(exposureMs, "4x4");
-    }
-
-
-    public void stopImageAcquisitionTask(){
     }
 
     // set camera properties
@@ -87,15 +85,15 @@ public class TrackStimController implements Runnable {
 
         Coords.CoordsBuilder builder = dm.getCoordsBuilder().time(0);
 
-
-        int skipCount = 10;  // keep 1 out of 10 images
         // Start collecting images.
         // Arguments are the number of images to collect, the amount of time to wait
         // between images, and whether or not to halt the acquisition if the
         // sequence buffer overflows.
+        long imageAcqusitionStartTime = System.nanoTime();
+
         try {
             mmc.startSequenceAcquisition(numFrames, 0, true);
-            // Set up a Coords.CoordsBuilder for applying coordinates to each image.
+
             int curFrame = 0;
             int curImage = 0;
             // check that there are still images to get or check if TrackStimGUI has cancelled this imaging task
@@ -113,9 +111,6 @@ public class TrackStimController implements Runnable {
                 }
                 
                 curImage++;
-                } else {
-                    // Wait for another image to arrive.
-                    // mmc.sleep(Math.min(.5 * exposureMs, 20));
                 }
             }
 
@@ -124,6 +119,11 @@ public class TrackStimController implements Runnable {
             lm.logMessage("error");
             lm.logMessage(e.getMessage());
         }
+
+        Long imageAcqusitionEndTime = System.nanoTime();
+
+        lm.logMessage("image acqusiition finished in " + String.valueOf( (imageAcqusitionEndTime - imageAcqusitionStartTime) / 1000000 ) + "ms");
+
         // Have Micro-Manager handle logic for ensuring data is saved to disk.
         try {
             store.save(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES, savePath);
@@ -132,6 +132,7 @@ public class TrackStimController implements Runnable {
             lm.logMessage(e.getMessage());
         }
         dism.manage(store);
+        ds.requestToClose();
 
         gui.taskDone();
 
