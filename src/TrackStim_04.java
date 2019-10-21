@@ -20,12 +20,66 @@ import org.micromanager.*;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 
+import org.micromanager.api.MMPlugin;
+import org.micromanager.api.ScriptInterface;
+
+public class TrackStimPlugin implements MMPlugin {
+   public static final String menuName = "TrackStim";
+   public static final String tooltipDescription =
+      "TrackStim";
+
+   // Provides access to the Micro-Manager Java API (for GUI control and high-
+   // level functions).
+   private ScriptInterface app_;
+   // Provides access to the Micro-Manager Core API (for direct hardware
+   // control)
+   private CMMCore core_;
+
+   @Override
+   public void setApp(ScriptInterface app) {
+      app_ = app;
+      core_ = app.getMMCore();
+   }
+
+   @Override
+   public void dispose() {
+      // We do nothing here as the only object we create, our dialog, should
+      // be dismissed by the user.
+   }
+
+   @Override
+   public void show() {
+        TrackStim_04 ts = new TrackStim_04(core_);
+   }
+
+   @Override
+   public String getInfo () {
+      return "C. elegans imaging.";
+   }
+
+   @Override
+   public String getDescription() {
+      return tooltipDescription;
+   }
+
+   @Override
+   public String getVersion() {
+      return "1.0";
+   }
+
+   @Override
+   public String getCopyright() {
+      return "Zhen lab";
+   }
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // To watch the process during data collection, use different thread.
-public class TrackStim_04 extends PlugInFrame implements ActionListener, ImageListener, MouseListener, ItemListener {
+class TrackStim_04 extends PlugInFrame implements ActionListener, ImageListener, MouseListener, ItemListener {
     // public class RealTimeTracker_09 extends PlugInFrame implements
     // ActionListener,ImageListener{
 
@@ -622,7 +676,7 @@ public class TrackStim_04 extends PlugInFrame implements ActionListener, ImageLi
         long index = conf.size();
         String[] tempports = new String[(int) index];
         PropertySetting ps = new PropertySetting();
-        
+
         for (int i = 0; i < index; i++) {
             try {
                 ps = conf.getSetting(i);
