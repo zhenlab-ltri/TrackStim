@@ -5,10 +5,11 @@ micro-manager plugin to image moving C.Elegans
 ## Index Of Topics
 1. Requrired software
 2. Required hardware
-3. Troubleshooting
-4. Installation guide
-5. Development guide
-6. Running TrackStim
+3. Installation guide
+4. Running TrackStim
+5. Troubleshooting
+6. Development guide
+7. Setting up the hardware and software from scratch
 
 
 ## Required software
@@ -30,7 +31,9 @@ Ask the IT department for Mac OS X 10.7
 - Thor Labs M00267820
 - ASI MS-2000-500 xy stage (Serial: 1004-1620-2933-2148, Model: WKU-XYB-Zs-Axioskop2+)
 - A mac with a firewire ieee 1394 port/cable
-- 
+
+
+
 
 
 
