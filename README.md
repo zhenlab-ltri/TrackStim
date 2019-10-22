@@ -23,6 +23,14 @@ Ask the IT department for Mac OS X 10.7
 - Micro-manager 1.4.22
 
 
+## Required hardware
+- Hamamatsu orca R2 camera
+- Hamamatsu orca R2 camera controller C10600
+- Thor Labs CM1-DCH/M SM1A23
+- Thor Labs M00267820
+- ASI MS-2000-500 xy stage (Serial: 1004-1620-2933-2148, Model: WKU-XYB-Zs-Axioskop2+)
+- A mac with a firewire ieee 1394 port/cable
+- 
 
 
 
