@@ -1862,7 +1862,7 @@ class TrackingThread11 extends Thread {
                                 ImageProcessor ip_current = imp.getProcessor();
                                 if (tpf.BF.getState())// for brightfield
                                 {
-                                    ip_current.invert();
+                                    // ip_current.invert(); // turn this off for now because it causes flashing 
                                 }
                                 ImagePlus impinv = new ImagePlus("l", ip_current);
                                 // get data and put it into double[] distancefromcenter =new double[2];
