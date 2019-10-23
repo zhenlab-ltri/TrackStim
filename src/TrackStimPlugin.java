@@ -132,18 +132,9 @@ class TrackStim_04 extends PlugInFrame implements ActionListener, ImageListener,
     int frame = 1200;// String defaultframestring;
     boolean ready;
 
-    public TrackStim_04() {
+    public TrackStim_04(CMMCore cmmcore) {
         super("TrackerwithStimulater");
-        // First, check if there is mmc.
-        if (mmc_ == null) {
-            // if core object is not set attempt to get its global handle
-            mmc_ = new CMMCore();
-        }
-        if (mmc_ == null) {
-            IJ.error("Unable to get Micro-Manager Core API handle.\n"
-                    + "If this module is used as ImageJ plugin, Micro-Manager Studio must be running first!");
-            return;
-        }
+        mmc_ = cmmcore;
         IJ.log("TrackStim Constructor: MMCore initialized");
 
         prefs = Preferences.userNodeForPackage(this.getClass());// make instance?
@@ -1060,36 +1051,17 @@ class TrackingThread11 extends Thread {
 
     // look for stage serial port name to send command
     private String getStagePortLabel(String stagelabel) {
-        String stagelabel_ = stagelabel;
-        Configuration conf = mmc_.getSystemState();
-        long index = conf.size();
-        int i;
-        String PORT = "";
-        PropertySetting ps = new PropertySetting();
-
-        for (i = 0; i < index; i++) {
-            try {
-                ps = conf.getSetting(i);
-            } catch (java.lang.Exception e) {
-                IJ.log("getStagePortLabel: could not get property " + String.valueOf(i) + " from property settings");
-                IJ.log(e.getMessage());
-            }
-
-            String str = ps.getDeviceLabel();
-            IJ.log("getStagePortLabel: device label is " + str);
-            String deviceLabel = ps.getDeviceLabel();
-            String propertyName = ps.getPropertyName();
-            String propertyValue = ps.getPropertyValue();
-
-            IJ.log("getStagePortLabel: device label is " + deviceLabel);
-            IJ.log("getStagePortLabel: serialized device label is " + ps.getVerbose());// this should include port name
-            if ( (deviceLabel == stagelabel) && propertyName == "Port") {
-                PORT = propertyValue;
-            }
+        String stageDeviceLabel = mmc_.getXYStageDevice();
+        String port = "";
+        try {
+            port = mmc_.getProperty(stageDeviceLabel, "Port");
+        } catch(java.lang.Exception e) {
+            IJ.log("could not get xy stage port");
+            IJ.log(e.getMessage());
         }
-
-        IJ.log("getStagePortLabel: returning found port " + PORT);
-        return PORT;
+        IJ.log("xyStagePort is " + port);
+        
+        return port;
     }
 
     // second new method to track
