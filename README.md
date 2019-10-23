@@ -21,7 +21,7 @@ Ask the IT department for Mac OS X 10.7
 - USB to UART Bridge VCP Driver Legacy Version for Mac OSX
 - DCAM API for Mac OS X 10.7 v13.11.4451
 - Java 6 (this should come with Mac OS X 10.7, but if its not installed, you can download it here: https://support.apple.com/kb/dl1572?locale=en_GB) 
-- Micro-manager 1.4.22
+- Micro-manager 1.4.23
 
 
 ### Required hardware
