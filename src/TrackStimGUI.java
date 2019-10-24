@@ -55,16 +55,17 @@ import mmcorej.StrVector;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 
+// provides the ui for track stim
 
-class TrackStim extends PlugInFrame implements ActionListener, ImageListener, MouseListener, ItemListener {
-    // public class RealTimeTracker_09 extends PlugInFrame implements
-    // ActionListener,ImageListener{
-
+// implements a ImageJ plugin interface 
+// **NOTE**: There is a big difference between a micro manager plugin and an imagej plugin
+// this program was initially designed as an imageJ plugin, but is now wrapped inside a micromanager plugin
+// to migrate it to new versions of micromanager
+class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener, MouseListener, ItemListener {
     // globals just in this class
     Preferences prefs;
     TextField framenumtext;
     TextField skiptext;
-    // TextField intervaltext;
 
     // filed used in TrackingThread
     TrackingThread tt = null;
@@ -108,10 +109,10 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
     int frame = 1200;// String defaultframestring;
     boolean ready;
 
-    public TrackStim(CMMCore cmmcore) {
+    public TrackStimGUI(CMMCore cmmcore) {
         super("TrackerwithStimulater");
         mmc_ = cmmcore;
-        IJ.log("TrackStim Constructor: MMCore initialized");
+        IJ.log("TrackStimGUI Constructor: MMCore initialized");
 
         prefs = Preferences.userNodeForPackage(this.getClass());// make instance?
         imp = WindowManager.getCurrentImage();
@@ -124,7 +125,7 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
         boolean stimulatorConnected = stimulator.initialize();
 
         if( !stimulatorConnected ){
-            IJ.log("TrackStim Constructor: could not initialize stimulator.  Stimulator related options will not work");
+            IJ.log("TrackStimGUI Constructor: could not initialize stimulator.  Stimulator related options will not work");
         }
 
 
@@ -137,9 +138,9 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
             } else {
                 frame = Integer.parseInt(prefs.get("FRAME", ""));
             }
-            IJ.log("TrackStim Constructor: Frame value is " + String.valueOf(frame));
+            IJ.log("TrackStimGUI Constructor: Frame value is " + String.valueOf(frame));
         } catch (java.lang.Exception e){
-            IJ.log("TrackStim Constructor: Could not get frame value from preferences obj");
+            IJ.log("TrackStimGUI Constructor: Could not get frame value from preferences obj");
             IJ.log(e.getMessage());
         }
 
@@ -150,7 +151,7 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
             if (dir == null) {
                 dir = IJ.getDirectory("home");
             }
-            IJ.log("TrackStim Constructor: initial dir is " + dir);
+            IJ.log("TrackStimGUI Constructor: initial dir is " + dir);
             File currentdir = new File(dir);
             File[] filelist = currentdir.listFiles();
             if (filelist != null) {
@@ -161,8 +162,8 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
                 }
             }
         }
-        IJ.log("TrackStim Constructor: initial dir is " + dir);
-        IJ.log("TrackStim Constructor: number of directories is " + String.valueOf(dircount));
+        IJ.log("TrackStimGUI Constructor: initial dir is " + dir);
+        IJ.log("TrackStimGUI Constructor: number of directories is " + String.valueOf(dircount));
 
         ImagePlus.addImageListener(this);
         requestFocus(); // may need for keylistener
@@ -785,7 +786,7 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
             stimulator.runStimulation(useRamp, preStimulationVal, strengthVal, stimDurationVal, stimCycleLengthVal, stimCycleVal, rampBaseVal, rampStartVal, rampEndVal);
 
         } catch (java.lang.Exception e){
-            IJ.log("TrackStim.validateAndStartStimulation: error trying to run stimulation");
+            IJ.log("TrackStimGUI.validateAndStartStimulation: error trying to run stimulation");
             IJ.log(e.getMessage());
         }
     }

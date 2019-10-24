@@ -29,7 +29,7 @@ public class TrackStimPlugin implements MMPlugin {
 
    @Override
    public void show() {
-        TrackStim ts = new TrackStim(core_);
+        TrackStimGUI ts = new TrackStimGUI(core_);
    }
 
    @Override
