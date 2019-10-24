@@ -35,14 +35,14 @@ import ij.gui.ImageCanvas;
 import mmcorej.CMMCore;
 
 
-class TrackingThread extends Thread {
-    // vaiables recieve from RealTimeTracker
+class Tracker extends Thread {
+    // vaiables recieve from GUI
     TrackStimGUI tpf;
     CMMCore mmc_;
     ImagePlus imp;
     ImageCanvas ic;
     String dirforsave;
-    int frame;// String defaultframestring;
+    int frame;
     boolean ready;
 
     // inside of thread
@@ -76,19 +76,20 @@ class TrackingThread extends Thread {
     // allowance distance change
     static double mindistancechange = 0.3;
 
-    TrackingThread(TrackStimGUI tpf) {
-        IJ.log("TrackingThread constructor");
-        this.tpf = tpf;
+    Tracker(TrackStimGUI gui) {
+        IJ.log("Tracker constructor");
+        this.tpf = gui;
         mmc_ = tpf.mmc_;
         imp = tpf.imp;
         ic = tpf.ic;
         dirforsave = tpf.dirforsave;
         frame = tpf.frame;// String defaultframestring;
         ready = tpf.ready;
+
     }
 
     public void run() {
-        IJ.log("TrackingThread: run start");
+        IJ.log("Tracker: run start");
         this.startAcq("from thread");
     }
 

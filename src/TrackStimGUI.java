@@ -67,8 +67,8 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     TextField framenumtext;
     TextField skiptext;
 
-    // filed used in TrackingThread
-    TrackingThread tt = null;
+    // filed used in Tracker
+    Tracker tt = null;
 
     java.awt.Checkbox closest;// target definition method.
     java.awt.Checkbox right;// field for tacking source
@@ -101,12 +101,12 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     TextField rampstart;
     TextField rampend;
 
-    // pass to TrackingThread
+    // pass to Tracker
     CMMCore mmc_;
     ImagePlus imp;
     ImageCanvas ic;
     String dirforsave;
-    int frame = 1200;// String defaultframestring;
+    int frame = 1200;
     boolean ready;
 
     public TrackStimGUI(CMMCore cmmcore) {
@@ -677,8 +677,7 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
             // ready button pushed
             if (lable.equals("Ready")) {
                 ready = true;
-                tt = new TrackingThread(this);
-                tt.start();
+                validateAndStartTracker();
 
                 // go button pressed
             } else if (lable.equals("Go")) {
@@ -739,9 +738,7 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
                     if (STIM.getState()) {
                         validateAndStartStimulation();
                     }
-
-                    tt = new TrackingThread(this);
-                    tt.start();
+                    validateAndStartTracker();
                 }
             } else if (lable.equals("Stop")) {
 
@@ -770,6 +767,11 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
                 validateAndStartStimulation();
             }
         }
+    }
+
+    void validateAndStartTracker(){
+        tt = new Tracker(this);
+        tt.start();
     }
 
     void validateAndStartStimulation(){
