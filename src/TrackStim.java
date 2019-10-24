@@ -633,7 +633,7 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
     // mili sec, and 0-63
     // helper function for prepSignals
     void setSender(int channel, int timepoint, int signalstrength) {
-        SignalSender01 sd = new SignalSender01(this);
+        SignalSender sd = new SignalSender(this);
         sd.setChannel(channel);
         sd.setSignalStrength(signalstrength);
         ScheduledExecutorService ses;

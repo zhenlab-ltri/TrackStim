@@ -3,7 +3,7 @@ import ij.IJ;
 import mmcorej.CharVector;
 
 // for stimulation using arduino DA converter
-class SignalSender01 implements Runnable {
+class SignalSender implements Runnable {
     TrackStim ts;
     int channel;
     int strength;
@@ -14,7 +14,7 @@ class SignalSender01 implements Runnable {
     int[] changetimepoints;
     int[] changevalues;
 
-    SignalSender01(TrackStim ts_) {
+    SignalSender(TrackStim ts_) {
         ts = ts_;
     }
 
@@ -28,8 +28,8 @@ class SignalSender01 implements Runnable {
     }
 
     public void run() {
-        IJ.log("SignalSender01: system time is " + String.valueOf(System.nanoTime() / 1000000));
-        IJ.log("SignalSender01: strength is " + String.valueOf(strength));
+        IJ.log("SignalSender: system time is " + String.valueOf(System.nanoTime() / 1000000));
+        IJ.log("SignalSender: strength is " + String.valueOf(strength));
 
         // testing sending vale
         sendingdata = channel << 7 | strength;
@@ -39,7 +39,7 @@ class SignalSender01 implements Runnable {
         try {
             ts.mmc_.writeToSerialPort(ts.adportsname, sendingchrvec);
         } catch (java.lang.Exception e) {
-            IJ.log("SignalSender01: error trying to write data " + String.valueOf(sendingdata) + " to the serial port " + ts.adportsname);
+            IJ.log("SignalSender: error trying to write data " + String.valueOf(sendingdata) + " to the serial port " + ts.adportsname);
             IJ.log(e.getMessage());
         }
     }
