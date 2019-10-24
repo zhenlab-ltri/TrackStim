@@ -642,7 +642,13 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
             }
             sendingdata = 1 << 6 | lengthchoice << 3 | exposurechoice;
 
-            stimulator.updateStimulatorSignal(exposurechoice, lengthchoice);
+            try {
+                stimulator.updateStimulatorSignal(exposurechoice, lengthchoice);
+
+            } catch (java.lang.Exception ex){
+                IJ.log("itemStateChanged: error trying to update the stimulator signal");
+                IJ.log(ex.getMessage());
+            }
         }
 
     }
@@ -770,7 +776,7 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
             int preStimulationVal = Integer.parseInt(prestimulation.getText());// initial delay
             int strengthVal = Integer.parseInt(stimstrength.getText());// strength
             int stimDurationVal = Integer.parseInt(stimduration.getText());// duration
-            int stimCycleLengthVal = Integer.parseInt(ç.getText());// cycle time
+            int stimCycleLengthVal = Integer.parseInt(stimcyclelength.getText());// cycle time
             int stimCycleVal = Integer.parseInt(stimcyclenum.getText());// repeat
             int rampBaseVal = Integer.parseInt(rampbase.getText());// base
             int rampStartVal = Integer.parseInt(rampstart.getText());// start
