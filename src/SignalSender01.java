@@ -4,7 +4,7 @@ import mmcorej.CharVector;
 
 // for stimulation using arduino DA converter
 class SignalSender01 implements Runnable {
-    TrackStim_04 ts;
+    TrackStim ts;
     int channel;
     int strength;
     int sendingdata;
@@ -14,7 +14,7 @@ class SignalSender01 implements Runnable {
     int[] changetimepoints;
     int[] changevalues;
 
-    SignalSender01(TrackStim_04 ts_) {
+    SignalSender01(TrackStim ts_) {
         ts = ts_;
     }
 

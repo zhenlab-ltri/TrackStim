@@ -61,7 +61,7 @@ import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 
 
-class TrackStim_04 extends PlugInFrame implements ActionListener, ImageListener, MouseListener, ItemListener {
+class TrackStim extends PlugInFrame implements ActionListener, ImageListener, MouseListener, ItemListener {
     // public class RealTimeTracker_09 extends PlugInFrame implements
     // ActionListener,ImageListener{
 
@@ -114,7 +114,7 @@ class TrackStim_04 extends PlugInFrame implements ActionListener, ImageListener,
     int frame = 1200;// String defaultframestring;
     boolean ready;
 
-    public TrackStim_04(CMMCore cmmcore) {
+    public TrackStim(CMMCore cmmcore) {
         super("TrackerwithStimulater");
         mmc_ = cmmcore;
         IJ.log("TrackStim Constructor: MMCore initialized");

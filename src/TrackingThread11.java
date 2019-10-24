@@ -37,7 +37,7 @@ import mmcorej.CMMCore;
 
 class TrackingThread11 extends Thread {
     // vaiables recieve from RealTimeTracker
-    TrackStim_04 tpf;
+    TrackStim tpf;
     CMMCore mmc_;
     ImagePlus imp;
     ImageCanvas ic;
@@ -76,7 +76,7 @@ class TrackingThread11 extends Thread {
     // allowance distance change
     static double mindistancechange = 0.3;
 
-    TrackingThread11(TrackStim_04 tpf) {
+    TrackingThread11(TrackStim tpf) {
         IJ.log("TrackingThread constructor");
         this.tpf = tpf;
         mmc_ = tpf.mmc_;
