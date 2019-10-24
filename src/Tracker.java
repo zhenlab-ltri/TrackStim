@@ -930,7 +930,8 @@ class Tracker extends Thread {
                                 roi = new Roi(4, 4, width - 8, height - 8);// trim edge of image since it may have dark
                                                                            // reagion
                                 imp.setRoi(roi);
-                                ImageProcessor ip_current = imp.getProcessor();
+                                ImagePlus inverted = imp.duplicate();
+                                ImageProcessor ip_current = inverted.getProcessor();
                                 if (tpf.BF.getState())// for brightfield
                                 {
                                     ip_current.invert(); // turn this off for now because it causes flashing 
