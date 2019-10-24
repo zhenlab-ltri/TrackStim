@@ -70,8 +70,7 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
     TextField framenumtext;
     TextField skiptext;
     // TextField intervaltext;
-    // TrackingThread(RealTimeTracker_01 tpf);
-    TrackingThread11 tt = null;
+    TrackingThread tt = null;
 
     // filed used in TrackingThread
     java.awt.Checkbox closest;// target definition method.
@@ -785,7 +784,7 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
             // ready button pushed
             if (lable.equals("Ready")) {
                 ready = true;
-                tt = new TrackingThread11(this);
+                tt = new TrackingThread(this);
                 tt.start();
 
                 // go button pressed
@@ -848,7 +847,7 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
                         prepSignals(0);
                     }
 
-                    tt = new TrackingThread11(this);
+                    tt = new TrackingThread(this);
                     tt.start();
                 }
             } else if (lable.equals("Stop")) {
