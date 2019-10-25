@@ -55,13 +55,15 @@ Take ```TrackStim_.jar``` and copy it to ```/Applications/Micro-Manager1.4/mmplu
 
 
 ### Running TrackStim
-1. Open Micro-Manager 1.4
-2. Choose the configuration file trackstim-mm1.4.23mac.cfg
-3. Click on the group setting ```TrackStim```
-4. Click on the preset ```default```
-5. Click the "live" button on the left side of the Micro-Manager window
-6. Open Micro-Manager 1.4 -> Plugins menu
-7. Choose TrackStim
+1. Make sure Micro-Manager 1.4 is not already running
+2. Turn on the camera controller, and asi ms 2000 xy stage
+3. Open Micro-Manager 1.4
+4. Choose the configuration file ```trackstim-mm1.4.23mac.cfg```
+5. Click on the group setting ```TrackStim ```
+6. Click on the preset ```default```
+7. Click the "live" button on the left side of the Micro-Manager window
+8. Open Micro-Manager 1.4 -> Plugins menu
+9. Choose TrackStim
 
 TODO
 - more detail
