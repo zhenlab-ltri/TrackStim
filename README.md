@@ -56,10 +56,10 @@ Take ```TrackStim_.jar``` and copy it to ```/Applications/Micro-Manager1.4/mmplu
 
 ### Running TrackStim
 1. Open Micro-Manager 1.4
-2. Choose the configuration file in this repository i.e (trackstim-mm1.4.21mac.cfg)
-3. Click on the group setting ```hamamatsu_property_test```
-4. Click on the preset ```NewPreset```
-5. Click the "live" button on the left side of the Micro-Manager windows
+2. Choose the configuration file trackstim-mm1.4.23mac.cfg
+3. Click on the group setting ```TrackStim```
+4. Click on the preset ```default```
+5. Click the "live" button on the left side of the Micro-Manager window
 6. Open Micro-Manager 1.4 -> Plugins menu
 7. Choose TrackStim
 
