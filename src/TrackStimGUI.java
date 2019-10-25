@@ -3,11 +3,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.prefs.Preferences;
 
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
 import java.awt.TextField;
 import java.awt.Label;
 import java.awt.GridBagConstraints;
@@ -60,19 +55,21 @@ import mmcorej.StrVector;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 
+// provides the ui for track stim
 
-class TrackStim extends PlugInFrame implements ActionListener, ImageListener, MouseListener, ItemListener {
-    // public class RealTimeTracker_09 extends PlugInFrame implements
-    // ActionListener,ImageListener{
-
+// implements a ImageJ plugin interface 
+// **NOTE**: There is a big difference between a micro manager plugin and an imagej plugin
+// this program was initially designed as an imageJ plugin, but is now wrapped inside a micromanager plugin
+// to migrate it to new versions of micromanager
+class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener, MouseListener, ItemListener {
     // globals just in this class
     Preferences prefs;
     TextField framenumtext;
     TextField skiptext;
-    // TextField intervaltext;
-    TrackingThread tt = null;
 
-    // filed used in TrackingThread
+    // filed used in Tracker
+    Tracker tt = null;
+
     java.awt.Checkbox closest;// target definition method.
     java.awt.Checkbox right;// field for tacking source
     java.awt.Checkbox objective_ten;// change stage movement velocity
@@ -92,6 +89,7 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
     java.awt.Choice cyclelength;
 
     // Stimulation
+    Stimulator stimulator;
     java.awt.Checkbox STIM;
     TextField prestimulation;
     TextField stimstrength;
@@ -103,26 +101,33 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
     TextField rampstart;
     TextField rampend;
 
-    String adportsname;// stimulation port for arduino
-
-    // pass to TrackingThread
+    // pass to Tracker
     CMMCore mmc_;
     ImagePlus imp;
     ImageCanvas ic;
     String dirforsave;
-    int frame = 1200;// String defaultframestring;
+    int frame = 1200;
     boolean ready;
 
-    public TrackStim(CMMCore cmmcore) {
+    public TrackStimGUI(CMMCore cmmcore) {
         super("TrackerwithStimulater");
         mmc_ = cmmcore;
-        IJ.log("TrackStim Constructor: MMCore initialized");
+        IJ.log("TrackStimGUI Constructor: MMCore initialized");
 
         prefs = Preferences.userNodeForPackage(this.getClass());// make instance?
         imp = WindowManager.getCurrentImage();
         ImageWindow iw = imp.getWindow();
         ic = iw.getCanvas();
         ic.addMouseListener(this);
+
+        stimulator = new Stimulator(mmc_);
+
+        boolean stimulatorConnected = stimulator.initialize();
+
+        if( !stimulatorConnected ){
+            IJ.log("TrackStimGUI Constructor: could not initialize stimulator.  Stimulator related options will not work");
+        }
+
 
         // try to get preferences directory and frame
         try {
@@ -133,9 +138,9 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
             } else {
                 frame = Integer.parseInt(prefs.get("FRAME", ""));
             }
-            IJ.log("TrackStim Constructor: Frame value is " + String.valueOf(frame));
+            IJ.log("TrackStimGUI Constructor: Frame value is " + String.valueOf(frame));
         } catch (java.lang.Exception e){
-            IJ.log("TrackStim Constructor: Could not get frame value from preferences obj");
+            IJ.log("TrackStimGUI Constructor: Could not get frame value from preferences obj");
             IJ.log(e.getMessage());
         }
 
@@ -146,7 +151,7 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
             if (dir == null) {
                 dir = IJ.getDirectory("home");
             }
-            IJ.log("TrackStim Constructor: initial dir is " + dir);
+            IJ.log("TrackStimGUI Constructor: initial dir is " + dir);
             File currentdir = new File(dir);
             File[] filelist = currentdir.listFiles();
             if (filelist != null) {
@@ -157,8 +162,8 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
                 }
             }
         }
-        IJ.log("TrackStim Constructor: initial dir is " + dir);
-        IJ.log("TrackStim Constructor: number of directories is " + String.valueOf(dircount));
+        IJ.log("TrackStimGUI Constructor: initial dir is " + dir);
+        IJ.log("TrackStimGUI Constructor: number of directories is " + String.valueOf(dircount));
 
         ImagePlus.addImageListener(this);
         requestFocus(); // may need for keylistener
@@ -562,115 +567,6 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
         add(rampend);
         setSize(700, 225);
         setVisible(true);
-
-
-        // find the port that the xy stage is on
-        ArrayList<String> portslist = getPortLabels();
-        adportsname = "";
-        for (int i = 0; i < portslist.size(); i++) {
-            if (portslist.get(i).indexOf("usbmodem") > 0)// adhoc. need better way later.
-            {
-                adportsname = portslist.get(i);
-            }
-        }
-
-        IJ.log("TrackStim Constructor: port list");
-        IJ.log(Arrays.toString(portslist.toArray()));
-        IJ.log("TrackStim Constructor: adportsname is" + adportsname);
-
-        if (adportsname.equals("")) {
-            IJ.log("TrackStim Constructor: adportsname is empty string.  stimulator is not assigned");
-        } else {
-            IJ.log("TrackStim Constructor: stimulator is assigned at adportsname: " + adportsname);
-        }
-    }
-
-    void prepSignals(int channel) {
-        IJ.log("prepSignals: parsing/validating UI values to send through channel " + Integer.toString(channel));
-
-        int inputval1 = 0;
-        int inputval2 = 0;
-        int inputval3 = 0;
-        int inputval4 = 0;
-        int inputval5 = 0;
-        int inputval6 = 0;
-        int inputval7 = 0;
-        int inputval8 = 0;
-        try {
-            inputval1 = Integer.parseInt(prestimulation.getText());// initial delay
-            inputval2 = Integer.parseInt(stimstrength.getText());// strength
-            inputval3 = Integer.parseInt(stimduration.getText());// duration
-            inputval4 = Integer.parseInt(stimcyclelength.getText());// cycle time
-            inputval5 = Integer.parseInt(stimcyclenum.getText());// repeat
-            inputval6 = Integer.parseInt(rampbase.getText());// base
-            inputval7 = Integer.parseInt(rampstart.getText());// start
-            inputval8 = Integer.parseInt(rampend.getText());// end
-            // ramp
-
-            if (ramp.getState()) {
-                int absdiff = Math.abs(inputval8 - inputval7);
-                int signoframp = Integer.signum(inputval8 - inputval7);
-
-                for (int i = 0; i < inputval5; i++) {
-                    for (int j = 0; j < absdiff + 1; j++) {
-                        setSender(channel, inputval1 + i * inputval4 + j * (inputval3 / absdiff),
-                                inputval7 + j * signoframp);
-                    }
-                    setSender(channel, inputval1 + inputval3 + i * inputval4, inputval6);
-                }
-            } else {
-                for (int i = 0; i < inputval5; i++) {
-                    setSender(channel, inputval1 + i * inputval4, inputval2);
-                    setSender(channel, inputval1 + inputval3 + i * inputval4, inputval6);
-                }
-            }
-        } catch (java.lang.Exception e) {
-            IJ.log("prepSignals: error sending signals to channel " + Integer.toString(channel));
-            IJ.log(e.getMessage());
-        }
-    }
-
-    // mili sec, and 0-63
-    // helper function for prepSignals
-    void setSender(int channel, int timepoint, int signalstrength) {
-        SignalSender sd = new SignalSender(this);
-        sd.setChannel(channel);
-        sd.setSignalStrength(signalstrength);
-        ScheduledExecutorService ses;
-        ScheduledFuture future = null;
-        ses = Executors.newSingleThreadScheduledExecutor();
-        future = ses.schedule(sd, timepoint * 1000, TimeUnit.MICROSECONDS);
-    }
-
-    ArrayList<String> getPortLabels() {
-        ArrayList<String> portlist = new ArrayList<String>();
-        Configuration conf = mmc_.getSystemState();
-        long index = conf.size();
-        String[] tempports = new String[(int) index];
-        PropertySetting ps = new PropertySetting();
-
-        for (int i = 0; i < index; i++) {
-            try {
-                ps = conf.getSetting(i);
-            } catch (java.lang.Exception e) {
-                IJ.log("getPortLabels: error getting config value");
-                IJ.log(e.getMessage());
-            }
-
-
-            String propertyName = ps.getPropertyName();
-            String propertyValue = ps.getPropertyValue();
-
-            // just testing enviroment having only one port /dev/tty.usbmodem1d11
-            if (propertyName == "Port") {
-                IJ.log("getPortLabels: adding port label " + propertyValue);
-
-                portlist.add(propertyValue);
-
-            }
-        }
-        return portlist;
-
     }
 
     public void imageOpened(ImagePlus imp) {
@@ -747,14 +643,11 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
             }
             sendingdata = 1 << 6 | lengthchoice << 3 | exposurechoice;
 
-            // sending vale to arduino
-            mmcorej.CharVector sendingchrvec = new mmcorej.CharVector();
-            IJ.log("itemStateChanged: sending the following data to the arduino: " + String.valueOf(sendingdata));
-            sendingchrvec.add((char) sendingdata);
             try {
-                mmc_.writeToSerialPort(adportsname, sendingchrvec);
-            } catch (java.lang.Exception ex) {
-                IJ.log("itemStateChanged:  error trying to send data " + String.valueOf(sendingdata) + "to arduino");
+                stimulator.updateStimulatorSignal(exposurechoice, lengthchoice);
+
+            } catch (java.lang.Exception ex){
+                IJ.log("itemStateChanged: error trying to update the stimulator signal");
                 IJ.log(ex.getMessage());
             }
         }
@@ -784,8 +677,7 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
             // ready button pushed
             if (lable.equals("Ready")) {
                 ready = true;
-                tt = new TrackingThread(this);
-                tt.start();
+                validateAndStartTracker();
 
                 // go button pressed
             } else if (lable.equals("Go")) {
@@ -844,11 +736,9 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
 
                     ready = false;
                     if (STIM.getState()) {
-                        prepSignals(0);
+                        validateAndStartStimulation();
                     }
-
-                    tt = new TrackingThread(this);
-                    tt.start();
+                    validateAndStartTracker();
                 }
             } else if (lable.equals("Stop")) {
 
@@ -873,9 +763,33 @@ class TrackStim extends PlugInFrame implements ActionListener, ImageListener, Mo
                 String dcdir = dc.getDirectory();
                 savedir.setText(dcdir);
             } else if (lable.equals("Run")){
-                IJ.log("actionPerformed: RUN was pressed, calling prepSignals...");
-                prepSignals(0);
+                IJ.log("actionPerformed: RUN was pressed, running stimulation");
+                validateAndStartStimulation();
             }
+        }
+    }
+
+    void validateAndStartTracker(){
+        tt = new Tracker(this);
+        tt.start();
+    }
+
+    void validateAndStartStimulation(){
+        try {
+            int preStimulationVal = Integer.parseInt(prestimulation.getText());// initial delay
+            int strengthVal = Integer.parseInt(stimstrength.getText());// strength
+            int stimDurationVal = Integer.parseInt(stimduration.getText());// duration
+            int stimCycleLengthVal = Integer.parseInt(stimcyclelength.getText());// cycle time
+            int stimCycleVal = Integer.parseInt(stimcyclenum.getText());// repeat
+            int rampBaseVal = Integer.parseInt(rampbase.getText());// base
+            int rampStartVal = Integer.parseInt(rampstart.getText());// start
+            int rampEndVal = Integer.parseInt(rampend.getText());// end
+            boolean useRamp = ramp.getState();
+            stimulator.runStimulation(useRamp, preStimulationVal, strengthVal, stimDurationVal, stimCycleLengthVal, stimCycleVal, rampBaseVal, rampStartVal, rampEndVal);
+
+        } catch (java.lang.Exception e){
+            IJ.log("TrackStimGUI.validateAndStartStimulation: error trying to run stimulation");
+            IJ.log(e.getMessage());
         }
     }
 

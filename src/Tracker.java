@@ -35,14 +35,14 @@ import ij.gui.ImageCanvas;
 import mmcorej.CMMCore;
 
 
-class TrackingThread extends Thread {
-    // vaiables recieve from RealTimeTracker
-    TrackStim tpf;
+class Tracker extends Thread {
+    // vaiables recieve from GUI
+    TrackStimGUI tpf;
     CMMCore mmc_;
     ImagePlus imp;
     ImageCanvas ic;
     String dirforsave;
-    int frame;// String defaultframestring;
+    int frame;
     boolean ready;
 
     // inside of thread
@@ -76,19 +76,20 @@ class TrackingThread extends Thread {
     // allowance distance change
     static double mindistancechange = 0.3;
 
-    TrackingThread(TrackStim tpf) {
-        IJ.log("TrackingThread constructor");
-        this.tpf = tpf;
+    Tracker(TrackStimGUI gui) {
+        IJ.log("Tracker constructor");
+        this.tpf = gui;
         mmc_ = tpf.mmc_;
         imp = tpf.imp;
         ic = tpf.ic;
         dirforsave = tpf.dirforsave;
         frame = tpf.frame;// String defaultframestring;
         ready = tpf.ready;
+
     }
 
     public void run() {
-        IJ.log("TrackingThread: run start");
+        IJ.log("Tracker: run start");
         this.startAcq("from thread");
     }
 
@@ -929,7 +930,8 @@ class TrackingThread extends Thread {
                                 roi = new Roi(4, 4, width - 8, height - 8);// trim edge of image since it may have dark
                                                                            // reagion
                                 imp.setRoi(roi);
-                                ImageProcessor ip_current = imp.getProcessor();
+                                ImagePlus inverted = imp.duplicate();
+                                ImageProcessor ip_current = inverted.getProcessor();
                                 if (tpf.BF.getState())// for brightfield
                                 {
                                     ip_current.invert(); // turn this off for now because it causes flashing 
