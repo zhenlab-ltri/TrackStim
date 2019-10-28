@@ -60,6 +60,7 @@ class Stimulator {
     boolean initialized = false;
 
     static final int STIMULATION_CHANNEL = 0; // the channel to send ths signals to
+    static final String STIMULATOR_DEVICE_LABEL = "FreeSerialPort"; // hardcoded device label found in config trackstim-mm1.4.23mac.cfg
 
     Stimulator(CMMCore cmmcore){
         mmc = cmmcore;
@@ -75,26 +76,17 @@ class Stimulator {
         PropertySetting ps = new PropertySetting();
         boolean portFound = false;
 
-        for (int i = 0; i < index; i++) {
-            try {
-                ps = conf.getSetting(i);
-            } catch (java.lang.Exception e) {
-                IJ.log("Stimulator.initialize: error getting property settings");
-                IJ.log(e.getMessage());
-            }
+        try {
+            stimulatorPort = mmc.getProperty(STIMULATOR_DEVICE_LABEL, "Port");
+        } catch (Exception e){
+            IJ.log("error getting stimulator port");
+            IJ.log(e.getMessage());
+        }
 
-
-            String propertyName = ps.getPropertyName();
-            String propertyValue = ps.getPropertyValue();
-
-            // just testing enviroment having only one port /dev/tty.usbmodem1d11
-            // searching for usbmodem is a hack and it should be replaced
-            if (propertyName == "Port" && propertyName.indexOf("usbmodem") > 0) {
-                IJ.log("Stimulator.initialize: found stimulator port - " + propertyValue);
-
-                stimulatorPort = propertyValue;
-                portFound = true;
-            }
+        if(stimulatorPort != ""){
+            portFound = true;
+            IJ.log("stimulator port found");
+            IJ.log("stimulator is connected at " + stimulatorPort);
         }
 
         initialized = portFound;
