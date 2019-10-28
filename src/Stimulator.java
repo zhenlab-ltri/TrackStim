@@ -23,8 +23,9 @@ class SignalSender implements Runnable {
     int[] changetimepoints;
     int[] changevalues;
 
-    SignalSender(CMMCore cmmcore, String stimulatorPort) {
-        mmc = cmmcore;
+    SignalSender(CMMCore cmmcore_, String stimulatorPort_) {
+        mmc = cmmcore_;
+        stimulatorPort = stimulatorPort_;
     }
 
     void setChannel(int channel_) {
