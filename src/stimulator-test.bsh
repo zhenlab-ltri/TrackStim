@@ -3,11 +3,20 @@ offsignal = (0 << 7) | 0;
 onsignal = (0 << 8) | 63;
 initialsignal = (0 << 8) | 192; // turn off cycle length
 
-serialdataon = new mmcorej.CharVector();
-serialdataon.add((char) onsignal);
 
-serialdataoff = new mmcorej.CharVector();
-serialdataoff.add((char) offsignal);
+// char vectors containing the signals 
 
-mmc.writeToSerialPort(port, serialdataon);
-//mmc.writeToSerialPort(port, serialdataoff);
+serialDataInitialSignal = new mmcorej.CharVector();
+serialDataInitialSignal.add((char) initialSignal); 
+
+serialDataOn = new mmcorej.CharVector();           
+serialDataOn.add((char) onsignal);
+
+serialDataOff = new mmcorej.CharVector();      
+serialDataOff.add((char) offsignal);
+
+mmc.writeToSerialPort(port, serialDataInitialSignal); // initially send 192 to supposedly turn off cycle length and trigger length
+
+mmc.writeToSerialPort(port, serialDataOn);            // send signal 63 to turn light on
+
+mmc.writeToSerialPort(port, serialDataOff);           // send signal 0 to turn light off
