@@ -95,10 +95,25 @@ class Stimulator {
     }
 
 
-    void runStimulation(boolean useRamp, int preStimulation, int strength, int stimDuration, int stimCycleLength, int stimCycle, int rampBase, int rampStart, int rampEnd) throws java.lang.Exception {
+    void runStimulation(
+        boolean useRamp, int preStimulation, int strength, 
+        int stimDuration, int stimCycleLength, int stimCycle, 
+        int rampBase, int rampStart, int rampEnd) throws java.lang.Exception {
+
+        strength = 31;
         if(!initialized){
             throw new Exception("could not run stimulation.  the stimulator is not initialized");
         }
+
+        IJ.log("Stimulator.runStimulation: useRamp is " + String.valueOf(useRamp));
+        IJ.log("Stimulator.runStimulation: preStimulation is " + String.valueOf(preStimulation));
+        IJ.log("Stimulator.runStimulation: strength is " + String.valueOf(strength));
+        IJ.log("Stimulator.runStimulation: stimDuration is " + String.valueOf(stimDuration));
+        IJ.log("Stimulator.runStimulation: stimCycleLength is " + String.valueOf(stimCycleLength));
+        IJ.log("Stimulator.runStimulation: stimCycle is " + String.valueOf(stimCycle));
+        IJ.log("Stimulator.runStimulation: rampBase is " + String.valueOf(rampBase));
+        IJ.log("Stimulator.runStimulation: rampStart is " + String.valueOf(rampStart));
+        IJ.log("Stimulator.runStimulation: rampEnd is " + String.valueOf(rampEnd));
 
         try {
             if (useRamp) {
@@ -114,8 +129,11 @@ class Stimulator {
                 }
             } else {
                 for (int i = 0; i < stimCycle; i++) {
-                    setSender(STIMULATION_CHANNEL, preStimulation + i * stimCycleLength, strength);
-                    setSender(STIMULATION_CHANNEL, preStimulation + stimDuration + i * stimCycleLength, rampBase);
+                    int signalTimePtBegin = preStimulation + i * stimCycleLength;
+                    int signalTimePtEnd = signalTimePtBegin + stimDuration;
+
+                    setSender(STIMULATION_CHANNEL, signalTimePtBegin, strength);
+                    setSender(STIMULATION_CHANNEL, signalTimePtEnd, rampBase);
                 }
             }
         } catch (java.lang.Exception e) {
@@ -130,9 +148,14 @@ class Stimulator {
         SignalSender sd = new SignalSender(mmc, stimulatorPort);
         sd.setChannel(channel);
         sd.setSignalStrength(signalstrength);
+
         ScheduledExecutorService ses;
         ScheduledFuture future = null;
         ses = Executors.newSingleThreadScheduledExecutor();
+
+        IJ.log("Stimulator.setSender: timepoint is: " + String.valueOf(timepoint * 1000));
+        IJ.log("Stimulator.setSender: signalstrength is: " + String.valueOf(signalstrength));
+
         future = ses.schedule(sd, timepoint * 1000, TimeUnit.MICROSECONDS);
     }
 
