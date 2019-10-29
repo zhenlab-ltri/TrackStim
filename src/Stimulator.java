@@ -100,7 +100,6 @@ class Stimulator {
         int stimDuration, int stimCycleLength, int stimCycle, 
         int rampBase, int rampStart, int rampEnd) throws java.lang.Exception {
 
-        strength = 31;
         if(!initialized){
             throw new Exception("could not run stimulation.  the stimulator is not initialized");
         }
