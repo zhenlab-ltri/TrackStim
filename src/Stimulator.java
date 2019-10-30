@@ -14,14 +14,8 @@ import java.util.concurrent.TimeUnit;
 class SignalSender implements Runnable {
     CMMCore mmc;
     int channel;
-    int strength;
-    int sendingdata;
+    int signal;
     String stimulatorPort;
-
-    int delaytime;
-    int dulation;
-    int[] changetimepoints;
-    int[] changevalues;
 
     SignalSender(CMMCore cmmcore_, String stimulatorPort_) {
         mmc = cmmcore_;
@@ -32,24 +26,22 @@ class SignalSender implements Runnable {
         channel = channel_;
     }
 
-    // use this
-    void setSignalStrength(int strength_) {
-        strength = strength_;
+    void setSignal(int signal_) {
+        signal = signal_;
     }
 
     public void run() {
         IJ.log("SignalSender: system time is " + String.valueOf(System.nanoTime() / 1000000));
-        IJ.log("SignalSender: strength is " + String.valueOf(strength));
+        IJ.log("SignalSender: signal is " + String.valueOf(signal));
 
-        // testing sending vale
-        sendingdata = channel << 7 | strength;
-        CharVector sendingchrvec = new CharVector();
-        sendingchrvec.add((char) sendingdata);
+        int signalData = channel << 7 | signal;
+        CharVector signalDataVec = new CharVector();
+        signalDataVec.add((char) signalData);
 
         try {
-            mmc.writeToSerialPort(stimulatorPort, sendingchrvec);
+            mmc.writeToSerialPort(stimulatorPort, signalDataVec);
         } catch (java.lang.Exception e) {
-            IJ.log("SignalSender: error trying to write data " + String.valueOf(sendingdata) + " to the serial port " + stimulatorPort);
+            IJ.log("SignalSender: error trying to write data " + String.valueOf(signalDataVec) + " to the serial port " + stimulatorPort);
             IJ.log(e.getMessage());
         }
     }
@@ -68,9 +60,8 @@ class Stimulator {
         stimulatorPort = "";
     }
 
-    // legacy logic to get the port that the stimulator is connected to
-    // returns true if a port is found
-    // false otherwise
+    // find and connect to the LED light stimulator
+    // initialize the stimulator by sending an initial signal
     public boolean initialize(){
         boolean portFound = false;
 
@@ -105,10 +96,20 @@ class Stimulator {
         return portFound;
     }
 
-
+    // schedules signals that will be run in the future at specific time points and intervals based on
+    // the arguments:
+    //    useRamp: whether to ramp up gradually to the full signal strength i.e. go from a weaker signal to a stronger signal
+    //    preStimTimeMs: time in ms before any signals are sent
+    //    signal: signal to send to the light -- usually 63 and it is rare if it is changed
+    //    stimDurationMs: duration that the light is on in ms
+    //    stimCycleDurationMs: duration that the light is off + duration that the light is on
+    //    numStimCycles: number of cycles 
+    //    rampBase: strength applied
+    //    rampStart: signal at the start of the interval
+    //    rampEnd: signal at the end of the interval
     void runStimulation(
-        boolean useRamp, int preStimulation, int strength, 
-        int stimDuration, int stimCycleLength, int stimCycle, 
+        boolean useRamp, int preStimTimeMs, int signal, 
+        int stimDurationMs, int stimCycleDurationMs, int numStimCycles, 
         int rampBase, int rampStart, int rampEnd) throws java.lang.Exception {
 
         if(!initialized){
@@ -117,46 +118,48 @@ class Stimulator {
 
         try {
             if (useRamp) {
-                int absdiff = Math.abs(rampEnd - rampStart);
-                int signoframp = Integer.signum(rampEnd - rampStart);
+                int rampSignalDelta = Math.abs(rampEnd - rampStart);
+                int rampSign = Integer.signum(rampEnd - rampStart);
 
-                for (int i = 0; i < stimCycle; i++) {
-                    for (int j = 0; j < absdiff + 1; j++) {
-                        setSender(STIMULATION_CHANNEL, preStimulation + i * stimCycleLength + j * (stimDuration / absdiff),
-                                rampStart + j * signoframp);
+                for (int i = 0; i < numStimCycles; i++) {
+                    for (int j = 0; j < rampSignalDelta + 1; j++) {
+                        scheduleSignal(preStimTimeMs + i * stimCycleDurationMs + j * (stimDurationMs / rampSignalDelta),
+                                rampStart + j * rampSign);
                     }
-                    setSender(STIMULATION_CHANNEL, preStimulation + stimDuration + i * stimCycleLength, rampBase);
+
+                    scheduleSignal(preStimTimeMs + stimDurationMs + i * stimCycleDurationMs, rampBase);
                 }
             } else {
-                for (int i = 0; i < stimCycle; i++) {
-                    int signalTimePtBegin = preStimulation + i * stimCycleLength;
-                    int signalTimePtEnd = signalTimePtBegin + stimDuration;
+                for (int i = 0; i < numStimCycles; i++) {
+                    int signalTimePtBegin = preStimTimeMs + i * stimCycleDurationMs;
+                    int signalTimePtEnd = signalTimePtBegin + stimDurationMs;
 
-                    setSender(STIMULATION_CHANNEL, signalTimePtBegin, strength);
-                    setSender(STIMULATION_CHANNEL, signalTimePtEnd, rampBase);
+                    scheduleSignal(signalTimePtBegin, signal);
+                    scheduleSignal(signalTimePtEnd, rampBase);
                 }
             }
         } catch (java.lang.Exception e) {
-            IJ.log("Stimulator.prepSignals: error sending signals to channel " + String.valueOf(STIMULATION_CHANNEL));
+            IJ.log("Stimulator.prepSignals: error sending signals");
             IJ.log(e.getMessage());
         }
     }
 
-    // mili sec, and 0-63
-    // helper function for prepSignals
-    void setSender(int channel, int timepoint, int signalstrength) {
+    // schedule a signal to be run at a specific timepoint(ms) in the future
+    void scheduleSignal(int timePointMs, int signal) {
         SignalSender sd = new SignalSender(mmc, stimulatorPort);
-        sd.setChannel(channel);
-        sd.setSignalStrength(signalstrength);
+        sd.setChannel(STIMULATION_CHANNEL);
+        sd.setSignal(signal);
 
         ScheduledExecutorService ses;
         ScheduledFuture future = null;
         ses = Executors.newSingleThreadScheduledExecutor();
 
-        IJ.log("Stimulator.setSender: timepoint is: " + String.valueOf(timepoint * 1000));
-        IJ.log("Stimulator.setSender: signalstrength is: " + String.valueOf(signalstrength));
+        IJ.log("Stimulator.scheduleSignal: timePointMs converted to microseconds is: " + String.valueOf(timePointMs * 1000));
+        IJ.log("Stimulator.scheduleSignal: signal is: " + String.valueOf(signal));
 
-        future = ses.schedule(sd, timepoint * 1000, TimeUnit.MICROSECONDS);
+        // convert the timepoint to microseconds
+        // legacy decision, not sure why we need to do it like this
+        future = ses.schedule(sd, timePointMs * 1000, TimeUnit.MICROSECONDS);
     }
 
     void updateStimulatorSignal(int newExposure, int newLength) throws java.lang.Exception {
