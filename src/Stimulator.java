@@ -15,7 +15,6 @@ class SignalSender implements Runnable {
     CMMCore mmc;
     int channel;
     int signal;
-    int sendingdata;
     String stimulatorPort;
 
     SignalSender(CMMCore cmmcore_, String stimulatorPort_) {
@@ -35,14 +34,14 @@ class SignalSender implements Runnable {
         IJ.log("SignalSender: system time is " + String.valueOf(System.nanoTime() / 1000000));
         IJ.log("SignalSender: signal is " + String.valueOf(signal));
 
-        sendingdata = channel << 7 | signal;
-        CharVector sendingchrvec = new CharVector();
-        sendingchrvec.add((char) sendingdata);
+        int signalData = channel << 7 | signal;
+        CharVector signalDataVec = new CharVector();
+        signalDataVec.add((char) signalData);
 
         try {
-            mmc.writeToSerialPort(stimulatorPort, sendingchrvec);
+            mmc.writeToSerialPort(stimulatorPort, signalDataVec);
         } catch (java.lang.Exception e) {
-            IJ.log("SignalSender: error trying to write data " + String.valueOf(sendingdata) + " to the serial port " + stimulatorPort);
+            IJ.log("SignalSender: error trying to write data " + String.valueOf(signalDataVec) + " to the serial port " + stimulatorPort);
             IJ.log(e.getMessage());
         }
     }
