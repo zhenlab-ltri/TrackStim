@@ -94,6 +94,8 @@ TODO
 4. Install the rest of the required software
 5. Open iChat -> Settings -> Camera -> toggle the setting off (e.g. Do not open iChat when the camera turns on) **Important, camera will not be detected by Micro-Manager 1.4 if this is not done** )
 6. plug in all of the hardware components
+   a. **The Thor Labs USB connector must be connected to the third USB port relative to the power button in the USB 3.0 hub.**
+   b. **The USB 3.0 hub must be connected to the right-most USB port at the back of the mac (right-most when facing the side of the mac with the power button)**
 7. build TrackStim
 8. install TrackStim
 
