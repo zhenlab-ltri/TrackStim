@@ -72,22 +72,31 @@ class Stimulator {
     // returns true if a port is found
     // false otherwise
     public boolean initialize(){
-        Configuration conf = mmc.getSystemState();
-        long index = conf.size();
-        PropertySetting ps = new PropertySetting();
         boolean portFound = false;
+
+        // see ./documentation/arduino.c line 16-21 for the signal format
+        // binary 192 -> 11000000
+           // 11 -> set trigger setting
+           // 000 -> set lower three bits for tigger cycle
+           // 000 -> set lower three bits for trigger length 
+        int initialSignal = (STIMULATION_CHANNEL << 8) | 192;
+        CharVector initialSignalData = new CharVector();
+        initialSignalData.add((char) initialSignal);
+
 
         try {
             stimulatorPort = mmc.getProperty(STIMULATOR_DEVICE_LABEL, "Port");
+
+            // send initial signal to stimulator port
+            mmc.writeToSerialPort(stimulatorPort, initialSignalData);
+            portFound = true;
+
+            IJ.log("stimulator port found");
+            IJ.log("stimulator is connected at " + stimulatorPort);
+
         } catch (Exception e){
             IJ.log("error getting stimulator port");
             IJ.log(e.getMessage());
-        }
-
-        if(stimulatorPort != ""){
-            portFound = true;
-            IJ.log("stimulator port found");
-            IJ.log("stimulator is connected at " + stimulatorPort);
         }
 
         initialized = portFound;
@@ -103,16 +112,6 @@ class Stimulator {
         if(!initialized){
             throw new Exception("could not run stimulation.  the stimulator is not initialized");
         }
-
-        IJ.log("Stimulator.runStimulation: useRamp is " + String.valueOf(useRamp));
-        IJ.log("Stimulator.runStimulation: preStimulation is " + String.valueOf(preStimulation));
-        IJ.log("Stimulator.runStimulation: strength is " + String.valueOf(strength));
-        IJ.log("Stimulator.runStimulation: stimDuration is " + String.valueOf(stimDuration));
-        IJ.log("Stimulator.runStimulation: stimCycleLength is " + String.valueOf(stimCycleLength));
-        IJ.log("Stimulator.runStimulation: stimCycle is " + String.valueOf(stimCycle));
-        IJ.log("Stimulator.runStimulation: rampBase is " + String.valueOf(rampBase));
-        IJ.log("Stimulator.runStimulation: rampStart is " + String.valueOf(rampStart));
-        IJ.log("Stimulator.runStimulation: rampEnd is " + String.valueOf(rampEnd));
 
         try {
             if (useRamp) {
