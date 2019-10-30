@@ -30,6 +30,7 @@ class SignalSender implements Runnable {
         signal = signal_;
     }
 
+    // send signal data to the stimulator through the serial port
     public void run() {
         IJ.log("SignalSender: system time is " + String.valueOf(System.nanoTime() / 1000000));
         IJ.log("SignalSender: signal is " + String.valueOf(signal));
@@ -162,18 +163,21 @@ class Stimulator {
         future = ses.schedule(sd, timePointMs * 1000, TimeUnit.MICROSECONDS);
     }
 
-    void updateStimulatorSignal(int newExposure, int newLength) throws java.lang.Exception {
+    // set new exposure and cycle length values in the stimulator
+    void updateStimulatorSettings(int newExposure, int newCycleLength) throws java.lang.Exception {
         if(!initialized){
             throw new Exception("could not run stimulation.  the stimulator is not initialized");
         }
 
-        int newSignalData = 1 << 6 | newLength << 3 | newExposure;
+        // pack the new values into a buffer to send
+        int newSettingsData = 1 << 6 | newCycleLength << 3 | newExposure;
 
-        CharVector chrVector = new CharVector();
-        chrVector.add((char) newSignalData);
+        CharVector newSettingsDataVec = new CharVector();
+        newSettingsDataVec.add((char) newSettingsData);
 
+        // send the data to the device to set the new exposure and new cycle length
         try {
-            mmc.writeToSerialPort(stimulatorPort, chrVector);
+            mmc.writeToSerialPort(stimulatorPort, newSettingsDataVec);
         } catch(java.lang.Exception e){
             IJ.log("Stimulator.updateStimulatorSignal: unable to write new signal data to serial port");
             IJ.log(e.getMessage());

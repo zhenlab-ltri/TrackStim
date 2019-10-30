@@ -618,33 +618,26 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
 
     // method required by ItemListener
     public void itemStateChanged(ItemEvent e) {
-        int selectedindex = 0;
-        int exposurechoice = 0;
-        int lengthchoice = 0;
-        int sendingdata = 0;
-        Choice cho = (Choice) e.getSource();
-        selectedindex = cho.getSelectedIndex();
-
-        IJ.log("itemStateChanged: the item at index " + String.valueOf(selectedindex) + " has been selected");
 
         if (e.getSource() == exposureduration || e.getSource() == cyclelength) {
-            /*
-             * arduino code int triggerlengtharray[]={ 0,1,10,50,100,200,500,1000};//3bit 8
-             * values msec. int cyclelengtharray[]={ 0,50,100,200,500,1000,2000};//use 3bit
-             */
-            exposurechoice = exposureduration.getSelectedIndex();
-            lengthchoice = cyclelength.getSelectedIndex();
-            if ((exposurechoice == 1 || exposurechoice == 2) && lengthchoice == 0) {
+
+            // indexes are mapped to specific values
+            // e.g. if you want trigger length 50, you send index=3 to the stimulator
+            // see /documentation/arduino.c lines 41-45
+            int newExposureSelectionIndex = exposureduration.getSelectedIndex();
+            int newCycleLengthIndex = cyclelength.getSelectedIndex();
+
+            // set cycle length if exposure is set
+            if ((newExposureSelectionIndex == 1 || newExposureSelectionIndex == 2) && newCycleLengthIndex == 0) {
                 cyclelength.select(1);
-                lengthchoice = cyclelength.getSelectedIndex();
-            } else if (lengthchoice + 1 <= exposurechoice) {
-                cyclelength.select(exposurechoice - 1);
-                lengthchoice = cyclelength.getSelectedIndex();
+                newCycleLengthIndex = cyclelength.getSelectedIndex();
+            } else if (newCycleLengthIndex + 1 <= newExposureSelectionIndex) {
+                cyclelength.select(newExposureSelectionIndex - 1);
+                newCycleLengthIndex = cyclelength.getSelectedIndex();
             }
-            sendingdata = 1 << 6 | lengthchoice << 3 | exposurechoice;
 
             try {
-                stimulator.updateStimulatorSignal(exposurechoice, lengthchoice);
+                stimulator.updateStimulatorSettings(newExposureSelectionIndex, newCycleLengthIndex);
 
             } catch (java.lang.Exception ex){
                 IJ.log("itemStateChanged: error trying to update the stimulator signal");
