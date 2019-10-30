@@ -79,6 +79,8 @@ class Stimulator {
            // 11 -> set trigger setting
            // 000 -> set lower three bits for tigger cycle
            // 000 -> set lower three bits for trigger length 
+        // if we dont set trigger cycle and trigger length to 0,
+        // we wont be able to turn the light on and off at the right times
         int initialSignal = (STIMULATION_CHANNEL << 8) | 192;
         CharVector initialSignalData = new CharVector();
         initialSignalData.add((char) initialSignal);
