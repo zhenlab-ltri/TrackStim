@@ -637,7 +637,7 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
             }
 
             try {
-                stimulator.updateStimulatorSettings(newExposureSelectionIndex, newCycleLengthIndex);
+                stimulator.updateCameraSettings(newExposureSelectionIndex, newCycleLengthIndex);
 
             } catch (java.lang.Exception ex){
                 IJ.log("itemStateChanged: error trying to update the stimulator signal");

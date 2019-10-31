@@ -163,19 +163,24 @@ class Stimulator {
         future = ses.schedule(sd, timePointMs * 1000, TimeUnit.MICROSECONDS);
     }
 
-    // set new exposure and cycle length values in the stimulator
-    void updateStimulatorSettings(int newExposure, int newCycleLength) throws java.lang.Exception {
+    // send new camera exposure and cycle length values to the stimulator, 
+    // which then sends them to the hamamatsu camera controller
+    // NOTE: 
+        // these arguments are indexes consisting of at most three bits i.e. in the range of [0, 8] 
+        // each index is then mapped to a specific value
+        // see documentation/arduino.c lines 41-44
+    void updateCameraSettings(int newExposureIndex, int newCycleLengthIndex) throws java.lang.Exception {
         if(!initialized){
-            throw new Exception("could not run stimulation.  the stimulator is not initialized");
+            throw new Exception("could not update camera settings.  the stimulator is not initialized");
         }
 
         // pack the new values into a buffer to send
-        int newSettingsData = 1 << 6 | newCycleLength << 3 | newExposure;
+        int newSettingsData = 1 << 6 | newCycleLengthIndex << 3 | newExposureIndex;
 
         CharVector newSettingsDataVec = new CharVector();
         newSettingsDataVec.add((char) newSettingsData);
 
-        // send the data to the device to set the new exposure and new cycle length
+        // send the data to the stimulator to set the new exposure and new cycle length
         try {
             mmc.writeToSerialPort(stimulatorPort, newSettingsDataVec);
         } catch(java.lang.Exception e){
