@@ -67,13 +67,8 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     TextField framenumtext;
     TextField skiptext;
 
-    // filed used in Tracker
-    Tracker tt = null;
-
     java.awt.Checkbox closest;// target definition method.
     java.awt.Checkbox right;// field for tacking source
-    java.awt.Checkbox objective_ten;// change stage movement velocity
-    java.awt.Checkbox objective_40;// change stage movement velocity
     java.awt.Checkbox textpos;// if save xy pos data into txt file. not inclued z.
     java.awt.Choice acceleration;
     java.awt.Choice thresholdmethod;
@@ -88,8 +83,6 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     java.awt.Choice exposureduration;
     java.awt.Choice cyclelength;
 
-    // Stimulation
-    Stimulator stimulator;
     java.awt.Checkbox STIM;
     TextField prestimulation;
     TextField stimstrength;
@@ -108,6 +101,9 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     String dirforsave;
     int frame = 1200;
     boolean ready;
+
+    Tracker tt = null;
+    Stimulator stimulator;
 
     public TrackStimGUI(CMMCore cmmcore) {
         super("TrackerwithStimulater");
