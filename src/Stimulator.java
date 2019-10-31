@@ -10,7 +10,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-// for stimulation using arduino DA converter
+// send signals to the stimulator to turn on/off the LED light
 class SignalSender implements Runnable {
     CMMCore mmc;
     int channel;
@@ -119,23 +119,32 @@ class Stimulator {
 
         try {
             if (useRamp) {
+                // incrementally increase light strength
                 int rampSignalDelta = Math.abs(rampEnd - rampStart);
                 int rampSign = Integer.signum(rampEnd - rampStart);
 
+
                 for (int i = 0; i < numStimCycles; i++) {
+
+                    // schedule signals with incrementally increasing light strength
                     for (int j = 0; j < rampSignalDelta + 1; j++) {
                         scheduleSignal(preStimTimeMs + i * stimCycleDurationMs + j * (stimDurationMs / rampSignalDelta),
                                 rampStart + j * rampSign);
                     }
 
+                    // schedule signal to turn off light at end of cycle
                     scheduleSignal(preStimTimeMs + stimDurationMs + i * stimCycleDurationMs, rampBase);
                 }
             } else {
+                // send full light strength right away
                 for (int i = 0; i < numStimCycles; i++) {
                     int signalTimePtBegin = preStimTimeMs + i * stimCycleDurationMs;
                     int signalTimePtEnd = signalTimePtBegin + stimDurationMs;
 
+                    // schedule signal to turn on light at beginning cycle
                     scheduleSignal(signalTimePtBegin, signal);
+
+                    // schedule signal to turn off light at end of cycle
                     scheduleSignal(signalTimePtEnd, rampBase);
                 }
             }
