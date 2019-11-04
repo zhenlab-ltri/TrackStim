@@ -1,7 +1,7 @@
 port = mmc.getProperty("FreeSerialPort", "Port");
-offsignal = (0 << 7) | 0;
-onsignal = (0 << 8) | 63;
-initialsignal = (0 << 8) | 192; // turn off cycle length
+offSignal = (0 << 7) | 0;
+onSignal = (0 << 8) | 63;
+initialSignal = (0 << 8) | 192; // turn off cycle length
 
 
 // char vectors containing the signals 
@@ -10,10 +10,10 @@ serialDataInitialSignal = new mmcorej.CharVector();
 serialDataInitialSignal.add((char) initialSignal); 
 
 serialDataOn = new mmcorej.CharVector();           
-serialDataOn.add((char) onsignal);
+serialDataOn.add((char) onSignal);
 
 serialDataOff = new mmcorej.CharVector();      
-serialDataOff.add((char) offsignal);
+serialDataOff.add((char) offSignal);
 
 mmc.writeToSerialPort(port, serialDataInitialSignal); // initially send 192 to supposedly turn off cycle length and trigger length
 

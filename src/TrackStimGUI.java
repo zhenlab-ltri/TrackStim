@@ -55,6 +55,8 @@ import mmcorej.StrVector;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 
+import org.micromanager.api.ScriptInterface;
+
 // provides the ui for track stim
 
 // implements a ImageJ plugin interface 
@@ -96,6 +98,7 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
 
     // pass to Tracker
     CMMCore mmc_;
+    ScriptInterface app_;
     ImagePlus imp;
     ImageCanvas ic;
     String dirforsave;
@@ -105,9 +108,10 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     Tracker tt = null;
     Stimulator stimulator;
 
-    public TrackStimGUI(CMMCore cmmcore) {
+    public TrackStimGUI(CMMCore cmmcore, ScriptInterface app) {
         super("TrackerwithStimulater");
         mmc_ = cmmcore;
+        app_ = app;
         IJ.log("TrackStimGUI Constructor: MMCore initialized");
 
         prefs = Preferences.userNodeForPackage(this.getClass());// make instance?
