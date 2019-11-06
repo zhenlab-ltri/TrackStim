@@ -106,7 +106,7 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     ScriptInterface app;
     ImagePlus currentImage;
     ImageCanvas currentImageCanvas;
-    String imageSaveDirectory;  // a subfolder within
+    String imageSaveDirectory;  // a subfolder within saveDirectory
     int numFrames;
     boolean ready;
 
@@ -114,25 +114,33 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     Stimulator stimulator;
 
     public TrackStimGUI(CMMCore cmmcore, ScriptInterface app_) {
-        super("TrackerwithStimulater");
+        super("TrackStim");
+
+        // set up micro manager variables
         mmc = cmmcore;
         app = app_;
         IJ.log("TrackStimGUI Constructor: MMCore initialized");
 
-        prefs = Preferences.userNodeForPackage(this.getClass());// make instance?
+        // set up imageJ window stuff
         currentImage = WindowManager.getCurrentImage();
         ImageWindow iw = currentImage.getWindow();
         currentImageCanvas = iw.getCanvas();
         currentImageCanvas.addMouseListener(this);
+        ImagePlus.addImageListener(this);
 
+        // set up stimulator
         stimulator = new Stimulator(mmc);
-
         boolean stimulatorConnected = stimulator.initialize();
-
         if( !stimulatorConnected ){
             IJ.log("TrackStimGUI Constructor: could not initialize stimulator.  Stimulator related options will not work");
         }
 
+        // set up tracker
+        // just set it to null for now, it is initialized later
+        tracker = null;
+
+        // set up previous preferences
+        prefs = Preferences.userNodeForPackage(this.getClass());// make instance?
         String previousSaveDirectoryPref = prefs.get("DIR", "");
         String previousNumFramesPref = prefs.get("FRAME", "");
 
@@ -144,12 +152,12 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
             IJ.log(e.getMessage());
         }
         saveDirectory = previousSaveDirectoryPref == "" ? IJ.getDirectory("current") : previousSaveDirectoryPref;
+        saveDirectory = saveDirectory ==  null ? IJ.getDirectory("home") : saveDirectory;
         
         IJ.log("TrackStimGUI Constructor: initial dir is " + saveDirectory);
         IJ.log("TrackStimGUI Constructor: Frame value is " + String.valueOf(numFrames));
-        
-        ImagePlus.addImageListener(this);
-        
+
+        // initialize GUI
         requestFocus(); // may need for keylistener
         initComponents(); // create the GUI
         setSize(700, 225);
