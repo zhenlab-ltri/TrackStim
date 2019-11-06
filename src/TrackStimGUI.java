@@ -66,61 +66,66 @@ import org.micromanager.api.ScriptInterface;
 class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener, MouseListener, ItemListener {
     // globals just in this class
     Preferences prefs;
-    TextField framenumtext;
-    TextField skiptext;
 
-    java.awt.Checkbox closest;// target definition method.
-    java.awt.Checkbox right;// field for tacking source
-    java.awt.Checkbox textpos;// if save xy pos data into txt file. not inclued z.
-    java.awt.Choice acceleration;
-    java.awt.Choice thresholdmethod;
-    java.awt.Checkbox CoM;// center of mass method
-    java.awt.Checkbox manualtracking;
-    java.awt.Checkbox FULL;// full size filed.
-    java.awt.Checkbox BF;// Bright field tracking only works with full size
-    TextField savedir;
-    String dir;
+    // camera options
+    TextField numFramesText;
+    TextField numSkipFramesText;
+    java.awt.Choice cameraExposureDurationSelector;
+    java.awt.Choice cameraCycleDurationSelector;
 
-    // camera trigger
-    java.awt.Choice exposureduration;
-    java.awt.Choice cyclelength;
+    // tracker options
+    java.awt.Checkbox useClosest;// target definition method.
+    java.awt.Checkbox trackRightSideScreen;// field for tacking source
+    java.awt.Checkbox saveXYPositionsAsTextFile;// if save xy pos data into txt file. not inclued z.
+    java.awt.Choice stageAccelerationSelector;
+    java.awt.Choice thresholdMethodSelector;
+    java.awt.Checkbox useCenterOfMassTracking;// center of mass method
+    java.awt.Checkbox useManualTracking;
+    java.awt.Checkbox useFullFieldImaging;// full size filed.
+    java.awt.Checkbox useBrightFieldImaging;// Bright field tracking only works with full size
 
-    java.awt.Checkbox STIM;
-    TextField prestimulation;
-    TextField stimstrength;
-    TextField stimduration;
-    TextField stimcyclelength;
-    TextField stimcyclenum;
-    java.awt.Checkbox ramp;// ramp
-    TextField rampbase;
-    TextField rampstart;
-    TextField rampend;
+    // stimulator options
+    java.awt.Checkbox enableStimulator;
+    TextField preStimulationTimeMsText;
+    TextField stimulationStrengthText;
+    TextField stimulationDurationMsText;
+    TextField stimulationCycledurationMsText;
+    TextField numStimulationCyclesText;
+    java.awt.Checkbox enableRamp;
+    TextField rampBase;
+    TextField rampStart;
+    TextField rampEnd;
+
+    // directory to save to
+    TextField saveDirectoryText;
+    String saveDirectory; // trackstim will create subdirectories in this folder
+
 
     // pass to Tracker
-    CMMCore mmc_;
-    ScriptInterface app_;
-    ImagePlus imp;
-    ImageCanvas ic;
-    String dirforsave;
-    int frame = 1200;
+    CMMCore mmc;
+    ScriptInterface app;
+    ImagePlus currentImage;
+    ImageCanvas currentImageCanvas;
+    String imageSaveDirectory;  // a subfolder within
+    int numFrames;
     boolean ready;
 
-    Tracker tt = null;
+    Tracker tracker;
     Stimulator stimulator;
 
-    public TrackStimGUI(CMMCore cmmcore, ScriptInterface app) {
+    public TrackStimGUI(CMMCore cmmcore, ScriptInterface app_) {
         super("TrackerwithStimulater");
-        mmc_ = cmmcore;
-        app_ = app;
+        mmc = cmmcore;
+        app = app_;
         IJ.log("TrackStimGUI Constructor: MMCore initialized");
 
         prefs = Preferences.userNodeForPackage(this.getClass());// make instance?
-        imp = WindowManager.getCurrentImage();
-        ImageWindow iw = imp.getWindow();
-        ic = iw.getCanvas();
-        ic.addMouseListener(this);
+        currentImage = WindowManager.getCurrentImage();
+        ImageWindow iw = currentImage.getWindow();
+        currentImageCanvas = iw.getCanvas();
+        currentImageCanvas.addMouseListener(this);
 
-        stimulator = new Stimulator(mmc_);
+        stimulator = new Stimulator(mmc);
 
         boolean stimulatorConnected = stimulator.initialize();
 
@@ -128,31 +133,30 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
             IJ.log("TrackStimGUI Constructor: could not initialize stimulator.  Stimulator related options will not work");
         }
 
-
         // try to get preferences directory and frame
         try {
-            dir = prefs.get("DIR", "");
-            IJ.log("pref dir " + dir);
+            saveDirectory = prefs.get("DIR", "");
+            IJ.log("pref dir " + saveDirectory);
             if (prefs.get("FRAME", "") == "") {
-                frame = 3000;
+                numFrames = 3000;
             } else {
-                frame = Integer.parseInt(prefs.get("FRAME", ""));
+                numFrames = Integer.parseInt(prefs.get("FRAME", ""));
             }
-            IJ.log("TrackStimGUI Constructor: Frame value is " + String.valueOf(frame));
+            IJ.log("TrackStimGUI Constructor: Frame value is " + String.valueOf(numFrames));
         } catch (java.lang.Exception e){
             IJ.log("TrackStimGUI Constructor: Could not get frame value from preferences obj");
             IJ.log(e.getMessage());
         }
 
         int dircount = 0;
-        if (dir == "") {
+        if (saveDirectory == "") {
             // check directry in the current
-            dir = IJ.getDirectory("current");
-            if (dir == null) {
-                dir = IJ.getDirectory("home");
+            saveDirectory = IJ.getDirectory("current");
+            if (saveDirectory == null) {
+                saveDirectory = IJ.getDirectory("home");
             }
-            IJ.log("TrackStimGUI Constructor: initial dir is " + dir);
-            File currentdir = new File(dir);
+            IJ.log("TrackStimGUI Constructor: initial dir is " + saveDirectory);
+            File currentdir = new File(saveDirectory);
             File[] filelist = currentdir.listFiles();
             if (filelist != null) {
                 for (int i = 0; i < filelist.length; i++) {
@@ -162,7 +166,7 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
                 }
             }
         }
-        IJ.log("TrackStimGUI Constructor: initial dir is " + dir);
+        IJ.log("TrackStimGUI Constructor: initial dir is " + saveDirectory);
         IJ.log("TrackStimGUI Constructor: number of directories is " + String.valueOf(dircount));
 
         ImagePlus.addImageListener(this);
@@ -211,22 +215,22 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         gbl.setConstraints(labelexpduration, gbc);
         add(labelexpduration);
 
-        exposureduration = new Choice();
-        exposureduration.setPreferredSize(new Dimension(80, 20));
+        cameraExposureDurationSelector = new Choice();
+        cameraExposureDurationSelector.setPreferredSize(new Dimension(80, 20));
         gbc.gridx = 7;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
-        exposureduration.add("0");
-        exposureduration.add("1");
-        exposureduration.add("10");
-        exposureduration.add("50");
-        exposureduration.add("100");
-        exposureduration.add("200");
-        exposureduration.add("500");
-        exposureduration.add("1000");
-        exposureduration.addItemListener(this);
-        gbl.setConstraints(exposureduration, gbc);
-        add(exposureduration);
+        cameraExposureDurationSelector.add("0");
+        cameraExposureDurationSelector.add("1");
+        cameraExposureDurationSelector.add("10");
+        cameraExposureDurationSelector.add("50");
+        cameraExposureDurationSelector.add("100");
+        cameraExposureDurationSelector.add("200");
+        cameraExposureDurationSelector.add("500");
+        cameraExposureDurationSelector.add("1000");
+        cameraExposureDurationSelector.addItemListener(this);
+        gbl.setConstraints(cameraExposureDurationSelector, gbc);
+        add(cameraExposureDurationSelector);
 
         Label labelcameracyclelength = new Label("cycle len.");
         gbc.gridx = 6;
@@ -235,21 +239,21 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         gbl.setConstraints(labelcameracyclelength, gbc);
         add(labelcameracyclelength);
 
-        cyclelength = new Choice();
-        cyclelength.setPreferredSize(new Dimension(80, 20));
+        cameraCycleDurationSelector = new Choice();
+        cameraCycleDurationSelector.setPreferredSize(new Dimension(80, 20));
         gbc.gridx = 7;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
-        cyclelength.add("0");
-        cyclelength.add("50");
-        cyclelength.add("100");
-        cyclelength.add("200");
-        cyclelength.add("500");
-        cyclelength.add("1000");
-        cyclelength.add("2000");
-        cyclelength.addItemListener(this);
-        gbl.setConstraints(cyclelength, gbc);
-        add(cyclelength);
+        cameraCycleDurationSelector.add("0");
+        cameraCycleDurationSelector.add("50");
+        cameraCycleDurationSelector.add("100");
+        cameraCycleDurationSelector.add("200");
+        cameraCycleDurationSelector.add("500");
+        cameraCycleDurationSelector.add("1000");
+        cameraCycleDurationSelector.add("2000");
+        cameraCycleDurationSelector.addItemListener(this);
+        gbl.setConstraints(cameraCycleDurationSelector, gbc);
+        add(cameraCycleDurationSelector);
 
         Label labelframe = new Label("Frame num");
         gbc.gridx = 0;
@@ -258,71 +262,71 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         gbl.setConstraints(labelframe, gbc);
         add(labelframe);
 
-        framenumtext = new TextField(String.valueOf(frame), 5);
-        framenumtext.addActionListener(this);
+        numFramesText = new TextField(String.valueOf(numFrames), 5);
+        numFramesText.addActionListener(this);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
-        gbl.setConstraints(framenumtext, gbc);
-        add(framenumtext);
+        gbl.setConstraints(numFramesText, gbc);
+        add(numFramesText);
 
-        closest = new Checkbox("Just closest", true);
+        useClosest = new Checkbox("Just closest", true);
         gbc.gridx = 2;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
-        gbl.setConstraints(closest, gbc);
-        add(closest);
+        gbl.setConstraints(useClosest, gbc);
+        add(useClosest);
 
-        acceleration = new Choice();
+        stageAccelerationSelector = new Choice();
         gbc.gridx = 3;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
-        acceleration.add("1x");
-        acceleration.add("2x");
-        acceleration.add("4x");
-        acceleration.add("5x");
-        acceleration.add("6x");
-        gbl.setConstraints(acceleration, gbc);
-        add(acceleration);
+        stageAccelerationSelector.add("1x");
+        stageAccelerationSelector.add("2x");
+        stageAccelerationSelector.add("4x");
+        stageAccelerationSelector.add("5x");
+        stageAccelerationSelector.add("6x");
+        gbl.setConstraints(stageAccelerationSelector, gbc);
+        add(stageAccelerationSelector);
 
-        thresholdmethod = new Choice();
+        thresholdMethodSelector = new Choice();
         gbc.gridx = 4;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
-        thresholdmethod.add("Yen");// good for normal
-        thresholdmethod.add("Triangle");// good for on coli
-        thresholdmethod.add("Otsu");// good for ventral cord?
+        thresholdMethodSelector.add("Yen");// good for normal
+        thresholdMethodSelector.add("Triangle");// good for on coli
+        thresholdMethodSelector.add("Otsu");// good for ventral cord?
 
-        thresholdmethod.add("Default");
-        thresholdmethod.add("Huang");
-        thresholdmethod.add("Intermodes");
-        thresholdmethod.add("IsoData");
-        thresholdmethod.add("Li");
-        thresholdmethod.add("MaxEntropy");
-        thresholdmethod.add("Mean");
-        thresholdmethod.add("MinError(I)");
-        thresholdmethod.add("Minimum");
-        thresholdmethod.add("Moments");
-        thresholdmethod.add("Percentile");
-        thresholdmethod.add("RenyiEntropy");
-        thresholdmethod.add("Shanbhag");
-        thresholdmethod.setPreferredSize(new Dimension(80, 20));
-        gbl.setConstraints(thresholdmethod, gbc);
-        add(thresholdmethod);
+        thresholdMethodSelector.add("Default");
+        thresholdMethodSelector.add("Huang");
+        thresholdMethodSelector.add("Intermodes");
+        thresholdMethodSelector.add("IsoData");
+        thresholdMethodSelector.add("Li");
+        thresholdMethodSelector.add("MaxEntropy");
+        thresholdMethodSelector.add("Mean");
+        thresholdMethodSelector.add("MinError(I)");
+        thresholdMethodSelector.add("Minimum");
+        thresholdMethodSelector.add("Moments");
+        thresholdMethodSelector.add("Percentile");
+        thresholdMethodSelector.add("RenyiEntropy");
+        thresholdMethodSelector.add("Shanbhag");
+        thresholdMethodSelector.setPreferredSize(new Dimension(80, 20));
+        gbl.setConstraints(thresholdMethodSelector, gbc);
+        add(thresholdMethodSelector);
 
-        right = new Checkbox("Use right", false);
+        trackRightSideScreen = new Checkbox("Use right", false);
         gbc.gridx = 5;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
-        gbl.setConstraints(right, gbc);
-        add(right);
+        gbl.setConstraints(trackRightSideScreen, gbc);
+        add(trackRightSideScreen);
 
-        textpos = new Checkbox("Save xypos file", false);
+        saveXYPositionsAsTextFile = new Checkbox("Save xypos file", false);
         gbc.gridx = 6;
         gbc.gridy = 2;
         gbc.gridwidth = 2;
-        gbl.setConstraints(textpos, gbc);
-        add(textpos);
+        gbl.setConstraints(saveXYPositionsAsTextFile, gbc);
+        add(saveXYPositionsAsTextFile);
 
         Label labelskip = new Label("one of ");
         gbc.gridx = 0;
@@ -331,41 +335,41 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         gbl.setConstraints(labelskip, gbc);
         add(labelskip);
 
-        skiptext = new TextField("1", 2);
-        skiptext.addActionListener(this);
+        numSkipFramesText = new TextField("1", 2);
+        numSkipFramesText.addActionListener(this);
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.gridwidth = 1;
-        gbl.setConstraints(skiptext, gbc);
-        add(skiptext);
+        gbl.setConstraints(numSkipFramesText, gbc);
+        add(numSkipFramesText);
 
-        CoM = new Checkbox("Center of Mass", false);
+        useCenterOfMassTracking = new Checkbox("Center of Mass", false);
         gbc.gridx = 2;
         gbc.gridy = 3;
         gbc.gridwidth = 1;
-        gbl.setConstraints(CoM, gbc);
-        add(CoM);
+        gbl.setConstraints(useCenterOfMassTracking, gbc);
+        add(useCenterOfMassTracking);
 
-        manualtracking = new Checkbox("manual track", false);
+        useManualTracking = new Checkbox("manual track", false);
         gbc.gridx = 3;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
-        gbl.setConstraints(manualtracking, gbc);
-        add(manualtracking);
+        gbl.setConstraints(useManualTracking, gbc);
+        add(useManualTracking);
 
-        FULL = new Checkbox("Full field", false);
+        useFullFieldImaging = new Checkbox("Full field", false);
         gbc.gridx = 5;
         gbc.gridy = 3;
         gbc.gridwidth = 1;
-        gbl.setConstraints(FULL, gbc);
-        add(FULL);
+        gbl.setConstraints(useFullFieldImaging, gbc);
+        add(useFullFieldImaging);
 
-        BF = new Checkbox("Bright field", false);
+        useBrightFieldImaging = new Checkbox("Bright field", false);
         gbc.gridx = 6;
         gbc.gridy = 3;
         gbc.gridwidth = 1;
-        gbl.setConstraints(BF, gbc);
-        add(BF);
+        gbl.setConstraints(useBrightFieldImaging, gbc);
+        add(useBrightFieldImaging);
 
         Label labeldir = new Label("Save at");
         gbc.gridx = 0;
@@ -374,14 +378,14 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         gbl.setConstraints(labeldir, gbc);
         add(labeldir);
 
-        savedir = new TextField(dir, 40);
-        savedir.addActionListener(this);
+        saveDirectoryText = new TextField(saveDirectory, 40);
+        saveDirectoryText.addActionListener(this);
         gbc.gridx = 1;
         gbc.gridy = 4;
         gbc.gridwidth = 5;
         gbc.fill = GridBagConstraints.BOTH;
-        gbl.setConstraints(savedir, gbc);
-        add(savedir);
+        gbl.setConstraints(saveDirectoryText, gbc);
+        add(saveDirectoryText);
         gbc.fill = GridBagConstraints.NONE;// return to default
 
         Button b4 = new Button("Change dir");
@@ -393,13 +397,13 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         add(b4);
 
         // gui for stimulation
-        STIM = new Checkbox("Light", false);
+        enableStimulator = new Checkbox("Light", false);
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.NORTH;
-        gbl.setConstraints(STIM, gbc);
-        add(STIM);
+        gbl.setConstraints(enableStimulator, gbc);
+        add(enableStimulator);
 
         b = new Button("Run");
         b.setPreferredSize(new Dimension(40, 20));
@@ -421,15 +425,15 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         gbl.setConstraints(labelpre, gbc);
         add(labelpre);
 
-        prestimulation = new TextField(String.valueOf(10000), 6);
-        prestimulation.setPreferredSize(new Dimension(50, 30));
-        prestimulation.addActionListener(this);
+        preStimulationTimeMsText = new TextField(String.valueOf(10000), 6);
+        preStimulationTimeMsText.setPreferredSize(new Dimension(50, 30));
+        preStimulationTimeMsText.addActionListener(this);
         gbc.gridx = 2;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
-        gbl.setConstraints(prestimulation, gbc);
-        add(prestimulation);
+        gbl.setConstraints(preStimulationTimeMsText, gbc);
+        add(preStimulationTimeMsText);
 
         Label labelstrength = new Label("Strength <63");
         gbc.gridx = 1;
@@ -439,15 +443,15 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         gbl.setConstraints(labelstrength, gbc);
         add(labelstrength);
 
-        stimstrength = new TextField(String.valueOf(63), 6);
-        stimstrength.setPreferredSize(new Dimension(50, 30));
-        stimstrength.addActionListener(this);
+        stimulationStrengthText = new TextField(String.valueOf(63), 6);
+        stimulationStrengthText.setPreferredSize(new Dimension(50, 30));
+        stimulationStrengthText.addActionListener(this);
         gbc.gridx = 2;
         gbc.gridy = 6;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
-        gbl.setConstraints(stimstrength, gbc);
-        add(stimstrength);
+        gbl.setConstraints(stimulationStrengthText, gbc);
+        add(stimulationStrengthText);
 
         Label labelduration = new Label("Duration");
         gbc.gridx = 1;
@@ -457,15 +461,15 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         gbl.setConstraints(labelduration, gbc);
         add(labelduration);
 
-        stimduration = new TextField(String.valueOf(5000), 6);
-        stimduration.setPreferredSize(new Dimension(50, 30));
-        stimduration.addActionListener(this);
+        stimulationDurationMsText = new TextField(String.valueOf(5000), 6);
+        stimulationDurationMsText.setPreferredSize(new Dimension(50, 30));
+        stimulationDurationMsText.addActionListener(this);
         gbc.gridx = 2;
         gbc.gridy = 7;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
-        gbl.setConstraints(stimduration, gbc);
-        add(stimduration);
+        gbl.setConstraints(stimulationDurationMsText, gbc);
+        add(stimulationDurationMsText);
 
         Label labelcyclelength = new Label("Cycle length");
         gbc.gridx = 3;
@@ -475,15 +479,15 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         gbl.setConstraints(labelcyclelength, gbc);
         add(labelcyclelength);
 
-        stimcyclelength = new TextField(String.valueOf(10000), 6);
-        stimcyclelength.setPreferredSize(new Dimension(50, 30));
-        stimcyclelength.addActionListener(this);
+        stimulationCycledurationMsText = new TextField(String.valueOf(10000), 6);
+        stimulationCycledurationMsText.setPreferredSize(new Dimension(50, 30));
+        stimulationCycledurationMsText.addActionListener(this);
         gbc.gridx = 4;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
-        gbl.setConstraints(stimcyclelength, gbc);
-        add(stimcyclelength);
+        gbl.setConstraints(stimulationCycledurationMsText, gbc);
+        add(stimulationCycledurationMsText);
 
         Label labelcyclenum = new Label("Cycle num");
         gbc.gridx = 3;
@@ -493,24 +497,24 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         gbl.setConstraints(labelcyclenum, gbc);
         add(labelcyclenum);
 
-        stimcyclenum = new TextField(String.valueOf(3), 6);
-        stimcyclenum.setPreferredSize(new Dimension(50, 30));
-        stimcyclenum.addActionListener(this);
+        numStimulationCyclesText = new TextField(String.valueOf(3), 6);
+        numStimulationCyclesText.setPreferredSize(new Dimension(50, 30));
+        numStimulationCyclesText.addActionListener(this);
         gbc.gridx = 4;
         gbc.gridy = 6;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
-        gbl.setConstraints(stimcyclenum, gbc);
-        add(stimcyclenum);
+        gbl.setConstraints(numStimulationCyclesText, gbc);
+        add(numStimulationCyclesText);
 
-        ramp = new Checkbox("ramp", false);
+        enableRamp = new Checkbox("ramp", false);
         gbc.gridx = 5;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
         // gbc.gridheight=3;
         gbc.anchor = GridBagConstraints.NORTH;
-        gbl.setConstraints(ramp, gbc);
-        add(ramp);
+        gbl.setConstraints(enableRamp, gbc);
+        add(enableRamp);
 
         Label labelbase = new Label("base");
         gbc.gridx = 6;
@@ -520,15 +524,15 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         gbl.setConstraints(labelbase, gbc);
         add(labelbase);
 
-        rampbase = new TextField(String.valueOf(0), 3);
-        rampbase.setPreferredSize(new Dimension(30, 30));
-        rampbase.addActionListener(this);
+        rampBase = new TextField(String.valueOf(0), 3);
+        rampBase.setPreferredSize(new Dimension(30, 30));
+        rampBase.addActionListener(this);
         gbc.gridx = 7;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
-        gbl.setConstraints(rampbase, gbc);
-        add(rampbase);
+        gbl.setConstraints(rampBase, gbc);
+        add(rampBase);
 
         Label labelrampstart = new Label("start");
         gbc.gridx = 6;
@@ -538,15 +542,15 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         gbl.setConstraints(labelrampstart, gbc);
         add(labelrampstart);
 
-        rampstart = new TextField(String.valueOf(0), 3);
-        rampstart.setPreferredSize(new Dimension(30, 30));
-        rampstart.addActionListener(this);
+        rampStart = new TextField(String.valueOf(0), 3);
+        rampStart.setPreferredSize(new Dimension(30, 30));
+        rampStart.addActionListener(this);
         gbc.gridx = 7;
         gbc.gridy = 6;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
-        gbl.setConstraints(rampstart, gbc);
-        add(rampstart);
+        gbl.setConstraints(rampStart, gbc);
+        add(rampStart);
 
         Label labelrampend = new Label("end");
         gbc.gridx = 6;
@@ -556,15 +560,15 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         gbl.setConstraints(labelrampend, gbc);
         add(labelrampend);
 
-        rampend = new TextField(String.valueOf(63), 3);
-        rampend.setPreferredSize(new Dimension(30, 30));
-        rampend.addActionListener(this);
+        rampEnd = new TextField(String.valueOf(63), 3);
+        rampEnd.setPreferredSize(new Dimension(30, 30));
+        rampEnd.addActionListener(this);
         gbc.gridx = 7;
         gbc.gridy = 7;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
-        gbl.setConstraints(rampend, gbc);
-        add(rampend);
+        gbl.setConstraints(rampEnd, gbc);
+        add(rampEnd);
         setSize(700, 225);
         setVisible(true);
     }
@@ -575,11 +579,11 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     public void imageUpdated(ImagePlus imp) {
     }
 
-    // Write logic to clear valables when image closed here
+    // Write logic to clear variables when image closed here
     public void imageClosed(ImagePlus impc) {
         IJ.log("imageClosed: cleaning up");
-        if (imp == impc) {
-            imp = null;
+        if (currentImage == impc) {
+            currentImage = null;
             IJ.log("imageClosed: imp set to null");
         }
     }
@@ -589,29 +593,29 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         int testint;
 
         try {
-            testint = Integer.parseInt(framenumtext.getText());
-            frame = testint;
+            testint = Integer.parseInt(numFramesText.getText());
+            numFrames = testint;
             return true;
         } catch (java.lang.Exception e) {
             IJ.log("checkFrameField: the current value of the frame field is not an int");
             IJ.log(e.getMessage());
-            framenumtext.setText(String.valueOf(frame));
+            numFramesText.setText(String.valueOf(numFrames));
             return false;
         }
     }
 
     // validate the directory field in the UI
     boolean checkDirField(){
-        String dirName = savedir.getText();
+        String dirName = saveDirectoryText.getText();
         File checkdir = new File(dirName);
 
         if (checkdir.exists()) {
             IJ.log("checkDirField: directory " + dirName + " exists");
-            dir = savedir.getText();
+            saveDirectory = dirName;
             return true;
         } else {
             IJ.log("checkDirField: directory " + dirName + " DOES NOT EXIST! Please create the directory first");
-            savedir.setText(dir);
+            saveDirectoryText.setText(saveDirectory);
             return false;
         }
     }
@@ -619,21 +623,21 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     // method required by ItemListener
     public void itemStateChanged(ItemEvent e) {
 
-        if (e.getSource() == exposureduration || e.getSource() == cyclelength) {
+        if (e.getSource() == cameraExposureDurationSelector || e.getSource() == cameraCycleDurationSelector) {
 
             // indexes are mapped to specific values
             // e.g. if you want trigger length 50, you send index=3 to the stimulator
             // see /documentation/arduino.c lines 41-45
-            int newExposureSelectionIndex = exposureduration.getSelectedIndex();
-            int newCycleLengthIndex = cyclelength.getSelectedIndex();
+            int newExposureSelectionIndex = cameraExposureDurationSelector.getSelectedIndex();
+            int newCycleLengthIndex = cameraCycleDurationSelector.getSelectedIndex();
 
             // set cycle length if exposure is set
             if ((newExposureSelectionIndex == 1 || newExposureSelectionIndex == 2) && newCycleLengthIndex == 0) {
-                cyclelength.select(1);
-                newCycleLengthIndex = cyclelength.getSelectedIndex();
+                cameraCycleDurationSelector.select(1);
+                newCycleLengthIndex = cameraCycleDurationSelector.getSelectedIndex();
             } else if (newCycleLengthIndex + 1 <= newExposureSelectionIndex) {
-                cyclelength.select(newExposureSelectionIndex - 1);
-                newCycleLengthIndex = cyclelength.getSelectedIndex();
+                cameraCycleDurationSelector.select(newExposureSelectionIndex - 1);
+                newCycleLengthIndex = cameraCycleDurationSelector.getSelectedIndex();
             }
 
             try {
@@ -649,40 +653,39 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
 
     // handle button presses
     public void actionPerformed(ActionEvent e) {
-        ImagePlus currentimp = WindowManager.getCurrentImage();
-        String lable = e.getActionCommand();
+        String clickedBtn = e.getActionCommand();
 
-        IJ.log("actionPerformed: button clicked is " + lable);
+        IJ.log("actionPerformed: button clicked is " + clickedBtn);
 
         // frame num changed
-        if (lable.equals(framenumtext.getText())){
+        if (clickedBtn.equals(numFramesText.getText())){
             boolean checkframefield = checkFrameField();
-            IJ.log("actionPerformed: frame is " + String.valueOf(frame));
+            IJ.log("actionPerformed: numFrames is " + String.valueOf(numFrames));
 
-            // savedir has changed
-        } else if (lable.equals(savedir.getText())){
+            // saveDirectoryText has changed
+        } else if (clickedBtn.equals(saveDirectoryText.getText())){
             checkDirField();
-            IJ.log("actionPerformed: directory is " + savedir.getText());
+            IJ.log("actionPerformed: directory is " + saveDirectoryText.getText());
 
             // any button pushed
         } else {
 
             // ready button pushed
-            if (lable.equals("Ready")) {
+            if (clickedBtn.equals("Ready")) {
                 ready = true;
                 validateAndStartTracker();
 
                 // go button pressed
-            } else if (lable.equals("Go")) {
+            } else if (clickedBtn.equals("Go")) {
 
                 // frame number is valid and directory exists
                 if (checkFrameField() && checkDirField()) {
-                    dir = savedir.getText();
-                    prefs.put("DIR", dir); // save in the preference
-                    prefs.put("FRAME", String.valueOf(frame));
+                    saveDirectory = saveDirectoryText.getText();
+                    prefs.put("DIR", saveDirectory); // save in the preference
+                    prefs.put("FRAME", String.valueOf(numFrames));
 
                     // get count number of directories N so that we can create directory N+1
-                    File currentdir = new File(dir);
+                    File currentdir = new File(saveDirectory);
                     File[] filelist = currentdir.listFiles();
                     int dircount = 0;
                     for (int i = 0; i < filelist.length; i++) {
@@ -691,28 +694,28 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
                         }
                     }
 
-                    IJ.log("actionPerformed: number for directories in " + dir + " is: " + String.valueOf(dircount));
+                    IJ.log("actionPerformed: number for directories in " + saveDirectory + " is: " + String.valueOf(dircount));
                     int i = 1;
-                    File newdir = new File(dir + "temp" + String.valueOf(dircount + i));
+                    File newdir = new File(saveDirectory + "temp" + String.valueOf(dircount + i));
                     while (newdir.exists()) {
                         i++;
-                        newdir = new File(dir + "temp" + String.valueOf(dircount + i));
+                        newdir = new File(saveDirectory + "temp" + String.valueOf(dircount + i));
                     }
 
                     newdir.mkdir();
-                    dirforsave = newdir.getPath();// this one doen't have "/" at the end
-                    IJ.log("actionPerformed: created new directory " + dirforsave);
+                    imageSaveDirectory = newdir.getPath();// this one doen't have "/" at the end
+                    IJ.log("actionPerformed: created new directory " + imageSaveDirectory);
 
                     // check if the tracking thread is running
-                    if (tt != null){
-                        if (tt.isAlive()) {
+                    if (tracker != null){
+                        if (tracker.isAlive()) {
                             IJ.log("actionPerformed: GO was pressed but the tracking thread is still running, stopping sequence acquisition");
 
                             // stop by stopping sequence acquisition. don't know better way but seems work.
                             try {
                                 // probably this code cause lots of death of micromanager?
                                 // cant solve now.
-                                mmc_.stopSequenceAcquisition();
+                                mmc.stopSequenceAcquisition();
                             } catch (java.lang.Exception ex) {
                                 IJ.log("actionPerformed: GO was pressed but could not stop previous thread sequence acquisition");
                                 IJ.log(ex.getMessage());
@@ -722,24 +725,24 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
                         }
 
                         IJ.log("actionPerformed: GO was pressed, setting tracking thread to null before creating new tracking thread");
-                        tt = null;
+                        tracker = null;
                     } else {
                         IJ.log("actionPerformed: GO was pressed and tracking thread is null, nothing to do before creating new tracking thread");
                     }
 
                     ready = false;
-                    if (STIM.getState()) {
+                    if (enableStimulator.getState()) {
                         validateAndStartStimulation();
                     }
                     validateAndStartTracker();
                 }
-            } else if (lable.equals("Stop")) {
+            } else if (clickedBtn.equals("Stop")) {
 
-                if (tt != null) {
-                    if (tt.isAlive()) {
+                if (tracker != null) {
+                    if (tracker.isAlive()) {
                         IJ.log("actionPerformed: STOP was pressed, stopping sequence acquisition");
                         try {
-                            mmc_.stopSequenceAcquisition();
+                            mmc.stopSequenceAcquisition();
                         } catch (java.lang.Exception ex) {
                             IJ.log("actionPerformed: STOP was pressed but could not stop previous thread sequence acquisition");
                             IJ.log(ex.getMessage());
@@ -751,11 +754,11 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
                     IJ.log("actionPerformed: STOP was pressed, but the tracking thread is null, nothing to do");
                 }
 
-            } else if (lable.equals("Change dir")) {
+            } else if (clickedBtn.equals("Change dir")) {
                 DirectoryChooser dc = new DirectoryChooser("Directory for temp folder");
                 String dcdir = dc.getDirectory();
-                savedir.setText(dcdir);
-            } else if (lable.equals("Run")){
+                saveDirectoryText.setText(dcdir);
+            } else if (clickedBtn.equals("Run")){
                 IJ.log("actionPerformed: RUN was pressed, running stimulation");
                 validateAndStartStimulation();
             }
@@ -763,21 +766,21 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     }
 
     void validateAndStartTracker(){
-        tt = new Tracker(this);
-        tt.start();
+        tracker = new Tracker(this);
+        tracker.start();
     }
 
     void validateAndStartStimulation(){
         try {
-            int preStimulationVal = Integer.parseInt(prestimulation.getText());// initial delay
-            int strengthVal = Integer.parseInt(stimstrength.getText());// strength
-            int stimDurationVal = Integer.parseInt(stimduration.getText());// duration
-            int stimCycleLengthVal = Integer.parseInt(stimcyclelength.getText());// cycle time
-            int stimCycleVal = Integer.parseInt(stimcyclenum.getText());// repeat
-            int rampBaseVal = Integer.parseInt(rampbase.getText());// base
-            int rampStartVal = Integer.parseInt(rampstart.getText());// start
-            int rampEndVal = Integer.parseInt(rampend.getText());// end
-            boolean useRamp = ramp.getState();
+            int preStimulationVal = Integer.parseInt(preStimulationTimeMsText.getText());// initial delay
+            int strengthVal = Integer.parseInt(stimulationStrengthText.getText());// strength
+            int stimDurationVal = Integer.parseInt(stimulationDurationMsText.getText());// duration
+            int stimCycleLengthVal = Integer.parseInt(stimulationCycledurationMsText.getText());// cycle time
+            int stimCycleVal = Integer.parseInt(numStimulationCyclesText.getText());// repeat
+            int rampBaseVal = Integer.parseInt(rampBase.getText());// base
+            int rampStartVal = Integer.parseInt(rampStart.getText());// start
+            int rampEndVal = Integer.parseInt(rampEnd.getText());// end
+            boolean useRamp = enableRamp.getState();
             stimulator.runStimulation(useRamp, preStimulationVal, strengthVal, stimDurationVal, stimCycleLengthVal, stimCycleVal, rampBaseVal, rampStartVal, rampEndVal);
 
         } catch (java.lang.Exception e){
@@ -804,10 +807,10 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     // Handle mouse click
     public void mouseClicked(MouseEvent e) {
         IJ.log("mouseClicked: ");
-        if (tt != null) {
-            if (tt.isAlive()) {
+        if (tracker != null) {
+            if (tracker.isAlive()) {
                 IJ.log("mouseClicked: tracking thread is active, changing target...");
-                tt.changeTarget();
+                tracker.changeTarget();
             }
         }
     }
