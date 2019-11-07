@@ -153,7 +153,7 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
         }
         saveDirectory = previousSaveDirectoryPref == "" ? IJ.getDirectory("current") : previousSaveDirectoryPref;
         saveDirectory = saveDirectory ==  null ? IJ.getDirectory("home") : saveDirectory;
-        
+
         IJ.log("TrackStimGUI Constructor: initial dir is " + saveDirectory);
         IJ.log("TrackStimGUI Constructor: Frame value is " + String.valueOf(numFrames));
 
@@ -165,15 +165,17 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     }
 
     // validate the frame field in the UI
-    boolean checkFrameField(){
+    boolean numFramesIsValid(){
         int testint;
 
         try {
             testint = Integer.parseInt(numFramesText.getText());
             numFrames = testint;
+            prefs.put("FRAME", String.valueOf(numFrames));
+            IJ.log("numFramesIsValid: numFrames is valid " + String.valueOf(numFrames));
             return true;
         } catch (java.lang.Exception e) {
-            IJ.log("checkFrameField: the current value of the frame field is not an int");
+            IJ.log("numFramesIsValid: the current value of the frame field is not an int");
             IJ.log(e.getMessage());
             numFramesText.setText(String.valueOf(numFrames));
             return false;
@@ -181,16 +183,17 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     }
 
     // validate the directory field in the UI
-    boolean checkDirField(){
+    boolean saveDirectoryIsValid(){
         String dirName = saveDirectoryText.getText();
         File checkdir = new File(dirName);
 
         if (checkdir.exists()) {
-            IJ.log("checkDirField: directory " + dirName + " exists");
+            IJ.log("saveDirectoryIsValid: directory is valid . " + dirName + " exists");
             saveDirectory = dirName;
+            prefs.put("DIR", saveDirectory);
             return true;
         } else {
-            IJ.log("checkDirField: directory " + dirName + " DOES NOT EXIST! Please create the directory first");
+            IJ.log("saveDirectoryIsValid: directory " + dirName + " DOES NOT EXIST! Please create the directory first");
             saveDirectoryText.setText(saveDirectory);
             return false;
         }
@@ -199,8 +202,10 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     // method required by ItemListener
     public void itemStateChanged(ItemEvent e) {
 
+        // listen to item changes if the user selecs the camera exposure duration selector or camera cycle duration
+        // becayse these values depend on each other
         if (e.getSource() == cameraExposureDurationSelector || e.getSource() == cameraCycleDurationSelector) {
-
+            IJ.log("itemStateChanged: camera settings selector changed, updating camera settings");
             // indexes are mapped to specific values
             // e.g. if you want trigger length 50, you send index=3 to the stimulator
             // see /documentation/arduino.c lines 41-45
@@ -220,7 +225,7 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
                 stimulator.updateCameraSettings(newExposureSelectionIndex, newCycleLengthIndex);
 
             } catch (java.lang.Exception ex){
-                IJ.log("itemStateChanged: error trying to update the stimulator signal");
+                IJ.log("itemStateChanged: error trying to update the camera settings");
                 IJ.log(ex.getMessage());
             }
         }
@@ -233,120 +238,100 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
 
         IJ.log("actionPerformed: button clicked is " + clickedBtn);
 
-        // frame num changed
+        // num frames text
         if (clickedBtn.equals(numFramesText.getText())){
-            boolean checkframefield = checkFrameField();
-            IJ.log("actionPerformed: numFrames is " + String.valueOf(numFrames));
+            numFramesIsValid();
+        } 
 
-            // saveDirectoryText has changed
-        } else if (clickedBtn.equals(saveDirectoryText.getText())){
-            checkDirField();
-            IJ.log("actionPerformed: directory is " + saveDirectoryText.getText());
+        // savedirectory text
+        if (clickedBtn.equals(saveDirectoryText.getText())){
+            saveDirectoryIsValid();
+        }
 
-            // any button pushed
-        } else {
+        // button to ready.  not sure what ready does that go doesnt do
+        if (clickedBtn.equals("Ready")){
+            ready = true;
+            validateAndStartTracker();
+        }
 
-            // ready button pushed
-            if (clickedBtn.equals("Ready")) {
-                ready = true;
-                validateAndStartTracker();
-
-                // go button pressed
-            } else if (clickedBtn.equals("Go")) {
-
-                // frame number is valid and directory exists
-                if (checkFrameField() && checkDirField()) {
-                    saveDirectory = saveDirectoryText.getText();
-                    prefs.put("DIR", saveDirectory); // save in the preference
-                    prefs.put("FRAME", String.valueOf(numFrames));
-
-                    // get count number of directories N so that we can create directory N+1
-                    File currentdir = new File(saveDirectory);
-                    File[] filelist = currentdir.listFiles();
-                    int dircount = 0;
-                    for (int i = 0; i < filelist.length; i++) {
-                        if (filelist[i].isDirectory()) {
-                            dircount++;
-                        }
-                    }
-
-                    IJ.log("actionPerformed: number for directories in " + saveDirectory + " is: " + String.valueOf(dircount));
-                    int i = 1;
-                    File newdir = new File(saveDirectory + "temp" + String.valueOf(dircount + i));
-                    while (newdir.exists()) {
-                        i++;
-                        newdir = new File(saveDirectory + "temp" + String.valueOf(dircount + i));
-                    }
-
-                    newdir.mkdir();
-                    imageSaveDirectory = newdir.getPath();// this one doen't have "/" at the end
-                    IJ.log("actionPerformed: created new directory " + imageSaveDirectory);
-
-                    // check if the tracking thread is running
-                    if (tracker != null){
-                        if (tracker.isAlive()) {
-                            IJ.log("actionPerformed: GO was pressed but the tracking thread is still running, stopping sequence acquisition");
-
-                            // stop by stopping sequence acquisition. don't know better way but seems work.
-                            try {
-                                // probably this code cause lots of death of micromanager?
-                                // cant solve now.
-                                mmc.stopSequenceAcquisition();
-                            } catch (java.lang.Exception ex) {
-                                IJ.log("actionPerformed: GO was pressed but could not stop previous thread sequence acquisition");
-                                IJ.log(ex.getMessage());
-                            }
-                        } else {
-                            IJ.log("actionPerformed: GO was pressed and the tracking thread is not active, nothing needs to be done");
-                        }
-
-                        IJ.log("actionPerformed: GO was pressed, setting tracking thread to null before creating new tracking thread");
-                        tracker = null;
-                    } else {
-                        IJ.log("actionPerformed: GO was pressed and tracking thread is null, nothing to do before creating new tracking thread");
-                    }
-
-                    ready = false;
-                    if (enableStimulator.getState()) {
-                        validateAndStartStimulation();
-                    }
-                    validateAndStartTracker();
-                }
-            } else if (clickedBtn.equals("Stop")) {
-
-                if (tracker != null) {
-                    if (tracker.isAlive()) {
-                        IJ.log("actionPerformed: STOP was pressed, stopping sequence acquisition");
-                        try {
-                            mmc.stopSequenceAcquisition();
-                        } catch (java.lang.Exception ex) {
-                            IJ.log("actionPerformed: STOP was pressed but could not stop previous thread sequence acquisition");
-                            IJ.log(ex.getMessage());
-                        }
-                    } else {
-                        IJ.log("actionPerformed: STOP was pressed, but the tracking thread is not alive, nothing to do");
-                    }
-                } else {
-                    IJ.log("actionPerformed: STOP was pressed, but the tracking thread is null, nothing to do");
-                }
-
-            } else if (clickedBtn.equals("Change dir")) {
-                DirectoryChooser dc = new DirectoryChooser("Directory for temp folder");
-                String dcdir = dc.getDirectory();
-                saveDirectoryText.setText(dcdir);
-            } else if (clickedBtn.equals("Run")){
-                IJ.log("actionPerformed: RUN was pressed, running stimulation");
+        // button to start TrackStim image acquisition
+        if (clickedBtn.equals("Go") && numFramesIsValid() && saveDirectoryIsValid()){
+            createImageSaveDirectory();
+            ready = false;
+            if (enableStimulator.getState()) {
                 validateAndStartStimulation();
             }
+            validateAndStartTracker();
+        }
+
+        // stop image acquisition process
+        if (clickedBtn.equals("Stop")){
+            stopTracker();
+            // TODO also stop the stimulator if possible
+        }
+
+        // button to choose directory
+        if (clickedBtn.equals("Change dir")) {
+            DirectoryChooser dc = new DirectoryChooser("Directory for temp folder");
+            String dcdir = dc.getDirectory();
+            saveDirectoryText.setText(dcdir);
+        }
+
+        // button to test stimulator
+        if (clickedBtn.equals("Run")){
+            validateAndStartStimulation();
         }
     }
 
+    void createImageSaveDirectory(){
+        // get count number of directories N so that we can create directory N+1
+        File saveDirectoryFile = new File(saveDirectory);
+        File[] fileList = saveDirectoryFile.listFiles();
+        int numSubDirectories = 0;
+        for (int i = 0; i < fileList.length; i++) {
+            if (fileList[i].isDirectory()) {
+                numSubDirectories++;
+            }
+        }
+
+        // choose first temp<i> which does not exist yet and create directory with name tempi
+        int i = 1;
+        File newdir = new File(saveDirectory + "temp" + String.valueOf(numSubDirectories + i));
+        while (newdir.exists()) {
+            i++;
+            newdir = new File(saveDirectory + "temp" + String.valueOf(numSubDirectories + i));
+        }
+
+        newdir.mkdir();
+        imageSaveDirectory = newdir.getPath();// this one doen't have "/" at the end
+        IJ.log("createImageSaveDirectory: created new directory " + imageSaveDirectory);
+    }
+
+    void stopTracker(){
+        // check if the tracking thread is running
+        if (tracker != null && tracker.isAlive()){
+
+            // stop by stopping sequence acquisition. don't know better way but seems work.
+            try {
+                mmc.stopSequenceAcquisition();
+                IJ.log("stopTracker: tracking thread is still running, stopping sequence acquisition and setting tracker to null");
+            } catch (java.lang.Exception ex) {
+                IJ.log("stopTracker: could not stop previous thread sequence acquisition");
+                IJ.log(ex.getMessage());
+            }
+        }
+        tracker = null; 
+    }
+
     void validateAndStartTracker(){
+        IJ.log("validateAndStartTracker: stopping previous tracker if possible and creating new tracker");
+        stopTracker();
         tracker = new Tracker(this);
         tracker.start();
     }
 
     void validateAndStartStimulation(){
+        IJ.log("validateAndStartStimulation: running stimulation");
         try {
             int preStimulationVal = Integer.parseInt(preStimulationTimeMsText.getText());// initial delay
             int strengthVal = Integer.parseInt(stimulationStrengthText.getText());// strength
@@ -398,11 +383,9 @@ class TrackStimGUI extends PlugInFrame implements ActionListener, ImageListener,
     // Handle mouse click
     public void mouseClicked(MouseEvent e) {
         IJ.log("mouseClicked: ");
-        if (tracker != null) {
-            if (tracker.isAlive()) {
-                IJ.log("mouseClicked: tracking thread is active, changing target...");
-                tracker.changeTarget();
-            }
+        if (tracker != null && tracker.isAlive()) {
+            IJ.log("mouseClicked: tracking thread is active, changing target...");
+            tracker.changeTarget();
         }
     }
 
