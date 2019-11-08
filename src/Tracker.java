@@ -1131,6 +1131,9 @@ class Tracker extends Thread {
                     outputData(xposarray, yposarray);
                 }
             }
+
+            tpf.app_.enableLiveMode(false);
+            tpf.app_.enableLiveMode(true);
             // ImagePlus imp3=new ImagePlus("binarystack",binaryimgstack);
             // imp3.show();
 
