@@ -10,6 +10,8 @@ import java.awt.event.ActionEvent;
 
 import java.io.File;
 
+import java.util.prefs.Preferences;
+
 import ij.ImagePlus;
 import ij.IJ;
 import ij.plugin.frame.PlugInFrame;
@@ -36,6 +38,9 @@ class TrackStimGUI extends PlugInFrame {
     TextField numFramesText;
     TextField saveDirectoryText;
     TextField framesPerSecondText;
+    
+    Preferences prefs;
+
 
 
     // pass to Tracker
@@ -52,6 +57,11 @@ class TrackStimGUI extends PlugInFrame {
 
         initComponents(); // create the GUI
         setSize(700, 200);
+
+        prefs = Preferences.userNodeForPackage(this.getClass());
+        numFramesText.setText(prefs.get("numFrames", "3000"));
+        saveDirectoryText.setText(prefs.get("saveDirectory", ""));
+
     }
 
     void scheduleSnapShots(int numFrames, int fps, String saveDirectory){
@@ -71,6 +81,9 @@ class TrackStimGUI extends PlugInFrame {
 
     void goBtnActionPerformed(ActionEvent e){
         if(saveDirectoryIsValid() && frameNumbersAreValid()){
+            prefs.put("saveDirectory", saveDirectoryText.getText());
+            prefs.put("numFrames", numFramesText.getText());
+
             if( !app.isLiveModeOn() ){
                 app.enableLiveMode(true);
             }
@@ -85,13 +98,8 @@ class TrackStimGUI extends PlugInFrame {
     }
 
     void directoryBtnActionPerformed(ActionEvent e){
-        String newDirectory = IJ.getDirectory("user.home");
 
-        if( newDirectory == null ){
-            newDirectory = System.getProperty("user.home");
-        }
-        
-        saveDirectoryText.setText(newDirectory);
+        saveDirectoryText.setText(IJ.getDirectory("user.home"));
     }
 
     void stopBtnActionPerformed(ActionEvent e){
