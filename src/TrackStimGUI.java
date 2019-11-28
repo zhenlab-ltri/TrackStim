@@ -8,6 +8,8 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
+import java.io.File;
+
 import ij.ImagePlus;
 import ij.IJ;
 import ij.plugin.frame.PlugInFrame;
@@ -28,19 +30,18 @@ import org.micromanager.api.ScriptInterface;
 // **NOTE**: There is a big difference between a micro manager plugin and an imagej plugin
 // this program was initially designed as an imageJ plugin, but is now wrapped inside a micromanager plugin
 // to migrate it to new versions of micromanager
-class TrackStimGUI extends PlugInFrame implements ActionListener {
+class TrackStimGUI extends PlugInFrame {
 
     // UI options
     TextField numFramesText;
     TextField saveDirectoryText;
-    String saveDirectory; // trackstim will create subdirectories in this folder
+    TextField framesPerSecondText;
 
 
     // pass to Tracker
     CMMCore mmc;
     ScriptInterface app;
     String imageSaveDirectory;  // a subfolder within saveDirectory
-    int numFrames;
 
     public TrackStimGUI(CMMCore cmmcore, ScriptInterface app_) {
         super("TrackStim");
@@ -48,44 +49,72 @@ class TrackStimGUI extends PlugInFrame implements ActionListener {
         // set up micro manager variables
         mmc = cmmcore;
         app = app_;
-        // initialize GUI
+
         initComponents(); // create the GUI
         setSize(700, 200);
     }
 
-    void testFramesPerSecond(){
-
+    void scheduleSnapShots(int numFrames, int fps, String saveDirectory){
         ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
-        int numFrames = 100; //
-        int cycleLengthMs = 100; // take a pic every 100ms
-        for(int i = 0; i < numFrames; i++ ){
-            int timePointMs = i * cycleLengthMs; // e.g. 0 ms, 100ms, 200ms, etc..
-            ScheduledSnapShot s = new ScheduledSnapShot(mmc, app, timePointMs);
 
-            ses.schedule(s, timePointMs, TimeUnit.MILLISECONDS);
+        fps = 10; // fix fps at 10 for now
+
+        long frameCycleNano = TimeUnit.SECONDS.toNanos(1 / fps); // take a pic every 100ms
+        for(int curFrameIndex = 0; curFrameIndex < numFrames; curFrameIndex++){
+            long timePtNano = curFrameIndex * frameCycleNano; // e.g. 0 ms, 100ms, 200ms, etc..
+            ScheduledSnapShot s = new ScheduledSnapShot(mmc, app, timePtNano);
+
+            ses.schedule(s, timePtNano, TimeUnit.NANOSECONDS);
         }
     }
 
-    // handle button presses
-    public void actionPerformed(ActionEvent e) {
-        String clickedBtn = e.getActionCommand();
-
-
-        // button to start TrackStim image acquisition
-        if (clickedBtn.equals("Go")){
-            IJ.log("Go");
-
+    void goBtnActionPerformed(ActionEvent e){
+        if(saveDirectoryIsValid() && frameNumbersAreValid()){
             if( !app.isLiveModeOn() ){
                 app.enableLiveMode(true);
-
             }
+            int numFrames = Integer.parseInt(numFramesText.getText());
+            int framesPerSecond = Integer.parseInt(framesPerSecondText.getText());
+            String saveDirectory = saveDirectoryText.getText();
 
-            testFramesPerSecond();
+            scheduleSnapShots(numFrames, framesPerSecond, saveDirectory);
+        } else {
+            IJ.showMessage("directory or frame number is invalid");
+        }
+    }
+
+    void directoryBtnActionPerformed(ActionEvent e){
+        String newDirectory = IJ.getDirectory("user.home");
+
+        if( newDirectory == null ){
+            newDirectory = System.getProperty("user.home");
+        }
+        
+        saveDirectoryText.setText(newDirectory);
+    }
+
+    void stopBtnActionPerformed(ActionEvent e){
+
+    }
+
+
+    boolean saveDirectoryIsValid(){
+        File f = new File(saveDirectoryText.getText());
+        return f.exists() && f.isDirectory();
+    }
+
+    boolean frameNumbersAreValid(){
+        boolean valid = true;
+
+        try {
+            Integer.parseInt(numFramesText.getText());
+            Integer.parseInt(framesPerSecondText.getText());
+
+        } catch (java.lang.Exception e){
+            valid = false;
         }
 
-        // stop image acquisition process
-        if (clickedBtn.equals("Stop")){
-        }
+         return valid;
     }
 
     // create the GUI
@@ -95,50 +124,71 @@ class TrackStimGUI extends PlugInFrame implements ActionListener {
         setLayout(gbl);
         GridBagConstraints gbc = new GridBagConstraints();
 
-        Button b2 = new Button("Go");
-        b2.setPreferredSize(new Dimension(100, 60));
-        b2.addActionListener(this);
+        Button goBtn = new Button("Go");
+        goBtn.setPreferredSize(new Dimension(100, 60));
+        goBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                goBtnActionPerformed(evt);
+            }
+        });
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         gbc.gridheight = 2;
-        gbl.setConstraints(b2, gbc);
-        add(b2);
+        gbl.setConstraints(goBtn, gbc);
+        add(goBtn);
 
-        Button b3 = new Button("Stop");
-        b3.setPreferredSize(new Dimension(100, 60));
-        b3.addActionListener(this);
+        Button stopBtn = new Button("Stop");
+        stopBtn.setPreferredSize(new Dimension(100, 60));
+        stopBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                stopBtnActionPerformed(evt);
+            }
+        });
         gbc.gridx = 4;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         gbc.gridheight = 2;
-        gbl.setConstraints(b3, gbc);
-        add(b3);
+        gbl.setConstraints(stopBtn, gbc);
+        add(stopBtn);
 
-        Label labelframe = new Label("Frame num");
+        Label numFramesLabel = new Label("Number of frames");
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
-        gbl.setConstraints(labelframe, gbc);
-        add(labelframe);
+        gbl.setConstraints(numFramesLabel, gbc);
+        add(numFramesLabel);
 
-        numFramesText = new TextField(String.valueOf(numFrames), 5);
-        numFramesText.addActionListener(this);
+        numFramesText = new TextField(String.valueOf("3000"), 5);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
         gbl.setConstraints(numFramesText, gbc);
         add(numFramesText);
 
-        Label labeldir = new Label("Save at");
+        Label framesPerSecondLabel = new Label("Frames per second");
+        gbc.gridx = 2;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbl.setConstraints(framesPerSecondLabel, gbc);
+        add(framesPerSecondLabel);
+
+        framesPerSecondText = new TextField("10", 5);
+        framesPerSecondText.setEnabled(false);
+        gbc.gridx = 3;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbl.setConstraints(framesPerSecondText, gbc);
+        add(framesPerSecondText);
+
+        Label directoryLabel = new Label("Save at");
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.gridwidth = 1;
-        gbl.setConstraints(labeldir, gbc);
-        add(labeldir);
+        gbl.setConstraints(directoryLabel, gbc);
+        add(directoryLabel);
 
-        saveDirectoryText = new TextField(saveDirectory, 40);
-        saveDirectoryText.addActionListener(this);
+        saveDirectoryText = new TextField("", 40);
         gbc.gridx = 1;
         gbc.gridy = 4;
         gbc.gridwidth = 5;
@@ -147,13 +197,17 @@ class TrackStimGUI extends PlugInFrame implements ActionListener {
         add(saveDirectoryText);
         gbc.fill = GridBagConstraints.NONE;// return to default
 
-        Button b4 = new Button("Change dir");
-        b4.addActionListener(this);
+        Button directoryBtn = new Button("Directory");
+        directoryBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                directoryBtnActionPerformed(evt);
+            }
+        });
         gbc.gridx = 6;
         gbc.gridy = 4;
         gbc.gridwidth = 2;
-        gbl.setConstraints(b4, gbc);
-        add(b4);
+        gbl.setConstraints(directoryBtn, gbc);
+        add(directoryBtn);
     }
 
 }

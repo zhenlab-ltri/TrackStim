@@ -66,9 +66,9 @@ import org.micromanager.api.ScriptInterface;
 class ScheduledSnapShot implements Runnable {
 	CMMCore core;
 	ScriptInterface app;
-	int timePoint;
+	long timePoint;
 
-	ScheduledSnapShot(CMMCore core_, ScriptInterface app_, int timePoint_){
+	ScheduledSnapShot(CMMCore core_, ScriptInterface app_, long timePoint_){
 		core = core_;
 		timePoint = timePoint_;
 		app = app_;
