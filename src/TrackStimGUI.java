@@ -11,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 
 import java.util.prefs.Preferences;
+import java.util.ArrayList;
 
 import ij.ImagePlus;
 import ij.IJ;
@@ -41,6 +42,8 @@ class TrackStimGUI extends PlugInFrame {
     
     Preferences prefs;
 
+    ArrayList<ScheduledFuture> snapshotTasks;
+
     CMMCore mmc;
     ScriptInterface app;
 
@@ -58,6 +61,7 @@ class TrackStimGUI extends PlugInFrame {
         numFramesText.setText(prefs.get("numFrames", "3000"));
         saveDirectoryText.setText(prefs.get("saveDirectory", ""));
 
+        snapshotTasks = new ArrayList<ScheduledFuture>();
     }
 
     String createImageSaveDirectory(String root){
@@ -83,9 +87,9 @@ class TrackStimGUI extends PlugInFrame {
         return newdir.getPath();
     }
 
-    void scheduleSnapShots(int numFrames, int fps, String saveDirectory){
+    ArrayList<ScheduledFuture> scheduleSnapShots(int numFrames, int fps, String saveDirectory){
         ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
-
+        ArrayList<ScheduledFuture> snapShots = new ArrayList<ScheduledFuture>();
         fps = 10; // fix fps at 10 for now
 
         long frameCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / fps); // take a pic every 100ms
@@ -94,8 +98,11 @@ class TrackStimGUI extends PlugInFrame {
             long timePtNano = curFrameIndex * frameCycleNano; // e.g. 0 ms, 100ms, 200ms, etc..
             ScheduledSnapShot s = new ScheduledSnapShot(mmc, app, timePtNano, saveDirectory, curFrameIndex);
 
-            ses.schedule(s, timePtNano, TimeUnit.NANOSECONDS);
+            ScheduledFuture snapShot = ses.schedule(s, timePtNano, TimeUnit.NANOSECONDS);
+            snapShots.add(snapShot);
         }
+
+        return snapShots;
     }
 
     void goBtnActionPerformed(ActionEvent e){
@@ -113,7 +120,7 @@ class TrackStimGUI extends PlugInFrame {
                 app.enableLiveMode(true);
             }
 
-            scheduleSnapShots(numFrames, framesPerSecond, imageSaveDirectory);
+            snapshotTasks = scheduleSnapShots(numFrames, framesPerSecond, imageSaveDirectory);
         } else {
             IJ.showMessage("directory or frame number is invalid");
         }
@@ -125,7 +132,9 @@ class TrackStimGUI extends PlugInFrame {
     }
 
     void stopBtnActionPerformed(ActionEvent e){
-
+        for (int i = 0; i < snapshotTasks.size(); i++ ){
+            snapshotTasks.get(i).cancel(true);
+        }
     }
 
 
