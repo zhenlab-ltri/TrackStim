@@ -1,65 +1,24 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.prefs.Preferences;
-
 import java.awt.TextField;
 import java.awt.Label;
 import java.awt.GridBagConstraints;
 import java.awt.Dimension;
-import java.awt.Checkbox;
-import java.awt.Rectangle;
-import java.awt.Point;
 import java.awt.Button;
-import java.awt.Choice;
 import java.awt.GridBagLayout;
 
 import java.awt.event.ActionListener;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
 
-import ij.ImageListener;
 import ij.ImagePlus;
 import ij.IJ;
-import ij.WindowManager;
-import ij.ImageStack;
-
-import ij.io.DirectoryChooser;
-import ij.io.FileInfo;
-import ij.io.TiffEncoder;
-
-import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
-
-import ij.gui.Roi;
-import ij.gui.Wand;
-import ij.gui.ImageCanvas;
-import ij.gui.ImageWindow;
-import ij.gui.PolygonRoi;
-
-import ij.plugin.filter.EDM;
-import ij.plugin.filter.RankFilters;
 import ij.plugin.frame.PlugInFrame;
 
-import java.io.File;
-import java.io.OutputStream;
-import java.io.FileOutputStream;
 
 import mmcorej.CMMCore;
-import mmcorej.MMCoreJ;
-import mmcorej.StrVector;
-import mmcorej.Configuration;
-import mmcorej.PropertySetting;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
 
 import org.micromanager.api.ScriptInterface;
 
@@ -70,13 +29,9 @@ import org.micromanager.api.ScriptInterface;
 // this program was initially designed as an imageJ plugin, but is now wrapped inside a micromanager plugin
 // to migrate it to new versions of micromanager
 class TrackStimGUI extends PlugInFrame implements ActionListener {
-    // globals just in this class
-    Preferences prefs;
 
-    // camera options
+    // UI options
     TextField numFramesText;
-
-    // directory to save to
     TextField saveDirectoryText;
     String saveDirectory; // trackstim will create subdirectories in this folder
 
@@ -94,15 +49,8 @@ class TrackStimGUI extends PlugInFrame implements ActionListener {
         mmc = cmmcore;
         app = app_;
         // initialize GUI
-        requestFocus(); // may need for keylistener
         initComponents(); // create the GUI
-        setSize(700, 225);
-        setVisible(true);
-    }
-
-
-    // method required by ItemListener
-    public void itemStateChanged(ItemEvent e) {
+        setSize(700, 200);
     }
 
     void testFramesPerSecond(){

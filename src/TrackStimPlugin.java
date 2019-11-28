@@ -29,9 +29,9 @@ public class TrackStimPlugin implements MMPlugin {
 
    @Override
    public void show() {
-        TrackStimGUI ts = new TrackStimGUI(core_, app_);
+      TrackStimGUI ts = new TrackStimGUI(core_, app_);
 
-        ts.setVisible(true);
+      ts.setVisible(true);
    }
 
    @Override
