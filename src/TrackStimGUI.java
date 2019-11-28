@@ -41,12 +41,8 @@ class TrackStimGUI extends PlugInFrame {
     
     Preferences prefs;
 
-
-
-    // pass to Tracker
     CMMCore mmc;
     ScriptInterface app;
-    String imageSaveDirectory;  // a subfolder within saveDirectory
 
     public TrackStimGUI(CMMCore cmmcore, ScriptInterface app_) {
         super("TrackStim");
@@ -64,6 +60,29 @@ class TrackStimGUI extends PlugInFrame {
 
     }
 
+    String createImageSaveDirectory(String root){
+        // get count number of directories N so that we can create directory N+1
+        File saveDirectoryFile = new File(root);
+        File[] fileList = saveDirectoryFile.listFiles();
+        int numSubDirectories = 0;
+        for (int i = 0; i < fileList.length; i++) {
+            if (fileList[i].isDirectory()) {
+                numSubDirectories++;
+            }
+        }
+
+        // choose first temp<i> which does not exist yet and create directory with name tempi
+        int i = 1;
+        File newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
+        while (newdir.exists()) {
+            i++;
+            newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
+        }
+
+        newdir.mkdir();
+        return newdir.getPath();
+    }
+
     void scheduleSnapShots(int numFrames, int fps, String saveDirectory){
         ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
@@ -73,7 +92,7 @@ class TrackStimGUI extends PlugInFrame {
 
         for(int curFrameIndex = 0; curFrameIndex < numFrames; curFrameIndex++){
             long timePtNano = curFrameIndex * frameCycleNano; // e.g. 0 ms, 100ms, 200ms, etc..
-            ScheduledSnapShot s = new ScheduledSnapShot(mmc, app, timePtNano);
+            ScheduledSnapShot s = new ScheduledSnapShot(mmc, app, timePtNano, saveDirectory, curFrameIndex);
 
             ses.schedule(s, timePtNano, TimeUnit.NANOSECONDS);
         }
@@ -84,14 +103,17 @@ class TrackStimGUI extends PlugInFrame {
             prefs.put("saveDirectory", saveDirectoryText.getText());
             prefs.put("numFrames", numFramesText.getText());
 
+            int numFrames = Integer.parseInt(numFramesText.getText());
+            int framesPerSecond = Integer.parseInt(framesPerSecondText.getText());
+            String rootDirectory = saveDirectoryText.getText();
+
+            String imageSaveDirectory = createImageSaveDirectory(rootDirectory);
+
             if( !app.isLiveModeOn() ){
                 app.enableLiveMode(true);
             }
-            int numFrames = Integer.parseInt(numFramesText.getText());
-            int framesPerSecond = Integer.parseInt(framesPerSecondText.getText());
-            String saveDirectory = saveDirectoryText.getText();
 
-            scheduleSnapShots(numFrames, framesPerSecond, saveDirectory);
+            scheduleSnapShots(numFrames, framesPerSecond, imageSaveDirectory);
         } else {
             IJ.showMessage("directory or frame number is invalid");
         }

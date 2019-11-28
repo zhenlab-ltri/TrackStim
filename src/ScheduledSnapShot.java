@@ -34,7 +34,6 @@ import ij.io.FileSaver;
 
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-
 import ij.gui.Roi;
 import ij.gui.Wand;
 import ij.gui.ImageCanvas;
@@ -67,11 +66,15 @@ class ScheduledSnapShot implements Runnable {
 	CMMCore core;
 	ScriptInterface app;
 	long timePoint;
+	String saveDirectory;
+	int frameIndex;
 
-	ScheduledSnapShot(CMMCore core_, ScriptInterface app_, long timePoint_){
+	ScheduledSnapShot(CMMCore core_, ScriptInterface app_, long timePoint_, String saveDirectory_, int frameIndex_){
 		core = core_;
 		timePoint = timePoint_;
 		app = app_;
+		saveDirectory = saveDirectory_;
+		frameIndex = frameIndex_;
 	}
 
 	public void run(){
@@ -80,6 +83,6 @@ class ScheduledSnapShot implements Runnable {
         ImagePlus liveModeImage = app.getSnapLiveWin().getImagePlus();
 
 		FileSaver f = new FileSaver(liveModeImage);
-		f.saveAsTiff("/Users/zhenlab/Desktop/Dylan/test/" + String.valueOf(timePoint) + ".tiff");
+		f.saveAsTiff(saveDirectory + String.valueOf(frameIndex) + ".tiff");
 	}
 }
