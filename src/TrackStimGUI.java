@@ -59,7 +59,8 @@ class TrackStimGUI extends PlugInFrame {
 
         fps = 10; // fix fps at 10 for now
 
-        long frameCycleNano = TimeUnit.SECONDS.toNanos(1 / fps); // take a pic every 100ms
+        long frameCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / fps); // take a pic every 100ms
+
         for(int curFrameIndex = 0; curFrameIndex < numFrames; curFrameIndex++){
             long timePtNano = curFrameIndex * frameCycleNano; // e.g. 0 ms, 100ms, 200ms, etc..
             ScheduledSnapShot s = new ScheduledSnapShot(mmc, app, timePtNano);
