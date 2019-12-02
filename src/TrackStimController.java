@@ -38,7 +38,7 @@ class TrackStimController {
             app.enableLiveMode(true);
         }
 
-        snapshotTasks = scheduleSnapShots(numFrames, framesPerSecond, imageSaveDirectory);
+        snapshotTasks = scheduleSnapshots(numFrames, framesPerSecond, imageSaveDirectory);
     }
 
     public void stopImageAcquisition(){
@@ -55,7 +55,7 @@ class TrackStimController {
 
     // schedule a number of snapshot at fixed time interval to ensure that images are taken
     // at the given fps
-    private ArrayList<ScheduledFuture> scheduleSnapShots(int numFrames, int fps, String saveDirectory){
+    private ArrayList<ScheduledFuture> scheduleSnapshots(int numFrames, int fps, String saveDirectory){
         ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
         ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
         fps = 10; // fix fps at 10 for now
@@ -64,7 +64,7 @@ class TrackStimController {
 
         for(int curFrameIndex = 0; curFrameIndex < numFrames; curFrameIndex++){
             long timePtNano = curFrameIndex * frameCycleNano; // e.g. 0 ms, 100ms, 200ms, etc..
-            ScheduledSnapShot s = new ScheduledSnapShot(core, app, timePtNano, saveDirectory, curFrameIndex);
+            ScheduledSnapshot s = new ScheduledSnapshot(core, app, timePtNano, saveDirectory, curFrameIndex);
 
             ScheduledFuture snapShot = ses.schedule(s, timePtNano, TimeUnit.NANOSECONDS);
             futureTasks.add(snapShot);
