@@ -83,6 +83,6 @@ class ScheduledSnapShot implements Runnable {
         ImagePlus liveModeImage = app.getSnapLiveWin().getImagePlus();
 
 		FileSaver f = new FileSaver(liveModeImage);
-		f.saveAsTiff(saveDirectory + String.valueOf(frameIndex) + ".tiff");
+		f.saveAsTiff(saveDirectory + "/" + String.valueOf(frameIndex) + ".tiff");
 	}
 }
