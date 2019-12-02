@@ -78,8 +78,12 @@ class ScheduledSnapShot implements Runnable {
 	}
 
 	public void run(){
-		IJ.log("Snapping image at time " + String.valueOf(timePoint));
+		IJ.log("[INFO] Acquring image at time " + String.valueOf(timePoint));
 
+		if( !app.isLiveModeOn() ){
+			IJ.log("[ERROR] Could not acquire image.  Live mode must be on.  Please press STOP." );
+			return;
+		}
         ImagePlus liveModeImage = app.getSnapLiveWin().getImagePlus();
 
 		FileSaver f = new FileSaver(liveModeImage);

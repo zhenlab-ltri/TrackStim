@@ -42,10 +42,10 @@ class TrackStimGUI extends PlugInFrame {
     
     Preferences prefs;
 
-    ArrayList<ScheduledFuture> snapshotTasks;
-
     CMMCore mmc;
     ScriptInterface app;
+
+    TrackStimController controller;
 
     public TrackStimGUI(CMMCore cmmcore, ScriptInterface app_) {
         super("TrackStim");
@@ -53,6 +53,7 @@ class TrackStimGUI extends PlugInFrame {
         // set up micro manager variables
         mmc = cmmcore;
         app = app_;
+        controller = new TrackStimController(mmc, app);
 
         initComponents(); // create the GUI
         setSize(700, 200);
@@ -60,51 +61,10 @@ class TrackStimGUI extends PlugInFrame {
         prefs = Preferences.userNodeForPackage(this.getClass());
         numFramesText.setText(prefs.get("numFrames", "3000"));
         saveDirectoryText.setText(prefs.get("saveDirectory", ""));
-
-        snapshotTasks = new ArrayList<ScheduledFuture>();
     }
 
-    String createImageSaveDirectory(String root){
-        // get count number of directories N so that we can create directory N+1
-        File saveDirectoryFile = new File(root);
-        File[] fileList = saveDirectoryFile.listFiles();
-        int numSubDirectories = 0;
-        for (int i = 0; i < fileList.length; i++) {
-            if (fileList[i].isDirectory()) {
-                numSubDirectories++;
-            }
-        }
-
-        // choose first temp<i> which does not exist yet and create directory with name tempi
-        int i = 1;
-        File newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
-        while (newdir.exists()) {
-            i++;
-            newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
-        }
-
-        newdir.mkdir();
-        return newdir.getPath();
-    }
-
-    ArrayList<ScheduledFuture> scheduleSnapShots(int numFrames, int fps, String saveDirectory){
-        ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
-        ArrayList<ScheduledFuture> snapShots = new ArrayList<ScheduledFuture>();
-        fps = 10; // fix fps at 10 for now
-
-        long frameCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / fps); // take a pic every 100ms
-
-        for(int curFrameIndex = 0; curFrameIndex < numFrames; curFrameIndex++){
-            long timePtNano = curFrameIndex * frameCycleNano; // e.g. 0 ms, 100ms, 200ms, etc..
-            ScheduledSnapShot s = new ScheduledSnapShot(mmc, app, timePtNano, saveDirectory, curFrameIndex);
-
-            ScheduledFuture snapShot = ses.schedule(s, timePtNano, TimeUnit.NANOSECONDS);
-            snapShots.add(snapShot);
-        }
-
-        return snapShots;
-    }
-
+    // when go is pressed, validate ui values and send them to the controller to start
+    // getting images
     void goBtnActionPerformed(ActionEvent e){
         if(saveDirectoryIsValid() && frameNumbersAreValid()){
             prefs.put("saveDirectory", saveDirectoryText.getText());
@@ -114,29 +74,21 @@ class TrackStimGUI extends PlugInFrame {
             int framesPerSecond = Integer.parseInt(framesPerSecondText.getText());
             String rootDirectory = saveDirectoryText.getText();
 
-            String imageSaveDirectory = createImageSaveDirectory(rootDirectory);
-
-            if( !app.isLiveModeOn() ){
-                app.enableLiveMode(true);
-            }
-
-            snapshotTasks = scheduleSnapShots(numFrames, framesPerSecond, imageSaveDirectory);
+            controller.startImageAcquisition(numFrames, framesPerSecond, rootDirectory);
         } else {
             IJ.showMessage("directory or frame number is invalid");
         }
     }
 
+    // pick new directory
     void directoryBtnActionPerformed(ActionEvent e){
-
         saveDirectoryText.setText(IJ.getDirectory("user.home"));
     }
 
+    // stop controller from getting images
     void stopBtnActionPerformed(ActionEvent e){
-        for (int i = 0; i < snapshotTasks.size(); i++ ){
-            snapshotTasks.get(i).cancel(true);
-        }
+        controller.stopImageAcquisition();
     }
-
 
     boolean saveDirectoryIsValid(){
         File f = new File(saveDirectoryText.getText());
