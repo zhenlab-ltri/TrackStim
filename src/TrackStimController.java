@@ -4,6 +4,11 @@ import java.util.ArrayList;
 
 import mmcorej.CMMCore;
 
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
+import ij.gui.ImageWindow;
+
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
@@ -17,6 +22,10 @@ class TrackStimController {
     private ArrayList<ScheduledFuture> stimulatorTasks;
     private String stimulatorPort;
 
+    // take live mode images and process them to show the user
+    private ScheduledExecutorService micromanagerLiveModeProcessor;
+    private ImageWindow processedImageWindow;
+
     CMMCore core;
     ScriptInterface app;
     
@@ -26,6 +35,10 @@ class TrackStimController {
         app = app_;
         snapshotTasks = new ArrayList<ScheduledFuture>(); 
         stimulatorTasks = new ArrayList<ScheduledFuture>();
+        
+        micromanagerLiveModeProcessor = Executors.newSingleThreadScheduledExecutor();
+        processedImageWindow = new ImageWindow("Binarized images");
+
     }
 
     public void startImageAcquisition(int numFrames, int framesPerSecond, String rootDirectory){
@@ -51,6 +64,31 @@ class TrackStimController {
         for (int j = 0; j < stimulatorTasks.size(); j++ ){
             snapshotTasks.get(j).cancel(true);
         }
+    }
+
+    // periodically takes images from live mode and applies thresholding to them
+    private void processLiveModeImages(){
+        micromanagerLiveModeProcessor.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run(){
+                if (app.isLiveModeOn()){
+                    // take the current live mode image, binarize it and show the result
+                    ImagePlus liveModeImage = app.getSnapLiveWin().getImagePlus();
+                    ImagePlus inverted = liveModeImage.duplicate();
+                    int width = inverted.getWidth();
+                    int height = inverted.getHeight();
+                    ImageProcessor ip = inverted.getProcessor();
+                    ip.setRoi(0, 0, width, height);
+                    ip.invert();
+
+                    ImageStatistics stats = inverted.getStatistics();
+
+                    ip.threshold( (int) stats.mean);
+
+                    processedImageWindow.setImage(inverted);
+                }
+            }
+        }, 0, 2000, TimeUnit.MILLISECONDS);
     }
 
     // schedule a number of snapshot at fixed time interval to ensure that images are taken

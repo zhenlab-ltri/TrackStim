@@ -45,10 +45,8 @@ class ScheduledSnapshot implements Runnable {
 		saveSnapshotToTiff(liveModeImage);
 	}
 
-	private void saveSnapshotToTiff(ImagePlus snapshot){
-		String filePath = saveDirectory + "/" + String.valueOf(frameIndex) + ".tiff";
-		FileInfo fi = snapshot.getFileInfo();
-
+	// encode stage position as a string
+	private String getStagePositionInfo(){
 		double currXPos = 0.0;
 		double currYPos = 0.0;
 		double currZPos = 0.0;
@@ -62,11 +60,18 @@ class ScheduledSnapshot implements Runnable {
 			IJ.log(e.getMessage());
 		}
 
-		String stagePositionInfo = "xpos=" + String.valueOf(currXPos) + 
+		String stagePositionInfo ="xpos=" + String.valueOf(currXPos) + 
 			",ypos=" + String.valueOf(currYPos) + 
 			",zpos=" + String.valueOf(currZPos);
 
-		fi.info = stagePositionInfo;
+		return stagePositionInfo;
+	}
+
+	private void saveSnapshotToTiff(ImagePlus snapshot){
+		String filePath = saveDirectory + "/" + String.valueOf(frameIndex) + ".tiff";
+		FileInfo fi = snapshot.getFileInfo();
+
+		fi.info = getStagePositionInfo();
 
 		try {
 			File toSave = new File(filePath);
