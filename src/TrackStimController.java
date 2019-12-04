@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import mmcorej.CMMCore;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
@@ -24,7 +25,7 @@ class TrackStimController {
 
     // take live mode images and process them to show the user
     private ScheduledExecutorService micromanagerLiveModeProcessor;
-    private ImageWindow processedImageWindow;
+    private ImagePlus processedImageWindow;
 
     CMMCore core;
     ScriptInterface app;
@@ -37,7 +38,8 @@ class TrackStimController {
         stimulatorTasks = new ArrayList<ScheduledFuture>();
         
         micromanagerLiveModeProcessor = Executors.newSingleThreadScheduledExecutor();
-        processedImageWindow = new ImageWindow("Binarized images");
+        processedImageWindow = new ImagePlus("Binarized images");
+        processLiveModeImages();
 
     }
 
@@ -72,6 +74,7 @@ class TrackStimController {
             @Override
             public void run(){
                 if (app.isLiveModeOn()){
+                    IJ.log("[INFO] Processing live mode image");
                     // take the current live mode image, binarize it and show the result
                     ImagePlus liveModeImage = app.getSnapLiveWin().getImagePlus();
                     ImagePlus inverted = liveModeImage.duplicate();
@@ -85,7 +88,8 @@ class TrackStimController {
 
                     ip.threshold( (int) stats.mean);
 
-                    processedImageWindow.setImage(inverted);
+                    processedImageWindow.setProcessor(ip);
+                    processedImageWindow.show();
                 }
             }
         }, 0, 2000, TimeUnit.MILLISECONDS);
