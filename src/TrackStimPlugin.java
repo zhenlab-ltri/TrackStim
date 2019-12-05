@@ -15,6 +15,9 @@ public class TrackStimPlugin implements MMPlugin {
    // control)
    private CMMCore core_;
 
+   private TrackStimGUI tsg;
+   private TrackStimController tsc;
+
    @Override
    public void setApp(ScriptInterface app) {
       app_ = app;
@@ -23,15 +26,19 @@ public class TrackStimPlugin implements MMPlugin {
 
    @Override
    public void dispose() {
-      // We do nothing here as the only object we create, our dialog, should
-      // be dismissed by the user.
+      tsc.destroy();
+      tsg.destroy();
    }
 
    @Override
    public void show() {
-      TrackStimGUI ts = new TrackStimGUI(core_, app_);
+      tsg = new TrackStimGUI(core_, app_);
+      tsc = new TrackStimController(core_, app_);
 
-      ts.setVisible(true);
+      tsc.setGui(tsg);
+      tsg.setController(tsc);
+
+      tsg.setVisible(true);
    }
 
    @Override

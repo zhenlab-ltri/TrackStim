@@ -8,10 +8,15 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.JSlider;
+import javax.swing.JLabel;
 import java.io.File;
 
 import java.util.prefs.Preferences;
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 import ij.ImagePlus;
 import ij.IJ;
@@ -53,7 +58,6 @@ class TrackStimGUI extends PlugInFrame {
         // set up micro manager variables
         mmc = cmmcore;
         app = app_;
-        controller = new TrackStimController(mmc, app);
 
         initComponents(); // create the GUI
         setSize(700, 200);
@@ -63,9 +67,17 @@ class TrackStimGUI extends PlugInFrame {
         saveDirectoryText.setText(prefs.get("saveDirectory", ""));
     }
 
+    public void destroy(){
+        // do nothing for now
+    }
+
+    public void setController(TrackStimController c){
+        controller = c;
+    }
+
     // when go is pressed, validate ui values and send them to the controller to start
     // getting images
-    void goBtnActionPerformed(ActionEvent e){
+    private void goBtnActionPerformed(ActionEvent e){
         if(saveDirectoryIsValid() && frameNumbersAreValid()){
             prefs.put("saveDirectory", saveDirectoryText.getText());
             prefs.put("numFrames", numFramesText.getText());
@@ -81,21 +93,26 @@ class TrackStimGUI extends PlugInFrame {
     }
 
     // pick new directory
-    void directoryBtnActionPerformed(ActionEvent e){
+    private void directoryBtnActionPerformed(ActionEvent e){
         saveDirectoryText.setText(IJ.getDirectory("user.home"));
     }
 
     // stop controller from getting images
-    void stopBtnActionPerformed(ActionEvent e){
+    private void stopBtnActionPerformed(ActionEvent e){
         controller.stopImageAcquisition();
     }
 
-    boolean saveDirectoryIsValid(){
+    private void sliderValueChanged(ChangeEvent e){
+        JSlider s = (JSlider) e.getSource();
+        controller.updateThresholdValue(s.getValue());
+    }
+
+    private boolean saveDirectoryIsValid(){
         File f = new File(saveDirectoryText.getText());
         return f.exists() && f.isDirectory();
     }
 
-    boolean frameNumbersAreValid(){
+    private boolean frameNumbersAreValid(){
         boolean valid = true;
 
         try {
@@ -110,7 +127,7 @@ class TrackStimGUI extends PlugInFrame {
     }
 
     // create the GUI
-    void initComponents(){
+    private void initComponents(){
         // Prepare GUI
         GridBagLayout gbl = new GridBagLayout();
         setLayout(gbl);
@@ -200,6 +217,25 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridwidth = 2;
         gbl.setConstraints(directoryBtn, gbc);
         add(directoryBtn);
+
+        JSlider slider = new JSlider(0, 100, 50);
+        slider.setMajorTickSpacing(50);
+        slider.setPaintTicks(true);
+        slider.setPaintLabels(true);
+        
+        // Hashtable<int, String> sliderTickLabels = new Hashtable<int, String>();
+        Hashtable<Integer, JLabel> sliderTickLabels = new Hashtable<Integer, JLabel>();
+
+        sliderTickLabels.put(0, new JLabel("Low"));
+        sliderTickLabels.put(50, new JLabel("Average"));
+        sliderTickLabels.put(100, new JLabel("High"));
+        slider.setLabelTable(sliderTickLabels);
+        slider.addChangeListener(new ChangeListener(){
+            public void stateChanged(ChangeEvent e){
+                sliderValueChanged(e);
+            }
+        });
+        add(slider);
     }
 
 }

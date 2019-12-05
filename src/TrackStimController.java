@@ -27,8 +27,13 @@ class TrackStimController {
     private ScheduledExecutorService micromanagerLiveModeProcessor;
     private ImagePlus processedImageWindow;
 
+    // sycned to threshold slider, used for thresholding images
+    public volatile double thresholdValue;
+
     CMMCore core;
     ScriptInterface app;
+
+    TrackStimGUI gui;
     
 
     TrackStimController(CMMCore core_, ScriptInterface app_){
@@ -40,7 +45,19 @@ class TrackStimController {
         micromanagerLiveModeProcessor = Executors.newSingleThreadScheduledExecutor();
         processedImageWindow = new ImagePlus("Binarized images");
         processLiveModeImages();
+    }
 
+    public void setGui(TrackStimGUI g){
+        gui = g;
+    }
+
+    public void destroy(){
+        stopImageAcquisition();
+        micromanagerLiveModeProcessor.shutdownNow();
+    }
+
+    public void updateThresholdValue(int newThresholdVal){
+        thresholdValue = 1.0 + (newThresholdVal / 100);
     }
 
     public void startImageAcquisition(int numFrames, int framesPerSecond, String rootDirectory){
@@ -86,7 +103,7 @@ class TrackStimController {
 
                     ImageStatistics stats = inverted.getStatistics();
 
-                    ip.threshold( (int) stats.mean);
+                    ip.threshold( (int) (stats.mean * thresholdValue));
 
                     processedImageWindow.setProcessor(ip);
                     processedImageWindow.show();
