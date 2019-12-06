@@ -42,9 +42,12 @@ class TrackStimController {
         snapshotTasks = new ArrayList<ScheduledFuture>(); 
         stimulatorTasks = new ArrayList<ScheduledFuture>();
         
+        thresholdValue = 1.0;
+        
         micromanagerLiveModeProcessor = Executors.newSingleThreadScheduledExecutor();
         processedImageWindow = new ImagePlus("Binarized images");
         processLiveModeImages();
+
     }
 
     public void setGui(TrackStimGUI g){
@@ -57,7 +60,8 @@ class TrackStimController {
     }
 
     public void updateThresholdValue(int newThresholdVal){
-        thresholdValue = 1.0 + (newThresholdVal / 100);
+        double val = (double) newThresholdVal / 100;
+        thresholdValue = 1.0 + val;
     }
 
     public void startImageAcquisition(int numFrames, int framesPerSecond, String rootDirectory){
@@ -109,7 +113,7 @@ class TrackStimController {
                     processedImageWindow.show();
                 }
             }
-        }, 0, 2000, TimeUnit.MILLISECONDS);
+        }, 0, 100, TimeUnit.MILLISECONDS);
     }
 
     // schedule a number of snapshot at fixed time interval to ensure that images are taken

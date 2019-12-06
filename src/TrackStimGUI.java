@@ -73,6 +73,7 @@ class TrackStimGUI extends PlugInFrame {
 
     public void setController(TrackStimController c){
         controller = c;
+        c.updateThresholdValue(100);
     }
 
     // when go is pressed, validate ui values and send them to the controller to start
@@ -218,7 +219,7 @@ class TrackStimGUI extends PlugInFrame {
         gbl.setConstraints(directoryBtn, gbc);
         add(directoryBtn);
 
-        JSlider slider = new JSlider(0, 100, 50);
+        JSlider slider = new JSlider(0, 200, 100);
         slider.setMajorTickSpacing(50);
         slider.setPaintTicks(true);
         slider.setPaintLabels(true);
@@ -227,8 +228,8 @@ class TrackStimGUI extends PlugInFrame {
         Hashtable<Integer, JLabel> sliderTickLabels = new Hashtable<Integer, JLabel>();
 
         sliderTickLabels.put(0, new JLabel("Low"));
-        sliderTickLabels.put(50, new JLabel("Average"));
-        sliderTickLabels.put(100, new JLabel("High"));
+        sliderTickLabels.put(100, new JLabel("Average"));
+        sliderTickLabels.put(200, new JLabel("High"));
         slider.setLabelTable(sliderTickLabels);
         slider.addChangeListener(new ChangeListener(){
             public void stateChanged(ChangeEvent e){
