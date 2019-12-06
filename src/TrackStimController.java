@@ -9,6 +9,8 @@ import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.gui.ImageWindow;
+import ij.gui.PointRoi;
+
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledExecutorService;
@@ -106,8 +108,17 @@ class TrackStimController {
                     ip.invert();
 
                     ImageStatistics stats = inverted.getStatistics();
+                    ip.threshold( (int) (stats.mean * thresholdValue) );
+                    processedImageWindow.setProcessor(ip);
 
-                    ip.threshold( (int) (stats.mean * thresholdValue));
+                    stats = inverted.getStatistics();
+                    double centerOfMassX = stats.xCenterOfMass;
+                    double centerOfMassY = stats.yCenterOfMass;
+                    
+                    IJ.log("[INFO] Center of mass is x: " + String.valueOf(centerOfMassX) + ", y: " + String.valueOf(centerOfMassY) );
+
+                    PointRoi centerOfMassRoi = new PointRoi(centerOfMassX, centerOfMassY);
+                    processedImageWindow.setRoi(centerOfMassRoi);
 
                     processedImageWindow.setProcessor(ip);
                     processedImageWindow.show();
