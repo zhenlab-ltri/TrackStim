@@ -8,9 +8,11 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import ij.process.ByteProcessor;
 import ij.gui.ImageWindow;
 import ij.gui.PointRoi;
 
+import ij.measure.Measurements;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledExecutorService;
@@ -111,14 +113,16 @@ class TrackStimController {
                     ip.threshold( (int) (stats.mean * thresholdValue) );
                     processedImageWindow.setProcessor(ip);
 
-                    stats = inverted.getStatistics();
-                    double centerOfMassX = stats.xCenterOfMass;
-                    double centerOfMassY = stats.yCenterOfMass;
-                    
-                    IJ.log("[INFO] Center of mass is x: " + String.valueOf(centerOfMassX) + ", y: " + String.valueOf(centerOfMassY) );
+                    stats = inverted.getStatistics(Measurements.CENTROID + Measurements.CENTER_OF_MASS); // centroid and some other thing
+                    Double centerOfMassX = new Double(stats.xCenterOfMass);
+                    Double centerOfMassY = new Double(stats.yCenterOfMass);
 
-                    PointRoi centerOfMassRoi = new PointRoi(centerOfMassX, centerOfMassY);
-                    processedImageWindow.setRoi(centerOfMassRoi);
+                    if(!centerOfMassX.isNaN() && !centerOfMassY.isNaN()){
+                        IJ.log("[INFO] Center of mass is x: " + String.valueOf(centerOfMassX) + ", y: " + String.valueOf(centerOfMassY) );
+
+                        PointRoi centerOfMassRoi = new PointRoi(centerOfMassX, centerOfMassY);
+                        processedImageWindow.setRoi(centerOfMassRoi);
+                    }                   
 
                     processedImageWindow.setProcessor(ip);
                     processedImageWindow.show();
