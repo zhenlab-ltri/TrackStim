@@ -33,11 +33,14 @@ class TrackStimController {
 
     // sycned to threshold slider, used for thresholding images
     public volatile double thresholdValue;
+    public volatile boolean running;
 
     CMMCore core;
     ScriptInterface app;
 
     TrackStimGUI gui;
+
+    Stimulator stimulator;
     
 
     TrackStimController(CMMCore core_, ScriptInterface app_){
@@ -45,6 +48,9 @@ class TrackStimController {
         app = app_;
         snapshotTasks = new ArrayList<ScheduledFuture>(); 
         stimulatorTasks = new ArrayList<ScheduledFuture>();
+
+        stimulator = new Stimulator(core_);
+        stimulator.initialize();
         
         thresholdValue = 1.0;
         
@@ -78,7 +84,19 @@ class TrackStimController {
             app.enableLiveMode(true);
         }
 
+        if( stimulator.initialized ){
+            try {
+                stimulatorTasks = stimulator.runStimulation(
+                false, 30000, 63, 
+                15000, 30000, 2, 
+                0, 0, 63);
+            } catch (java.lang.Exception e){
+                IJ.log("[ERROR] could not start stimulation.  stimulator not initialized.");
+            }
+        }
+
         snapshotTasks = scheduleSnapshots(numFrames, framesPerSecond, imageSaveDirectory);
+        running = true;
     }
 
     public void stopImageAcquisition(){
@@ -92,6 +110,8 @@ class TrackStimController {
             snapshotTasks.get(j).cancel(true);
         }
     }
+
+    
 
     // periodically takes images from live mode and applies thresholding to them
     private void processLiveModeImages(){
@@ -117,11 +137,21 @@ class TrackStimController {
                     Double centerOfMassX = new Double(stats.xCenterOfMass);
                     Double centerOfMassY = new Double(stats.yCenterOfMass);
 
-                    if(!centerOfMassX.isNaN() && !centerOfMassY.isNaN()){
+                    if(!centerOfMassX.isNaN() && !centerOfMassY.isNaN() && running){
                         IJ.log("[INFO] Center of mass is x: " + String.valueOf(centerOfMassX) + ", y: " + String.valueOf(centerOfMassY) );
 
                         PointRoi centerOfMassRoi = new PointRoi(centerOfMassX, centerOfMassY);
                         processedImageWindow.setRoi(centerOfMassRoi);
+
+                        double xDistFromCenter = (width / 2) - centerOfMassX;
+                        double yDistFromCenter = (height / 2) - centerOfMassY;
+
+                        double distScalar = Math.sqrt((xDistFromCenter * xDistFromCenter) + (yDistFromCenter * yDistFromCenter));
+
+                        double xVelocity = Math.round(-xDistFromCenter * 0.0018 * 1000.0) / 1000.0;
+                        double yVelocity = Math.round(yDistFromCenter * 0.0018 * 1000.0) / 1000.0;
+
+                        String command = "VECTOR X=" + String.valueOf(xVelocity) + " Y=" + String.valueOf(yVelocity);
                     }                   
 
                     processedImageWindow.setProcessor(ip);
