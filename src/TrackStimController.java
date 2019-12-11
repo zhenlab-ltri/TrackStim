@@ -23,39 +23,43 @@ import org.micromanager.api.ScriptInterface;
 
 
 class TrackStimController {
-    private ArrayList<ScheduledFuture> snapshotTasks;
+    private ArrayList<ScheduledFuture> imagingTasks;
     private ArrayList<ScheduledFuture> stimulatorTasks;
-    private String stimulatorPort;
+    private ArrayList<ScheduledFuture> trackerTasks;
 
     // take live mode images and process them to show the user
     private ScheduledExecutorService micromanagerLiveModeProcessor;
-    private ImagePlus processedImageWindow;
+    private ImagePlus binarizedLiveModeImage;
+
+    private TrackStimGUI gui;
+    private Stimulator stimulator;
+    private Tracker tracker;
+    private Imager imager;
 
     // sycned to threshold slider, used for thresholding images
     public volatile double thresholdValue;
-    public volatile boolean running;
 
-    CMMCore core;
-    ScriptInterface app;
-
-    TrackStimGUI gui;
-
-    Stimulator stimulator;
-    
+    public CMMCore core;
+    public ScriptInterface app;
 
     TrackStimController(CMMCore core_, ScriptInterface app_){
         core = core_;
         app = app_;
-        snapshotTasks = new ArrayList<ScheduledFuture>(); 
+        imagingTasks = new ArrayList<ScheduledFuture>(); 
         stimulatorTasks = new ArrayList<ScheduledFuture>();
 
         stimulator = new Stimulator(core_);
         stimulator.initialize();
+
+        tracker = new Tracker(this);
+        tracker.initialize();
+
+        imager = new Imager(core_, app_);
         
         thresholdValue = 1.0;
         
         micromanagerLiveModeProcessor = Executors.newSingleThreadScheduledExecutor();
-        processedImageWindow = new ImagePlus("Binarized images");
+        binarizedLiveModeImage = new ImagePlus("Binarized images");
         processLiveModeImages();
 
     }
@@ -76,9 +80,6 @@ class TrackStimController {
 
     public void startImageAcquisition(int numFrames, int framesPerSecond, String rootDirectory){
 
-        // create a new directory in rootDirectory to save images to
-        String imageSaveDirectory = createImageSaveDirectory(rootDirectory);
-
         // ensure micro manager live mode is on so we can capture images
         if( !app.isLiveModeOn() ){
             app.enableLiveMode(true);
@@ -86,122 +87,68 @@ class TrackStimController {
 
         if( stimulator.initialized ){
             try {
-                stimulatorTasks = stimulator.runStimulation(
-                false, 30000, 63, 
-                15000, 30000, 2, 
-                0, 0, 63);
+                // stimulatorTasks = stimulator.scheduleStimulationTasks(
+                // false, 30000, 63, 
+                // 15000, 30000, 2, 
+                // 0, 0, 63);
             } catch (java.lang.Exception e){
                 IJ.log("[ERROR] could not start stimulation.  stimulator not initialized.");
             }
         }
 
-        snapshotTasks = scheduleSnapshots(numFrames, framesPerSecond, imageSaveDirectory);
-        running = true;
+        if( tracker.initialized ){
+            try {
+                trackerTasks = tracker.scheduleTrackingTasks(numFrames, framesPerSecond);
+            } catch (java.lang.Exception e){
+                IJ.log("[ERROR] could not start tracking. tracker is not initialized.");
+            }
+        }
+
+        imagingTasks = imager.scheduleImagingTasks(numFrames, framesPerSecond, rootDirectory);
     }
 
     public void stopImageAcquisition(){
         // cancel getting images
-        for (int i = 0; i < snapshotTasks.size(); i++ ){
-            snapshotTasks.get(i).cancel(true);
+        for (int i = 0; i < imagingTasks.size(); i++ ){
+            imagingTasks.get(i).cancel(true);
         }
 
         // cancel turning on the stimulator
         for (int j = 0; j < stimulatorTasks.size(); j++ ){
-            snapshotTasks.get(j).cancel(true);
+            stimulatorTasks.get(j).cancel(true);
+        }
+
+        // cancel tracking tasks
+        for (int k = 0; k < trackerTasks.size(); k++){
+            trackerTasks.get(k).cancel(true);
         }
     }
 
-    
-
-    // periodically takes images from live mode and applies thresholding to them
+    // show processed binarized images and show where the center of mass is 
+    // (ideally it will be wormPos, but not always)
     private void processLiveModeImages(){
         micromanagerLiveModeProcessor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run(){
                 if (app.isLiveModeOn()){
-                    IJ.log("[INFO] Processing live mode image");
                     // take the current live mode image, binarize it and show the result
                     ImagePlus liveModeImage = app.getSnapLiveWin().getImagePlus();
-                    ImagePlus inverted = liveModeImage.duplicate();
-                    int width = inverted.getWidth();
-                    int height = inverted.getHeight();
-                    ImageProcessor ip = inverted.getProcessor();
-                    ip.setRoi(0, 0, width, height);
-                    ip.invert();
 
-                    ImageStatistics stats = inverted.getStatistics();
-                    ip.threshold( (int) (stats.mean * thresholdValue) );
-                    processedImageWindow.setProcessor(ip);
-
-                    stats = inverted.getStatistics(Measurements.CENTROID + Measurements.CENTER_OF_MASS); // centroid and some other thing
-                    Double centerOfMassX = new Double(stats.xCenterOfMass);
-                    Double centerOfMassY = new Double(stats.yCenterOfMass);
-
-                    if(!centerOfMassX.isNaN() && !centerOfMassY.isNaN() && running){
-                        IJ.log("[INFO] Center of mass is x: " + String.valueOf(centerOfMassX) + ", y: " + String.valueOf(centerOfMassY) );
-
-                        PointRoi centerOfMassRoi = new PointRoi(centerOfMassX, centerOfMassY);
-                        processedImageWindow.setRoi(centerOfMassRoi);
-
-                        double xDistFromCenter = (width / 2) - centerOfMassX;
-                        double yDistFromCenter = (height / 2) - centerOfMassY;
-
-                        double distScalar = Math.sqrt((xDistFromCenter * xDistFromCenter) + (yDistFromCenter * yDistFromCenter));
-
-                        double xVelocity = Math.round(-xDistFromCenter * 0.0018 * 1000.0) / 1000.0;
-                        double yVelocity = Math.round(yDistFromCenter * 0.0018 * 1000.0) / 1000.0;
-
-                        String command = "VECTOR X=" + String.valueOf(xVelocity) + " Y=" + String.valueOf(yVelocity);
+                    ImagePlus binarized = TrackingTask.binarizeImage(liveModeImage, thresholdValue);
+                    double[] wormPosition = TrackingTask.detectWormPosition(binarized);
+                    
+                    Double wormPosX = new Double(wormPosition[0]);
+                    Double wormPosY = new Double(wormPosition[1]);
+                    
+                    if(!wormPosX.isNaN() && !wormPosY.isNaN()){
+                        PointRoi centerOfMassRoi = new PointRoi(wormPosX, wormPosY);
+                        binarizedLiveModeImage.setRoi(centerOfMassRoi);
                     }                   
 
-                    processedImageWindow.setProcessor(ip);
-                    processedImageWindow.show();
+                    binarizedLiveModeImage.setProcessor(binarized.getProcessor());
+                    binarizedLiveModeImage.show();
                 }
             }
         }, 0, 100, TimeUnit.MILLISECONDS);
     }
-
-    // schedule a number of snapshot at fixed time interval to ensure that images are taken
-    // at the given fps
-    private ArrayList<ScheduledFuture> scheduleSnapshots(int numFrames, int fps, String saveDirectory){
-        ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
-        ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
-        fps = 10; // fix fps at 10 for now
-
-        long frameCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / fps); // take a pic every 100ms
-
-        for(int curFrameIndex = 0; curFrameIndex < numFrames; curFrameIndex++){
-            long timePtNano = curFrameIndex * frameCycleNano; // e.g. 0 ms, 100ms, 200ms, etc..
-            ScheduledSnapshot s = new ScheduledSnapshot(core, app, timePtNano, saveDirectory, curFrameIndex);
-
-            ScheduledFuture snapShot = ses.schedule(s, timePtNano, TimeUnit.NANOSECONDS);
-            futureTasks.add(snapShot);
-        }
-
-        return futureTasks;
-    }
-    
-    private String createImageSaveDirectory(String root){
-        // get count number of directories N so that we can create directory N+1
-        File saveDirectoryFile = new File(root);
-        File[] fileList = saveDirectoryFile.listFiles();
-        int numSubDirectories = 0;
-        for (int i = 0; i < fileList.length; i++) {
-            if (fileList[i].isDirectory()) {
-                numSubDirectories++;
-            }
-        }
-
-        // choose first temp<i> which does not exist yet and create directory with name tempi
-        int i = 1;
-        File newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
-        while (newdir.exists()) {
-            i++;
-            newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
-        }
-
-        newdir.mkdir();
-        return newdir.getPath();
-    }
-
 }
