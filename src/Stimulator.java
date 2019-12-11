@@ -1,9 +1,9 @@
 import ij.IJ;
 
+import java.util.ArrayList;
+
 import mmcorej.CharVector;
 import mmcorej.CMMCore;
-import mmcorej.Configuration;
-import mmcorej.PropertySetting;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledExecutorService;
@@ -11,30 +11,21 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 // send signals to the stimulator to turn on/off the LED light
-class SignalSender implements Runnable {
+class StimulationTask implements Runnable {
     CMMCore mmc;
     int channel;
     int signal;
     String stimulatorPort;
 
-    SignalSender(CMMCore cmmcore_, String stimulatorPort_) {
+    StimulationTask(CMMCore cmmcore_, String stimulatorPort_, int channel_, int signal_) {
         mmc = cmmcore_;
         stimulatorPort = stimulatorPort_;
-    }
-
-    void setChannel(int channel_) {
         channel = channel_;
-    }
-
-    void setSignal(int signal_) {
         signal = signal_;
     }
 
     // send signal data to the stimulator through the serial port
     public void run() {
-        IJ.log("SignalSender: system time is " + String.valueOf(System.nanoTime() / 1000000));
-        IJ.log("SignalSender: signal is " + String.valueOf(signal));
-
         int signalData = channel << 7 | signal;
         CharVector signalDataVec = new CharVector();
         signalDataVec.add((char) signalData);
@@ -42,7 +33,7 @@ class SignalSender implements Runnable {
         try {
             mmc.writeToSerialPort(stimulatorPort, signalDataVec);
         } catch (java.lang.Exception e) {
-            IJ.log("SignalSender: error trying to write data " + String.valueOf(signalDataVec) + " to the serial port " + stimulatorPort);
+            IJ.log("StimulationTask: error trying to write data " + String.valueOf(signalDataVec) + " to the serial port " + stimulatorPort);
             IJ.log(e.getMessage());
         }
     }
@@ -108,7 +99,7 @@ class Stimulator {
     //    rampBase: strength applied
     //    rampStart: signal at the start of the interval
     //    rampEnd: signal at the end of the interval
-    ArrayList<ScheduledFuture> runStimulation(
+    public ArrayList<ScheduledFuture> scheduleStimulationTasks(
         boolean useRamp, int preStimTimeMs, int signal, 
         int stimDurationMs, int stimCycleDurationMs, int numStimCycles, 
         int rampBase, int rampStart, int rampEnd) throws java.lang.Exception {
@@ -157,47 +148,13 @@ class Stimulator {
         return stimulatorTasks;
     }
 
-    // schedule a signal to be run at a specific timepoint(ms) in the future
-    ScheduledFuture scheduleSignal(int timePointMs, int signal) {
-        SignalSender sd = new SignalSender(mmc, stimulatorPort);
-        sd.setChannel(STIMULATION_CHANNEL);
-        sd.setSignal(signal);
-
-        ScheduledExecutorService ses;
-        ScheduledFuture future = null;
-        ses = Executors.newSingleThreadScheduledExecutor();
-
-        IJ.log("Stimulator.scheduleSignal: timePointMs converted to microseconds is: " + String.valueOf(timePointMs * 1000));
-        IJ.log("Stimulator.scheduleSignal: signal is: " + String.valueOf(signal));
+    // schedule a task to send a (on/off w/ certain intensity) signal to the LED light
+    private ScheduledFuture scheduleSignal(int timePointMs, final int signal) {
+        ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
+        StimulationTask stimulationTask = new StimulationTask(mmc, stimulatorPort, STIMULATION_CHANNEL, signal);
 
         // convert the timepoint to microseconds
         // legacy decision, not sure why we need to do it like this
-        return ses.schedule(sd, timePointMs * 1000, TimeUnit.MICROSECONDS);
-    }
-
-    // send new camera exposure and cycle length values to the stimulator, 
-    // which then sends them to the hamamatsu camera controller
-    // NOTE: 
-        // these arguments are indexes consisting of at most three bits i.e. in the range of [0, 8] 
-        // each index is then mapped to a specific value
-        // see documentation/arduino.c lines 41-44
-    void updateCameraSettings(int newExposureIndex, int newCycleLengthIndex) throws java.lang.Exception {
-        if(!initialized){
-            throw new Exception("could not update camera settings.  the stimulator is not initialized");
-        }
-
-        // pack the new values into a buffer to send
-        int newSettingsData = 1 << 6 | newCycleLengthIndex << 3 | newExposureIndex;
-
-        CharVector newSettingsDataVec = new CharVector();
-        newSettingsDataVec.add((char) newSettingsData);
-
-        // send the data to the stimulator to set the new exposure and new cycle length
-        try {
-            mmc.writeToSerialPort(stimulatorPort, newSettingsDataVec);
-        } catch(java.lang.Exception e){
-            IJ.log("Stimulator.updateStimulatorSignal: unable to write new signal data to serial port");
-            IJ.log(e.getMessage());
-        }
+        return ses.schedule(stimulationTask, timePointMs * 1000, TimeUnit.MICROSECONDS);
     }
 }
