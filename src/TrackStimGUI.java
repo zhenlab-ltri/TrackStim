@@ -39,27 +39,11 @@ import java.util.concurrent.TimeUnit;
 // to migrate it to new versions of micromanager
 class TrackStimGUI extends PlugInFrame {
 
-    // UI options
+    // variables in use
     TextField numFramesText;
     TextField saveDirectoryText;
     TextField framesPerSecondText;
-
-    TextField numSkipFramesText;	
-    java.awt.Choice cameraExposureDurationSelector;	
-    java.awt.Choice cameraCycleDurationSelector;	
-
-    // tracker options	
-    java.awt.Checkbox useClosest;// target definition method.	
-    java.awt.Checkbox trackRightSideScreen;// field for tacking source	
-    java.awt.Checkbox saveXYPositionsAsTextFile;// if save xy pos data into txt file. not inclued z.	
-    java.awt.Choice stageAccelerationSelector;	
-    java.awt.Choice thresholdMethodSelector;	
-    java.awt.Checkbox useCenterOfMassTracking;// center of mass method	
-    java.awt.Checkbox useManualTracking;	
-    java.awt.Checkbox useFullFieldImaging;// full size filed.	
-    java.awt.Checkbox useBrightFieldImaging;// Bright field tracking only works with full size	
-
-    // stimulator options	
+    Checkbox enableTracking;
     java.awt.Checkbox enableStimulator;	
     TextField preStimulationTimeMsText;	
     TextField stimulationStrengthText;	
@@ -70,21 +54,49 @@ class TrackStimGUI extends PlugInFrame {
     TextField rampBase;	
     TextField rampStart;	
     TextField rampEnd;	
+    JSlider slider;
     
     Preferences prefs;
-
-
     TrackStimController controller;
+
+    // legacy variables that will eventually be deleted
+    TextField numSkipFramesText;	
+    java.awt.Choice cameraExposureDurationSelector;	
+    java.awt.Choice cameraCycleDurationSelector;	
+    java.awt.Checkbox useClosest;// target definition method.	
+    java.awt.Checkbox trackRightSideScreen;// field for tacking source	
+    java.awt.Checkbox saveXYPositionsAsTextFile;// if save xy pos data into txt file. not inclued z.	
+    java.awt.Choice stageAccelerationSelector;	
+    java.awt.Choice thresholdMethodSelector;	
+    java.awt.Checkbox useCenterOfMassTracking;// center of mass method	
+    java.awt.Checkbox useManualTracking;	
+    java.awt.Checkbox useFullFieldImaging;// full size filed.	
+    java.awt.Checkbox useBrightFieldImaging;// Bright field tracking only works with full size	
+
 
     public TrackStimGUI() {
         super("TrackStim");
 
-        initComponents(); // create the GUI
         setSize(800, 400);
+        initComponents(); // create the GUI
 
+
+        // try to set values from preferences
         prefs = Preferences.userNodeForPackage(this.getClass());
         numFramesText.setText(prefs.get("numFrames", "3000"));
         saveDirectoryText.setText(prefs.get("saveDirectory", ""));
+        slider.setValue(prefs.getInt("sliderValue", 100));
+        enableTracking.setState(prefs.getBoolean("enableTracking", false));
+        enableStimulator.setState(prefs.getBoolean("enableStimulator", false));
+        enableRamp.setState(prefs.getBoolean("enableRamp", false));
+        preStimulationTimeMsText.setText(prefs.get("preStimulationTimeMs", "10000"));
+        stimulationStrengthText.setText(prefs.get("stimulationStrength", "63"));
+        stimulationDurationMsText.setText(prefs.get("stimulationDuration", "5000"));
+        stimulationCycledurationMsText.setText(prefs.get("stimulationCycleDuration", "10000"));
+        numStimulationCyclesText.setText(prefs.get("numStimulationCycles", "3"));
+        rampBase.setText(prefs.get("rampBase", "0"));
+        rampStart.setText(prefs.get("rampStart", "0"));
+        rampEnd.setText(prefs.get("rampEnd", "63"));
     }
 
     public void destroy(){
@@ -93,7 +105,7 @@ class TrackStimGUI extends PlugInFrame {
 
     public void setController(TrackStimController c){
         controller = c;
-        c.updateThresholdValue(100);
+        c.updateThresholdValue(slider.getValue());
     }
 
     // when go is pressed, validate ui values and send them to the controller to start
@@ -155,21 +167,17 @@ class TrackStimGUI extends PlugInFrame {
         GridBagConstraints gbc = new GridBagConstraints();
 
         Button b = new Button("Ready");
-        b.setPreferredSize(new Dimension(100, 60));
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
-        gbc.gridheight = 2;
         gbl.setConstraints(b, gbc);
-        b.setEnabled(false);
+        b.setVisible(false);
         add(b);
 
         Button b2 = new Button("Go");
-        b2.setPreferredSize(new Dimension(100, 60));
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
-        gbc.gridheight = 2;
         gbl.setConstraints(b2, gbc);
         b2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -179,11 +187,9 @@ class TrackStimGUI extends PlugInFrame {
         add(b2);
 
         Button b3 = new Button("Stop");
-        b3.setPreferredSize(new Dimension(100, 60));
         gbc.gridx = 4;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
-        gbc.gridheight = 2;
         gbl.setConstraints(b3, gbc);
         b3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -197,7 +203,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        labelexpduration.setEnabled(false);
+        labelexpduration.setVisible(false);
         add(labelexpduration);
 
         cameraExposureDurationSelector = new Choice();
@@ -214,7 +220,7 @@ class TrackStimGUI extends PlugInFrame {
         cameraExposureDurationSelector.add("500");
         cameraExposureDurationSelector.add("1000");
         gbl.setConstraints(cameraExposureDurationSelector, gbc);
-        cameraExposureDurationSelector.setEnabled(false);
+        cameraExposureDurationSelector.setVisible(false);
         add(cameraExposureDurationSelector);
 
         Label labelcameracyclelength = new Label("cycle len.");
@@ -222,7 +228,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbl.setConstraints(labelcameracyclelength, gbc);
-        labelcameracyclelength.setEnabled(false);
+        labelcameracyclelength.setVisible(false);
         add(labelcameracyclelength);
 
         cameraCycleDurationSelector = new Choice();
@@ -238,7 +244,7 @@ class TrackStimGUI extends PlugInFrame {
         cameraCycleDurationSelector.add("1000");
         cameraCycleDurationSelector.add("2000");
         gbl.setConstraints(cameraCycleDurationSelector, gbc);
-        cameraCycleDurationSelector.setEnabled(false);
+        cameraCycleDurationSelector.setVisible(false);
         add(cameraCycleDurationSelector);
 
         Label labelframe = new Label("Frame num");
@@ -260,7 +266,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridy = 2;
         gbc.gridwidth = 1;
         gbl.setConstraints(useClosest, gbc);
-        useClosest.setEnabled(false);
+        useClosest.setVisible(false);
         add(useClosest);
 
         stageAccelerationSelector = new Choice();
@@ -273,7 +279,7 @@ class TrackStimGUI extends PlugInFrame {
         stageAccelerationSelector.add("5x");
         stageAccelerationSelector.add("6x");
         gbl.setConstraints(stageAccelerationSelector, gbc);
-        stageAccelerationSelector.setEnabled(false);
+        stageAccelerationSelector.setVisible(false);
         add(stageAccelerationSelector);
 
         thresholdMethodSelector = new Choice();
@@ -299,7 +305,7 @@ class TrackStimGUI extends PlugInFrame {
         thresholdMethodSelector.add("Shanbhag");
         thresholdMethodSelector.setPreferredSize(new Dimension(80, 20));
         gbl.setConstraints(thresholdMethodSelector, gbc);
-        thresholdMethodSelector.setEnabled(false);
+        thresholdMethodSelector.setVisible(false);
         add(thresholdMethodSelector);
 
         trackRightSideScreen = new Checkbox("Use right", false);
@@ -307,7 +313,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridy = 2;
         gbc.gridwidth = 1;
         gbl.setConstraints(trackRightSideScreen, gbc);
-        trackRightSideScreen.setEnabled(false);
+        trackRightSideScreen.setVisible(false);
         add(trackRightSideScreen);
 
         saveXYPositionsAsTextFile = new Checkbox("Save xypos file", false);
@@ -315,7 +321,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbl.setConstraints(saveXYPositionsAsTextFile, gbc);
-        saveXYPositionsAsTextFile.setEnabled(false);
+        saveXYPositionsAsTextFile.setVisible(false);
         add(saveXYPositionsAsTextFile);
 
         Label labelskip = new Label("one of ");
@@ -323,7 +329,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridy = 3;
         gbc.gridwidth = 1;
         gbl.setConstraints(labelskip, gbc);
-        labelskip.setEnabled(false);
+        labelskip.setVisible(false);
         add(labelskip);
 
         numSkipFramesText = new TextField("1", 2);
@@ -331,7 +337,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridy = 3;
         gbc.gridwidth = 1;
         gbl.setConstraints(numSkipFramesText, gbc);
-        numSkipFramesText.setEnabled(false);
+        numSkipFramesText.setVisible(false);
         add(numSkipFramesText);
 
         useCenterOfMassTracking = new Checkbox("Center of Mass", false);
@@ -339,7 +345,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridy = 3;
         gbc.gridwidth = 1;
         gbl.setConstraints(useCenterOfMassTracking, gbc);
-        useCenterOfMassTracking.setEnabled(false);
+        useCenterOfMassTracking.setVisible(false);
         add(useCenterOfMassTracking);
 
         useManualTracking = new Checkbox("manual track", false);
@@ -347,7 +353,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridy = 3;
         gbc.gridwidth = 2;
         gbl.setConstraints(useManualTracking, gbc);
-        useManualTracking.setEnabled(false);
+        useManualTracking.setVisible(false);
         add(useManualTracking);
 
         useFullFieldImaging = new Checkbox("Full field", false);
@@ -355,7 +361,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridy = 3;
         gbc.gridwidth = 1;
         gbl.setConstraints(useFullFieldImaging, gbc);
-        useFullFieldImaging.setEnabled(false);
+        useFullFieldImaging.setVisible(false);
         add(useFullFieldImaging);
 
         useBrightFieldImaging = new Checkbox("Bright field", false);
@@ -363,7 +369,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridy = 3;
         gbc.gridwidth = 1;
         gbl.setConstraints(useBrightFieldImaging, gbc);
-        useBrightFieldImaging.setEnabled(false);
+        useBrightFieldImaging.setVisible(false);
         add(useBrightFieldImaging);
 
         Label labeldir = new Label("Save at");
@@ -396,7 +402,7 @@ class TrackStimGUI extends PlugInFrame {
         add(b4);
 
         // gui for stimulation
-        enableStimulator = new Checkbox("Light", false);
+        enableStimulator = new Checkbox("Enable stimulator", false);
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
@@ -412,7 +418,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridheight = 2;
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(b, gbc);
-        b.setEnabled(false);
+        b.setVisible(false);
         add(b);
         gbc.gridheight = 1;
 
@@ -433,7 +439,7 @@ class TrackStimGUI extends PlugInFrame {
         gbl.setConstraints(preStimulationTimeMsText, gbc);
         add(preStimulationTimeMsText);
 
-        Label labelstrength = new Label("Strength <63");
+        Label labelstrength = new Label("Strength <= 63");
         gbc.gridx = 1;
         gbc.gridy = 6;
         gbc.gridwidth = 1;
@@ -561,7 +567,21 @@ class TrackStimGUI extends PlugInFrame {
         gbl.setConstraints(rampEnd, gbc);
         add(rampEnd);
 
-        JSlider slider = new JSlider(0, 200, 100);
+        enableTracking = new Checkbox("Enable auto-tracking", false);
+        gbc.gridx = 0;
+        gbc.gridy = 9;
+        gbc.gridwidth = 2;
+        gbl.setConstraints(enableTracking, gbc);
+        add(enableTracking);
+        
+        Label thresholdSliderLabel = new Label("Auto-tracking threshold");
+        gbc.gridx = 3;
+        gbc.gridy = 9;
+        gbc.gridwidth = 2;
+        gbl.setConstraints(thresholdSliderLabel, gbc);
+        add(thresholdSliderLabel);
+
+        slider = new JSlider(0, 200, 100);
         slider.setMajorTickSpacing(50);
         slider.setPaintTicks(true);
         slider.setPaintLabels(true);
@@ -577,11 +597,13 @@ class TrackStimGUI extends PlugInFrame {
                 sliderValueChanged(e);
             }
         });
-        gbc.gridx = 0;
+        gbc.gridx = 5;
         gbc.gridy = 9;
         gbc.gridwidth = 5;
         gbl.setConstraints(slider, gbc);
         add(slider);
+
+        pack();
     }
 
 }
