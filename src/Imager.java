@@ -95,14 +95,19 @@ class Imager {
 	CMMCore core;
 	ScriptInterface app;
 
+	private ArrayList<ScheduledFuture> imagingTasks;
+
+
 	Imager(CMMCore core_, ScriptInterface app_){
 		core = core_;
 		app = app_;
+
+		imagingTasks = new ArrayList<ScheduledFuture>();
 	}
 
     // schedule a number of snapshots at fixed time interval to ensure that images are taken
     // at the given fps
-    public ArrayList<ScheduledFuture> scheduleImagingTasks(int numFrames, int fps, String rootDirectory){
+    public void scheduleImagingTasks(int numFrames, int fps, String rootDirectory){
 
 		String imageSaveDirectory = createImageSaveDirectory(rootDirectory);
 
@@ -120,8 +125,14 @@ class Imager {
             futureTasks.add(snapShot);
         }
 
-        return futureTasks;
+        imagingTasks = futureTasks;
     }
+
+    public void cancelTasks(){
+		for (int i = 0; i < imagingTasks.size(); i++ ){
+            imagingTasks.get(i).cancel(true);
+        }
+	}
     
     private String createImageSaveDirectory(String root){
         // get count number of directories N so that we can create directory N+1

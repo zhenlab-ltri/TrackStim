@@ -23,10 +23,6 @@ import org.micromanager.api.ScriptInterface;
 
 
 class TrackStimController {
-    private ArrayList<ScheduledFuture> imagingTasks;
-    private ArrayList<ScheduledFuture> stimulatorTasks;
-    private ArrayList<ScheduledFuture> trackerTasks;
-
     // take live mode images and process them to show the user
     private ScheduledExecutorService micromanagerLiveModeProcessor;
     private ImagePlus binarizedLiveModeImage;
@@ -45,8 +41,6 @@ class TrackStimController {
     TrackStimController(CMMCore core_, ScriptInterface app_){
         core = core_;
         app = app_;
-        imagingTasks = new ArrayList<ScheduledFuture>(); 
-        stimulatorTasks = new ArrayList<ScheduledFuture>();
 
         stimulator = new Stimulator(core_);
         stimulator.initialize();
@@ -98,30 +92,19 @@ class TrackStimController {
 
         if( tracker.initialized ){
             try {
-                trackerTasks = tracker.scheduleTrackingTasks(numFrames, framesPerSecond);
+                tracker.scheduleTrackingTasks(numFrames, framesPerSecond);
             } catch (java.lang.Exception e){
                 IJ.log("[ERROR] could not start tracking. tracker is not initialized.");
             }
         }
 
-        imagingTasks = imager.scheduleImagingTasks(numFrames, framesPerSecond, rootDirectory);
+        imager.scheduleImagingTasks(numFrames, framesPerSecond, rootDirectory);
     }
 
     public void stopImageAcquisition(){
-        // cancel getting images
-        for (int i = 0; i < imagingTasks.size(); i++ ){
-            imagingTasks.get(i).cancel(true);
-        }
-
-        // cancel turning on the stimulator
-        for (int j = 0; j < stimulatorTasks.size(); j++ ){
-            stimulatorTasks.get(j).cancel(true);
-        }
-
-        // cancel tracking tasks
-        for (int k = 0; k < trackerTasks.size(); k++){
-            trackerTasks.get(k).cancel(true);
-        }
+        imager.cancelTasks();
+        tracker.cancelTasks();
+        stimulator.cancelTasks();
     }
 
     // show processed binarized images and show where the center of mass is 

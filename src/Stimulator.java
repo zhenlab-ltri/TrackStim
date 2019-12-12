@@ -44,12 +44,16 @@ class Stimulator {
     String stimulatorPort;
     boolean initialized = false;
 
+    private ArrayList<ScheduledFuture> stimulatorTasks;
+
     static final int STIMULATION_CHANNEL = 0; // the channel to send ths signals to
     static final String STIMULATOR_DEVICE_LABEL = "FreeSerialPort"; // hardcoded device label found in config trackstim-mm1.4.23mac.cfg
 
     Stimulator(CMMCore cmmcore){
         mmc = cmmcore;
         stimulatorPort = "";
+
+        stimulatorTasks = new ArrayList<ScheduledFuture>();
     }
 
     // find and connect to the LED light stimulator
@@ -88,6 +92,12 @@ class Stimulator {
         return portFound;
     }
 
+    public void cancelTasks(){
+        for (int k = 0; k < stimulatorTasks.size(); k++){
+            stimulatorTasks.get(k).cancel(true);
+        }
+    }
+
     // schedules signals that will be run in the future at specific time points and intervals based on
     // the arguments:
     //    useRamp: whether to ramp up gradually to the full signal strength i.e. go from a weaker signal to a stronger signal
@@ -99,12 +109,12 @@ class Stimulator {
     //    rampBase: strength applied
     //    rampStart: signal at the start of the interval
     //    rampEnd: signal at the end of the interval
-    public ArrayList<ScheduledFuture> scheduleStimulationTasks(
+    public void scheduleStimulationTasks(
         boolean useRamp, int preStimTimeMs, int signal, 
         int stimDurationMs, int stimCycleDurationMs, int numStimCycles, 
         int rampBase, int rampStart, int rampEnd) throws java.lang.Exception {
 
-        ArrayList<ScheduledFuture> stimulatorTasks = new ArrayList<ScheduledFuture>(); 
+        ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>(); 
         if(!initialized){
             throw new Exception("could not run stimulation.  the stimulator is not initialized");
         }
@@ -120,12 +130,12 @@ class Stimulator {
 
                     // schedule signals with incrementally increasing light strength
                     for (int j = 0; j < rampSignalDelta + 1; j++) {
-                        stimulatorTasks.add(scheduleSignal(preStimTimeMs + i * stimCycleDurationMs + j * (stimDurationMs / rampSignalDelta),
+                        futureTasks.add(scheduleSignal(preStimTimeMs + i * stimCycleDurationMs + j * (stimDurationMs / rampSignalDelta),
                                 rampStart + j * rampSign));
                     }
 
                     // schedule signal to turn off light at end of cycle
-                    stimulatorTasks.add(scheduleSignal(preStimTimeMs + stimDurationMs + i * stimCycleDurationMs, rampBase));
+                    futureTasks.add(scheduleSignal(preStimTimeMs + stimDurationMs + i * stimCycleDurationMs, rampBase));
                 }
             } else {
                 // send full light strength right away
@@ -134,10 +144,10 @@ class Stimulator {
                     int signalTimePtEnd = signalTimePtBegin + stimDurationMs;
 
                     // schedule signal to turn on light at beginning cycle
-                    stimulatorTasks.add(scheduleSignal(signalTimePtBegin, signal));
+                    futureTasks.add(scheduleSignal(signalTimePtBegin, signal));
 
                     // schedule signal to turn off light at end of cycle
-                    stimulatorTasks.add(scheduleSignal(signalTimePtEnd, rampBase));
+                    futureTasks.add(scheduleSignal(signalTimePtEnd, rampBase));
                 }
             }
         } catch (java.lang.Exception e) {
@@ -145,7 +155,7 @@ class Stimulator {
             IJ.log(e.getMessage());
         }
 
-        return stimulatorTasks;
+        stimulatorTasks = futureTasks;
     }
 
     // schedule a task to send a (on/off w/ certain intensity) signal to the LED light

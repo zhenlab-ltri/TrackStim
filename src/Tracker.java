@@ -10,6 +10,9 @@ import ij.measure.Measurements;
 
 import java.util.ArrayList;
 
+import java.awt.geom.Point2D;
+
+
 import mmcorej.CharVector;
 import mmcorej.CMMCore;
 
@@ -57,7 +60,7 @@ class TrackingTask implements Runnable {
         return binarizedImage;
     }
 
-    private static String translateWormPosToStageCommandVelocity(ImagePlus binarizedImage, double[] wormPosition){
+    private String translateWormPosToStageCommandVelocity(ImagePlus binarizedImage, double[] wormPosition){
         Double wormPosX = new Double(wormPosition[0]);
         Double wormPosY = new Double(wormPosition[1]);
 
@@ -73,6 +76,20 @@ class TrackingTask implements Runnable {
 
             double distScalar = Math.sqrt((xDistFromCenter * xDistFromCenter) + (yDistFromCenter * yDistFromCenter));
 
+
+            try {
+                // controller.core.setSerialPortCommand(trackerXYStagePort, velocityCommand, "\r");
+                Point2D pos = controller.core.getXYStagePosition();
+                double nextX = pos.getX() - xDistFromCenter;
+                double nextY = pos.getY() - yDistFromCenter;
+
+                controller.core.setXYPosition(nextX, nextY);
+                
+
+            } catch (java.lang.Exception e) {
+                IJ.log(e.getMessage());
+            }
+
             // legacy calculation to caclulate a velocity for the stage to move to
             double xVelocity = Math.round(-xDistFromCenter * 0.0018 * 1000.0) / 1000.0;
             double yVelocity = Math.round(yDistFromCenter * 0.0018 * 1000.0) / 1000.0;
@@ -85,7 +102,10 @@ class TrackingTask implements Runnable {
 
     private void sendXYStageCommand(String velocityCommand){
         try {
-            controller.core.setSerialPortCommand(trackerXYStagePort, velocityCommand, "\r");
+            // controller.core.setSerialPortCommand(trackerXYStagePort, velocityCommand, "\r");
+            Point2D pos = controller.core.getXYStagePosition();
+
+
         } catch (java.lang.Exception e) {
             IJ.log("startAcq: error setting serial port command " + velocityCommand);
             IJ.log(e.getMessage());
@@ -111,11 +131,14 @@ class Tracker {
     String trackerXYStagePort;
     boolean initialized = false;
 
-    private static final int NUM_TRACKING_TASKS_PER_SECOND = 4;
+    private ArrayList<ScheduledFuture> trackerTasks;
+    private static final int NUM_TRACKING_TASKS_PER_SECOND = 1;
 
     Tracker(TrackStimController controller_){
         controller = controller_;
         trackerXYStagePort = "";
+
+        trackerTasks = new ArrayList<ScheduledFuture>();
     }
 
     // find and connect to the motorized xy stage (asi ms-2000)
@@ -137,7 +160,13 @@ class Tracker {
         return portFound;
     }
 
-    public ArrayList<ScheduledFuture> scheduleTrackingTasks(int numFrames, int fps){
+    public void cancelTasks(){
+        for (int k = 0; k < trackerTasks.size(); k++){
+            trackerTasks.get(k).cancel(true);
+        }
+    }
+
+    public void scheduleTrackingTasks(int numFrames, int fps){
         ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
         ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
 
@@ -151,13 +180,13 @@ class Tracker {
         IJ.log("[INFO] total tracking tasks " + String.valueOf(totalTrackingTasks));
 
 
-        for(int trackingTaskIndex = 0; trackingTaskIndex < totalTrackingTasks; trackingTaskIndex++){
+        for(int trackingTaskIndex = 0; trackingTaskIndex < 5; trackingTaskIndex++){
             long timePtNano = trackingTaskIndex * trackingCycleNano; // e.g. 0 ms, 250ms, 500ms, etc..
             TrackingTask t = new TrackingTask(controller, trackerXYStagePort);
             ScheduledFuture trackingTask = ses.schedule(t, timePtNano, TimeUnit.NANOSECONDS);
             futureTasks.add(trackingTask);
         }
 
-        return futureTasks;
+        trackerTasks = futureTasks;
     }
 }
