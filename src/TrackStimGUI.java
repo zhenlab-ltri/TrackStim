@@ -10,6 +10,7 @@ import java.awt.Choice;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.Insets;
 
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
@@ -166,91 +167,17 @@ class TrackStimGUI extends PlugInFrame {
         setLayout(gbl);
         GridBagConstraints gbc = new GridBagConstraints();
 
-        Button b = new Button("Ready");
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbl.setConstraints(b, gbc);
-        b.setVisible(false);
-        add(b);
+        Button b;
 
-        Button b2 = new Button("Go");
-        gbc.gridx = 2;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbl.setConstraints(b2, gbc);
-        b2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                goBtnActionPerformed(evt);
-            }
-        });
-        add(b2);
+        Insets externalPadding = new Insets(10, 5, 10, 5);
+        Insets noPadding = new Insets(0, 0, 0, 0);
+        Insets topPadding = new Insets(10, 0, 0, 0);
 
-        Button b3 = new Button("Stop");
-        gbc.gridx = 4;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbl.setConstraints(b3, gbc);
-        b3.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                stopBtnActionPerformed(evt);
-            }
-        });
-        add(b3);
-
-        Label labelexpduration = new Label("exposure");
-        gbc.gridx = 6;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        labelexpduration.setVisible(false);
-        add(labelexpduration);
-
-        cameraExposureDurationSelector = new Choice();
-        cameraExposureDurationSelector.setPreferredSize(new Dimension(80, 20));
-        gbc.gridx = 7;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        cameraExposureDurationSelector.add("0");
-        cameraExposureDurationSelector.add("1");
-        cameraExposureDurationSelector.add("10");
-        cameraExposureDurationSelector.add("50");
-        cameraExposureDurationSelector.add("100");
-        cameraExposureDurationSelector.add("200");
-        cameraExposureDurationSelector.add("500");
-        cameraExposureDurationSelector.add("1000");
-        gbl.setConstraints(cameraExposureDurationSelector, gbc);
-        cameraExposureDurationSelector.setVisible(false);
-        add(cameraExposureDurationSelector);
-
-        Label labelcameracyclelength = new Label("cycle len.");
-        gbc.gridx = 6;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbl.setConstraints(labelcameracyclelength, gbc);
-        labelcameracyclelength.setVisible(false);
-        add(labelcameracyclelength);
-
-        cameraCycleDurationSelector = new Choice();
-        cameraCycleDurationSelector.setPreferredSize(new Dimension(80, 20));
-        gbc.gridx = 7;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        cameraCycleDurationSelector.add("0");
-        cameraCycleDurationSelector.add("50");
-        cameraCycleDurationSelector.add("100");
-        cameraCycleDurationSelector.add("200");
-        cameraCycleDurationSelector.add("500");
-        cameraCycleDurationSelector.add("1000");
-        cameraCycleDurationSelector.add("2000");
-        gbl.setConstraints(cameraCycleDurationSelector, gbc);
-        cameraCycleDurationSelector.setVisible(false);
-        add(cameraCycleDurationSelector);
-
-        Label labelframe = new Label("Frame num");
+        Label labelframe = new Label("Number of frames");
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
+        gbc.insets = externalPadding;
         gbl.setConstraints(labelframe, gbc);
         add(labelframe);
 
@@ -258,124 +185,15 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
+        gbc.insets = externalPadding;
         gbl.setConstraints(numFramesText, gbc);
         add(numFramesText);
-
-        useClosest = new Checkbox("Just closest", true);
-        gbc.gridx = 2;
-        gbc.gridy = 2;
-        gbc.gridwidth = 1;
-        gbl.setConstraints(useClosest, gbc);
-        useClosest.setVisible(false);
-        add(useClosest);
-
-        stageAccelerationSelector = new Choice();
-        gbc.gridx = 3;
-        gbc.gridy = 2;
-        gbc.gridwidth = 1;
-        stageAccelerationSelector.add("1x");
-        stageAccelerationSelector.add("2x");
-        stageAccelerationSelector.add("4x");
-        stageAccelerationSelector.add("5x");
-        stageAccelerationSelector.add("6x");
-        gbl.setConstraints(stageAccelerationSelector, gbc);
-        stageAccelerationSelector.setVisible(false);
-        add(stageAccelerationSelector);
-
-        thresholdMethodSelector = new Choice();
-        gbc.gridx = 4;
-        gbc.gridy = 2;
-        gbc.gridwidth = 1;
-        thresholdMethodSelector.add("Yen");// good for normal
-        thresholdMethodSelector.add("Triangle");// good for on coli
-        thresholdMethodSelector.add("Otsu");// good for ventral cord?
-
-        thresholdMethodSelector.add("Default");
-        thresholdMethodSelector.add("Huang");
-        thresholdMethodSelector.add("Intermodes");
-        thresholdMethodSelector.add("IsoData");
-        thresholdMethodSelector.add("Li");
-        thresholdMethodSelector.add("MaxEntropy");
-        thresholdMethodSelector.add("Mean");
-        thresholdMethodSelector.add("MinError(I)");
-        thresholdMethodSelector.add("Minimum");
-        thresholdMethodSelector.add("Moments");
-        thresholdMethodSelector.add("Percentile");
-        thresholdMethodSelector.add("RenyiEntropy");
-        thresholdMethodSelector.add("Shanbhag");
-        thresholdMethodSelector.setPreferredSize(new Dimension(80, 20));
-        gbl.setConstraints(thresholdMethodSelector, gbc);
-        thresholdMethodSelector.setVisible(false);
-        add(thresholdMethodSelector);
-
-        trackRightSideScreen = new Checkbox("Use right", false);
-        gbc.gridx = 5;
-        gbc.gridy = 2;
-        gbc.gridwidth = 1;
-        gbl.setConstraints(trackRightSideScreen, gbc);
-        trackRightSideScreen.setVisible(false);
-        add(trackRightSideScreen);
-
-        saveXYPositionsAsTextFile = new Checkbox("Save xypos file", false);
-        gbc.gridx = 6;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        gbl.setConstraints(saveXYPositionsAsTextFile, gbc);
-        saveXYPositionsAsTextFile.setVisible(false);
-        add(saveXYPositionsAsTextFile);
-
-        Label labelskip = new Label("one of ");
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 1;
-        gbl.setConstraints(labelskip, gbc);
-        labelskip.setVisible(false);
-        add(labelskip);
-
-        numSkipFramesText = new TextField("1", 2);
-        gbc.gridx = 1;
-        gbc.gridy = 3;
-        gbc.gridwidth = 1;
-        gbl.setConstraints(numSkipFramesText, gbc);
-        numSkipFramesText.setVisible(false);
-        add(numSkipFramesText);
-
-        useCenterOfMassTracking = new Checkbox("Center of Mass", false);
-        gbc.gridx = 2;
-        gbc.gridy = 3;
-        gbc.gridwidth = 1;
-        gbl.setConstraints(useCenterOfMassTracking, gbc);
-        useCenterOfMassTracking.setVisible(false);
-        add(useCenterOfMassTracking);
-
-        useManualTracking = new Checkbox("manual track", false);
-        gbc.gridx = 3;
-        gbc.gridy = 3;
-        gbc.gridwidth = 2;
-        gbl.setConstraints(useManualTracking, gbc);
-        useManualTracking.setVisible(false);
-        add(useManualTracking);
-
-        useFullFieldImaging = new Checkbox("Full field", false);
-        gbc.gridx = 5;
-        gbc.gridy = 3;
-        gbc.gridwidth = 1;
-        gbl.setConstraints(useFullFieldImaging, gbc);
-        useFullFieldImaging.setVisible(false);
-        add(useFullFieldImaging);
-
-        useBrightFieldImaging = new Checkbox("Bright field", false);
-        gbc.gridx = 6;
-        gbc.gridy = 3;
-        gbc.gridwidth = 1;
-        gbl.setConstraints(useBrightFieldImaging, gbc);
-        useBrightFieldImaging.setVisible(false);
-        add(useBrightFieldImaging);
 
         Label labeldir = new Label("Save at");
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.gridwidth = 1;
+        gbc.insets = externalPadding;
         gbl.setConstraints(labeldir, gbc);
         add(labeldir);
 
@@ -383,6 +201,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 1;
         gbc.gridy = 4;
         gbc.gridwidth = 5;
+        gbc.insets = externalPadding;
         gbc.fill = GridBagConstraints.BOTH;
         gbl.setConstraints(saveDirectoryText, gbc);
         add(saveDirectoryText);
@@ -393,6 +212,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 6;
         gbc.gridy = 4;
         gbc.gridwidth = 2;
+        gbc.insets = externalPadding;
         gbl.setConstraints(b4, gbc);
         b4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -401,31 +221,47 @@ class TrackStimGUI extends PlugInFrame {
         });
         add(b4);
 
+        Button b2 = new Button("Go");
+        gbc.gridx = 2;
+        gbc.gridy = 10;
+        gbc.gridwidth = 1;
+        gbc.insets = externalPadding;
+        gbl.setConstraints(b2, gbc);
+        b2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                goBtnActionPerformed(evt);
+            }
+        });
+        add(b2);
+
+        Button b3 = new Button("Stop");
+        gbc.gridx = 5;
+        gbc.gridy = 10;
+        gbc.gridwidth = 1;
+        gbc.insets = externalPadding;
+        gbl.setConstraints(b3, gbc);
+        b3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                stopBtnActionPerformed(evt);
+            }
+        });
+        add(b3);
+
         // gui for stimulation
         enableStimulator = new Checkbox("Enable stimulator", false);
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
+        gbc.insets = topPadding;
         gbc.anchor = GridBagConstraints.NORTH;
         gbl.setConstraints(enableStimulator, gbc);
         add(enableStimulator);
-
-        b = new Button("Run");
-        b.setPreferredSize(new Dimension(40, 20));
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbl.setConstraints(b, gbc);
-        b.setVisible(false);
-        add(b);
-        gbc.gridheight = 1;
 
         Label labelpre = new Label("Pre-stim");
         gbc.gridx = 1;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
+        gbc.insets = topPadding;
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelpre, gbc);
         add(labelpre);
@@ -435,6 +271,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 2;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
+        gbc.insets = topPadding;
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(preStimulationTimeMsText, gbc);
         add(preStimulationTimeMsText);
@@ -443,6 +280,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 1;
         gbc.gridy = 6;
         gbc.gridwidth = 1;
+        gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelstrength, gbc);
         add(labelstrength);
@@ -452,6 +290,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 2;
         gbc.gridy = 6;
         gbc.gridwidth = 1;
+        gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(stimulationStrengthText, gbc);
         add(stimulationStrengthText);
@@ -460,6 +299,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 1;
         gbc.gridy = 7;
         gbc.gridwidth = 1;
+        gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelduration, gbc);
         add(labelduration);
@@ -469,6 +309,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 2;
         gbc.gridy = 7;
         gbc.gridwidth = 1;
+        gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(stimulationDurationMsText, gbc);
         add(stimulationDurationMsText);
@@ -477,6 +318,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 3;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
+        gbc.insets = topPadding;
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelcyclelength, gbc);
         add(labelcyclelength);
@@ -486,6 +328,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 4;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
+        gbc.insets = topPadding;
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(stimulationCycledurationMsText, gbc);
         add(stimulationCycledurationMsText);
@@ -494,6 +337,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 3;
         gbc.gridy = 6;
         gbc.gridwidth = 1;
+        gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelcyclenum, gbc);
         add(labelcyclenum);
@@ -503,6 +347,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 4;
         gbc.gridy = 6;
         gbc.gridwidth = 1;
+        gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(numStimulationCyclesText, gbc);
         add(numStimulationCyclesText);
@@ -512,6 +357,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridy = 5;
         gbc.gridwidth = 1;
         // gbc.gridheight=3;
+        gbc.insets = topPadding;
         gbc.anchor = GridBagConstraints.NORTH;
         gbl.setConstraints(enableRamp, gbc);
         add(enableRamp);
@@ -520,6 +366,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 6;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
+        gbc.insets = topPadding;
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelbase, gbc);
         add(labelbase);
@@ -529,6 +376,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 7;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
+        gbc.insets = topPadding;
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(rampBase, gbc);
         add(rampBase);
@@ -546,6 +394,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 7;
         gbc.gridy = 6;
         gbc.gridwidth = 1;
+        gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(rampStart, gbc);
         add(rampStart);
@@ -554,6 +403,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 6;
         gbc.gridy = 7;
         gbc.gridwidth = 1;
+        gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.CENTER;
         gbl.setConstraints(labelrampend, gbc);
         add(labelrampend);
@@ -563,21 +413,24 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridx = 7;
         gbc.gridy = 7;
         gbc.gridwidth = 1;
+        gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(rampEnd, gbc);
         add(rampEnd);
 
         enableTracking = new Checkbox("Enable auto-tracking", false);
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 8;
         gbc.gridwidth = 2;
+        gbc.insets = externalPadding;
         gbl.setConstraints(enableTracking, gbc);
         add(enableTracking);
         
         Label thresholdSliderLabel = new Label("Auto-tracking threshold");
         gbc.gridx = 3;
-        gbc.gridy = 9;
+        gbc.gridy = 8;
         gbc.gridwidth = 2;
+        gbc.insets = externalPadding;
         gbl.setConstraints(thresholdSliderLabel, gbc);
         add(thresholdSliderLabel);
 
@@ -598,10 +451,197 @@ class TrackStimGUI extends PlugInFrame {
             }
         });
         gbc.gridx = 5;
-        gbc.gridy = 9;
+        gbc.gridy = 8;
         gbc.gridwidth = 5;
+        gbc.insets = externalPadding;
         gbl.setConstraints(slider, gbc);
         add(slider);
+
+
+                    // LEGACY VARIABLES
+
+                    // test stimulator
+                    b = new Button("Run");
+                    b.setPreferredSize(new Dimension(40, 20));
+                    gbc.gridx = 0;
+                    gbc.gridy = 6;
+                    gbc.gridwidth = 1;
+                    gbc.gridheight = 2;
+                    gbc.anchor = GridBagConstraints.CENTER;
+                    gbl.setConstraints(b, gbc);
+                    b.setVisible(false);
+                    add(b);
+                    gbc.gridheight = 1;
+
+
+                    b = new Button("Ready");
+                    gbc.gridx = 0;
+                    gbc.gridy = 0;
+                    gbc.gridwidth = 2;
+                    gbl.setConstraints(b, gbc);
+                    b.setVisible(false);
+                    add(b);
+
+
+                    Label labelexpduration = new Label("exposure");
+                    gbc.gridx = 6;
+                    gbc.gridy = 0;
+                    gbc.gridwidth = 1;
+                    gbc.gridheight = 1;
+                    labelexpduration.setVisible(false);
+                    add(labelexpduration);
+
+                    cameraExposureDurationSelector = new Choice();
+                    cameraExposureDurationSelector.setPreferredSize(new Dimension(80, 20));
+                    gbc.gridx = 7;
+                    gbc.gridy = 0;
+                    gbc.gridwidth = 1;
+                    cameraExposureDurationSelector.add("0");
+                    cameraExposureDurationSelector.add("1");
+                    cameraExposureDurationSelector.add("10");
+                    cameraExposureDurationSelector.add("50");
+                    cameraExposureDurationSelector.add("100");
+                    cameraExposureDurationSelector.add("200");
+                    cameraExposureDurationSelector.add("500");
+                    cameraExposureDurationSelector.add("1000");
+                    gbl.setConstraints(cameraExposureDurationSelector, gbc);
+                    cameraExposureDurationSelector.setVisible(false);
+                    add(cameraExposureDurationSelector);
+
+                    Label labelcameracyclelength = new Label("cycle len.");
+                    gbc.gridx = 6;
+                    gbc.gridy = 1;
+                    gbc.gridwidth = 1;
+                    gbl.setConstraints(labelcameracyclelength, gbc);
+                    labelcameracyclelength.setVisible(false);
+                    add(labelcameracyclelength);
+
+                    cameraCycleDurationSelector = new Choice();
+                    cameraCycleDurationSelector.setPreferredSize(new Dimension(80, 20));
+                    gbc.gridx = 7;
+                    gbc.gridy = 1;
+                    gbc.gridwidth = 1;
+                    cameraCycleDurationSelector.add("0");
+                    cameraCycleDurationSelector.add("50");
+                    cameraCycleDurationSelector.add("100");
+                    cameraCycleDurationSelector.add("200");
+                    cameraCycleDurationSelector.add("500");
+                    cameraCycleDurationSelector.add("1000");
+                    cameraCycleDurationSelector.add("2000");
+                    gbl.setConstraints(cameraCycleDurationSelector, gbc);
+                    cameraCycleDurationSelector.setVisible(false);
+                    add(cameraCycleDurationSelector);
+
+                    useClosest = new Checkbox("Just closest", true);
+                    gbc.gridx = 2;
+                    gbc.gridy = 2;
+                    gbc.gridwidth = 1;
+                    gbl.setConstraints(useClosest, gbc);
+                    useClosest.setVisible(false);
+                    add(useClosest);
+
+                    stageAccelerationSelector = new Choice();
+                    gbc.gridx = 3;
+                    gbc.gridy = 2;
+                    gbc.gridwidth = 1;
+                    stageAccelerationSelector.add("1x");
+                    stageAccelerationSelector.add("2x");
+                    stageAccelerationSelector.add("4x");
+                    stageAccelerationSelector.add("5x");
+                    stageAccelerationSelector.add("6x");
+                    gbl.setConstraints(stageAccelerationSelector, gbc);
+                    stageAccelerationSelector.setVisible(false);
+                    add(stageAccelerationSelector);
+
+                    thresholdMethodSelector = new Choice();
+                    gbc.gridx = 4;
+                    gbc.gridy = 2;
+                    gbc.gridwidth = 1;
+                    thresholdMethodSelector.add("Yen");// good for normal
+                    thresholdMethodSelector.add("Triangle");// good for on coli
+                    thresholdMethodSelector.add("Otsu");// good for ventral cord?
+
+                    thresholdMethodSelector.add("Default");
+                    thresholdMethodSelector.add("Huang");
+                    thresholdMethodSelector.add("Intermodes");
+                    thresholdMethodSelector.add("IsoData");
+                    thresholdMethodSelector.add("Li");
+                    thresholdMethodSelector.add("MaxEntropy");
+                    thresholdMethodSelector.add("Mean");
+                    thresholdMethodSelector.add("MinError(I)");
+                    thresholdMethodSelector.add("Minimum");
+                    thresholdMethodSelector.add("Moments");
+                    thresholdMethodSelector.add("Percentile");
+                    thresholdMethodSelector.add("RenyiEntropy");
+                    thresholdMethodSelector.add("Shanbhag");
+                    thresholdMethodSelector.setPreferredSize(new Dimension(80, 20));
+                    gbl.setConstraints(thresholdMethodSelector, gbc);
+                    thresholdMethodSelector.setVisible(false);
+                    add(thresholdMethodSelector);
+
+                    trackRightSideScreen = new Checkbox("Use right", false);
+                    gbc.gridx = 5;
+                    gbc.gridy = 2;
+                    gbc.gridwidth = 1;
+                    gbl.setConstraints(trackRightSideScreen, gbc);
+                    trackRightSideScreen.setVisible(false);
+                    add(trackRightSideScreen);
+
+                    saveXYPositionsAsTextFile = new Checkbox("Save xypos file", false);
+                    gbc.gridx = 6;
+                    gbc.gridy = 2;
+                    gbc.gridwidth = 2;
+                    gbl.setConstraints(saveXYPositionsAsTextFile, gbc);
+                    saveXYPositionsAsTextFile.setVisible(false);
+                    add(saveXYPositionsAsTextFile);
+
+                    Label labelskip = new Label("one of ");
+                    gbc.gridx = 0;
+                    gbc.gridy = 3;
+                    gbc.gridwidth = 1;
+                    gbl.setConstraints(labelskip, gbc);
+                    labelskip.setVisible(false);
+                    add(labelskip);
+
+                    numSkipFramesText = new TextField("1", 2);
+                    gbc.gridx = 1;
+                    gbc.gridy = 3;
+                    gbc.gridwidth = 1;
+                    gbl.setConstraints(numSkipFramesText, gbc);
+                    numSkipFramesText.setVisible(false);
+                    add(numSkipFramesText);
+
+                    useCenterOfMassTracking = new Checkbox("Center of Mass", false);
+                    gbc.gridx = 2;
+                    gbc.gridy = 3;
+                    gbc.gridwidth = 1;
+                    gbl.setConstraints(useCenterOfMassTracking, gbc);
+                    useCenterOfMassTracking.setVisible(false);
+                    add(useCenterOfMassTracking);
+
+                    useManualTracking = new Checkbox("manual track", false);
+                    gbc.gridx = 3;
+                    gbc.gridy = 3;
+                    gbc.gridwidth = 2;
+                    gbl.setConstraints(useManualTracking, gbc);
+                    useManualTracking.setVisible(false);
+                    add(useManualTracking);
+
+                    useFullFieldImaging = new Checkbox("Full field", false);
+                    gbc.gridx = 5;
+                    gbc.gridy = 3;
+                    gbc.gridwidth = 1;
+                    gbl.setConstraints(useFullFieldImaging, gbc);
+                    useFullFieldImaging.setVisible(false);
+                    add(useFullFieldImaging);
+
+                    useBrightFieldImaging = new Checkbox("Bright field", false);
+                    gbc.gridx = 6;
+                    gbc.gridy = 3;
+                    gbc.gridwidth = 1;
+                    gbl.setConstraints(useBrightFieldImaging, gbc);
+                    useBrightFieldImaging.setVisible(false);
+                    add(useBrightFieldImaging);
 
         pack();
     }
