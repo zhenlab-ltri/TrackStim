@@ -22,6 +22,7 @@ Ask the IT department for Mac OS X 10.7
 - DCAM API for Mac OS X 10.7 v13.11.4451
 - Java 6 (this should come with Mac OS X 10.7, but if its not installed, you can download it here: https://support.apple.com/kb/dl1572?locale=en_GB) 
 - Micro-manager 1.4.23
+- [Arduino drivers for whatever system you are on](https://www.arduino.cc/en/Main/Software)
 
 
 ### Required hardware
