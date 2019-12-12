@@ -99,7 +99,7 @@ class TrackingTask implements Runnable {
             ImagePlus binarized = binarizeImage(liveModeImage, controller.thresholdValue);
             double[] wormPosition = detectWormPosition(binarized);
             String stageCommand = translateWormPosToStageCommandVelocity(binarized, wormPosition);
-            sendXYStageCommand(stageCommand);
+            // sendXYStageCommand(stageCommand);
         }
     }
 
@@ -123,16 +123,16 @@ class Tracker {
         boolean portFound = false;
 
         String stageDeviceLabel = controller.core.getXYStageDevice();
-        String port = "";
         try {
             trackerXYStagePort = controller.core.getProperty(stageDeviceLabel, "Port");
             portFound = true;
+            initialized = true;
         } catch(java.lang.Exception e) {
             IJ.log("[ERROR] could not get xy stage port, tracker will not work");
             IJ.log(e.getMessage());
         }
 
-        IJ.log("[INFO] tracker xy stage port is " + port);
+        IJ.log("[INFO] tracker xy stage port is " + trackerXYStagePort);
 
         return portFound;
     }
@@ -147,6 +147,8 @@ class Tracker {
         long trackingCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / NUM_TRACKING_TASKS_PER_SECOND);
 
         int totalTrackingTasks = (int) (imagingTaskTimeNano / trackingCycleNano);
+
+        IJ.log("[INFO] total tracking tasks " + String.valueOf(totalTrackingTasks));
 
 
         for(int trackingTaskIndex = 0; trackingTaskIndex < totalTrackingTasks; trackingTaskIndex++){
