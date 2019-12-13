@@ -469,7 +469,6 @@ class TrackStimGUI extends PlugInFrame {
         gbc.insets = externalPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(enableTracking, gbc);
-        enableTracking.setEnabled(false);
         add(enableTracking);
 
         Label thresholdSliderLabel = new Label("Auto-tracking threshold");
