@@ -27,6 +27,7 @@ class TrackStimController {
     private ScheduledExecutorService micromanagerLiveModeProcessor;
     private ImagePlus binarizedLiveModeImage;
 
+    // main components that generate imaging, stimulation, and tracking tasks
     private TrackStimGUI gui;
     private Stimulator stimulator;
     private Tracker tracker;
@@ -48,7 +49,7 @@ class TrackStimController {
         tracker = new Tracker(this);
         tracker.initialize();
 
-        imager = new Imager(core_, app_);
+        imager = new Imager(this);
         
         thresholdValue = 1.0;
         
@@ -112,6 +113,17 @@ class TrackStimController {
         imager.cancelTasks();
         tracker.cancelTasks();
         stimulator.cancelTasks();
+    }
+
+    public void onImageAcquisitionDone(double totalTaskTimeSeconds){
+        // stop live mode again
+        // show how long it took to finish the task
+        // start live mode again
+        // enable the gui again
+
+        app.enableLiveMode(false);
+        IJ.showMessage("Task finished in " + String.valueOf(totalTaskTimeSeconds) + " seconds");
+        app.enableLiveMode(true);
     }
 
     // show processed binarized images and show where the center of mass is 

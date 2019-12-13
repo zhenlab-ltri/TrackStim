@@ -34,7 +34,8 @@ class ImagingTask implements Runnable {
 	}
 
 	public void run(){
-		IJ.log("[INFO] Acquring image at time " + String.valueOf(timePoint));
+		double nanoTimePtInSeconds = timePoint / 1000000000.0;
+		IJ.log("[INFO] Acquring image at time " + String.valueOf((double) nanoTimePtInSeconds) + " seconds");
 
 		if( !app.isLiveModeOn() ){
 			IJ.log("[ERROR] Could not acquire image.  Live mode must be on.  Please press STOP." );
@@ -92,17 +93,18 @@ class ImagingTask implements Runnable {
 
 class Imager {
 
-	CMMCore core;
-	ScriptInterface app;
+	TrackStimController controller;
 
 	private ArrayList<ScheduledFuture> imagingTasks;
+	private long imagingTaskStartTime;
 
 
-	Imager(CMMCore core_, ScriptInterface app_){
-		core = core_;
-		app = app_;
+	Imager(TrackStimController c){
+
+		controller = c;
 
 		imagingTasks = new ArrayList<ScheduledFuture>();
+		imagingTaskStartTime = 0;
 	}
 
     // schedule a number of snapshots at fixed time interval to ensure that images are taken
@@ -114,15 +116,25 @@ class Imager {
         ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
         ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
 
-        long frameCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / fps); // take a pic every 100ms
+		long frameCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / fps); // take a pic every 100ms
+		
+		imagingTaskStartTime = System.nanoTime();
 
         for(int curFrameIndex = 0; curFrameIndex < numFrames; curFrameIndex++){
             long timePtNano = curFrameIndex * frameCycleNano; // e.g. 0 ms, 100ms, 200ms, etc..
-            ImagingTask s = new ImagingTask(core, app, timePtNano, imageSaveDirectory, curFrameIndex);
+            ImagingTask s = new ImagingTask(controller.core, controller.app, timePtNano, imageSaveDirectory, curFrameIndex);
 
             ScheduledFuture snapShot = ses.schedule(s, timePtNano, TimeUnit.NANOSECONDS);
             futureTasks.add(snapShot);
-        }
+		}
+
+		ScheduledFuture lastImagingTask = ses.schedule(new Runnable() {
+			@Override
+			public void run(){
+				controller.onImageAcquisitionDone(computeImageTaskTimeInSeconds());
+			}
+		}, (numFrames - 1) * frameCycleNano, TimeUnit.NANOSECONDS);
+		imagingTasks.add(lastImagingTask);
 
         imagingTasks = futureTasks;
     }
@@ -130,7 +142,14 @@ class Imager {
     public void cancelTasks(){
 		for (int i = 0; i < imagingTasks.size(); i++ ){
             imagingTasks.get(i).cancel(true);
-        }
+		}
+		
+		controller.onImageAcquisitionDone(computeImageTaskTimeInSeconds());
+	}
+
+	private double computeImageTaskTimeInSeconds(){
+		double imagingTaskDoneTime = System.nanoTime();
+		return (imagingTaskDoneTime - imagingTaskStartTime) / 1000000000.0;
 	}
     
     private String createImageSaveDirectory(String root){

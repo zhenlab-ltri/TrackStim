@@ -198,8 +198,7 @@ class Tracker {
         IJ.log("[INFO] total tracking tasks " + String.valueOf(totalTrackingTasks));
 
 
-        int trackingTaskIndex = 0;
-        for(trackingTaskIndex = 0; trackingTaskIndex < totalTrackingTasks; trackingTaskIndex++){
+        for(int trackingTaskIndex = 0; trackingTaskIndex < totalTrackingTasks; trackingTaskIndex++){
             long timePtNano = trackingTaskIndex * trackingCycleNano; // e.g. 0 ms, 250ms, 500ms, etc..
             TrackingTask t = new TrackingTask(controller, trackerXYStagePort);
             ScheduledFuture trackingTask = ses.schedule(t, timePtNano, TimeUnit.NANOSECONDS);
@@ -207,12 +206,13 @@ class Tracker {
         }
 
         // after all tracking tasks, execute a final task to stop auto tracking
-        ses.schedule(new Runnable() {
+        ScheduledFuture lastTrackingTask = ses.schedule(new Runnable() {
             @Override
             public void run(){
                 TrackingTask.stopAutoTracking(controller.core, trackerXYStagePort);
             }
-        }, (trackingTaskIndex + 1 ) * trackingCycleNano,  TimeUnit.NANOSECONDS);
+        }, (totalTrackingTasks - 1) * trackingCycleNano,  TimeUnit.NANOSECONDS);
+        trackerTasks.add(lastTrackingTask);
 
         trackerTasks = futureTasks;
     }
