@@ -72,29 +72,36 @@ class TrackStimController {
         thresholdValue = 1.0 + val;
     }
 
-    public void startImageAcquisition(int numFrames, int framesPerSecond, String rootDirectory){
+    public void startImageAcquisition(
+        int numFrames, int framesPerSecond, String rootDirectory, // imaging args
+        boolean enableStimulator, int preStim, int stimStrength, int stimDuration, // stimulator args
+        int stimCycleDuration, int numStimCycles, boolean enableRamp, 
+        int rampBase, int rampStart, int rampEnd,
+        boolean enableTracking // tracking args
+    ){
 
         // ensure micro manager live mode is on so we can capture images
         if( !app.isLiveModeOn() ){
             app.enableLiveMode(true);
         }
 
-        if( stimulator.initialized ){
-            try {
-                // stimulatorTasks = stimulator.scheduleStimulationTasks(
-                // false, 30000, 63, 
-                // 15000, 30000, 2, 
-                // 0, 0, 63);
-            } catch (java.lang.Exception e){
-                IJ.log("[ERROR] could not start stimulation.  stimulator not initialized.");
-            }
-        }
-
-        if( tracker.initialized ){
+        if( tracker.initialized  && enableTracking ){
             try {
                 tracker.scheduleTrackingTasks(numFrames, framesPerSecond);
             } catch (java.lang.Exception e){
                 IJ.log("[ERROR] could not start tracking. tracker is not initialized.");
+            }
+        }
+
+        if( stimulator.initialized && enableStimulator ){
+            try {
+                stimulator.scheduleStimulationTasks(
+                    enableRamp, preStim, stimStrength, 
+                    stimDuration, stimCycleDuration, numStimCycles, 
+                    rampBase, rampStart, rampEnd
+                );
+            } catch (java.lang.Exception e){
+                IJ.log("[ERROR] could not start stimulation.  stimulator not initialized.");
             }
         }
 

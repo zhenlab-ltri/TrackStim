@@ -17,11 +17,38 @@ class StimulationTask implements Runnable {
     int signal;
     String stimulatorPort;
 
+    public static final int ON_SIGNAL = 63;
+    public static final int OFF_SIGNAL = 0;
+
     StimulationTask(CMMCore cmmcore_, String stimulatorPort_, int channel_, int signal_) {
         mmc = cmmcore_;
         stimulatorPort = stimulatorPort_;
         channel = channel_;
         signal = signal_;
+    }
+
+    public static void turnOnLEDLight(CMMCore core, String port){
+        int signalData = 0 << 7 | ON_SIGNAL;
+        CharVector signalDataVec = new CharVector();
+        signalDataVec.add((char) signalData);
+
+        try {
+            core.writeToSerialPort(port, signalDataVec);
+        } catch (java.lang.Exception e) {
+            IJ.log(e.getMessage());
+        }
+    }
+
+    public static void turnOffLEDLight(CMMCore core, String port){
+        int signalData = 0 << 7 | OFF_SIGNAL;
+        CharVector signalDataVec = new CharVector();
+        signalDataVec.add((char) signalData);
+
+        try {
+            core.writeToSerialPort(port, signalDataVec);
+        } catch (java.lang.Exception e) {
+            IJ.log(e.getMessage());
+        }
     }
 
     // send signal data to the stimulator through the serial port
@@ -96,6 +123,8 @@ class Stimulator {
         for (int k = 0; k < stimulatorTasks.size(); k++){
             stimulatorTasks.get(k).cancel(true);
         }
+
+        StimulationTask.turnOffLEDLight(mmc, stimulatorPort);
     }
 
     // schedules signals that will be run in the future at specific time points and intervals based on

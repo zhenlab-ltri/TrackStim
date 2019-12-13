@@ -47,12 +47,12 @@ class TrackStimGUI extends PlugInFrame {
     TextField framesPerSecondText;
     Checkbox enableTracking;
     java.awt.Checkbox enableStimulator;
+    java.awt.Checkbox enableRamp;
     TextField preStimulationTimeMsText;
     TextField stimulationStrengthText;
     TextField stimulationDurationMsText;
-    TextField stimulationCycledurationMsText;
+    TextField stimulationCycleDurationMsText;
     TextField numStimulationCyclesText;
-    java.awt.Checkbox enableRamp;
     TextField rampBase;
     TextField rampStart;
     TextField rampEnd;
@@ -81,24 +81,7 @@ class TrackStimGUI extends PlugInFrame {
 
         setSize(800, 400);
         initComponents(); // create the GUI
-
-
-        // try to set values from preferences
-        prefs = Preferences.userNodeForPackage(this.getClass());
-        numFramesText.setText(prefs.get("numFrames", "3000"));
-        saveDirectoryText.setText(prefs.get("saveDirectory", ""));
-        slider.setValue(prefs.getInt("sliderValue", 100));
-        enableTracking.setState(prefs.getBoolean("enableTracking", false));
-        enableStimulator.setState(prefs.getBoolean("enableStimulator", false));
-        enableRamp.setState(prefs.getBoolean("enableRamp", false));
-        preStimulationTimeMsText.setText(prefs.get("preStimulationTimeMs", "10000"));
-        stimulationStrengthText.setText(prefs.get("stimulationStrength", "63"));
-        stimulationDurationMsText.setText(prefs.get("stimulationDuration", "5000"));
-        stimulationCycledurationMsText.setText(prefs.get("stimulationCycleDuration", "10000"));
-        numStimulationCyclesText.setText(prefs.get("numStimulationCycles", "3"));
-        rampBase.setText(prefs.get("rampBase", "0"));
-        rampStart.setText(prefs.get("rampStart", "0"));
-        rampEnd.setText(prefs.get("rampEnd", "63"));
+        loadPreferences(); // populate GUI with saved preferences
     }
 
     public void destroy(){
@@ -110,18 +93,64 @@ class TrackStimGUI extends PlugInFrame {
         c.updateThresholdValue(slider.getValue());
     }
 
+    private void loadPreferences(){
+        prefs = Preferences.userNodeForPackage(this.getClass());
+        numFramesText.setText(prefs.get("numFrames", "3000"));
+        saveDirectoryText.setText(prefs.get("saveDirectory", ""));
+        enableTracking.setState(prefs.getBoolean("enableTracking", false));
+        enableStimulator.setState(prefs.getBoolean("enableStimulator", false));
+        enableRamp.setState(prefs.getBoolean("enableRamp", false));
+        preStimulationTimeMsText.setText(prefs.get("preStimulationTimeMs", "10000"));
+        stimulationStrengthText.setText(prefs.get("stimulationStrength", "63"));
+        stimulationDurationMsText.setText(prefs.get("stimulationDuration", "5000"));
+        stimulationCycleDurationMsText.setText(prefs.get("stimulationCycleDuration", "10000"));
+        numStimulationCyclesText.setText(prefs.get("numStimulationCycles", "3"));
+        rampBase.setText(prefs.get("rampBase", "0"));
+        rampStart.setText(prefs.get("rampStart", "0"));
+        rampEnd.setText(prefs.get("rampEnd", "63"));
+    }
+
+    private void savePreferences(){
+        prefs.put("saveDirectory", saveDirectoryText.getText());
+        prefs.put("numFrames", numFramesText.getText());
+        prefs.put("sliderValue", String.valueOf(slider.getValue()));
+        prefs.put("enableTracking", String.valueOf(enableTracking.getState()));
+        prefs.put("enableStimulator", String.valueOf(enableStimulator.getState()));
+        prefs.put("enableRamp", String.valueOf(enableRamp.getState()));
+        prefs.put("preStimulationTimeMs", preStimulationTimeMsText.getText());
+        prefs.put("stimulationStrength", stimulationStrengthText.getText());
+        prefs.put("stimulationDuration", stimulationDurationMsText.getText());
+        prefs.put("stimulationCycleDuration", stimulationCycleDurationMsText.getText());
+        prefs.put("numStimulationCycles", numStimulationCyclesText.getText());
+        prefs.put("rampBase", rampBase.getText());
+        prefs.put("rampStart", rampStart.getText());
+        prefs.put("rampEnd", rampEnd.getText());
+    }
+
     // when go is pressed, validate ui values and send them to the controller to start
     // getting images
     private void goBtnActionPerformed(ActionEvent e){
-        if(saveDirectoryIsValid() && frameNumbersAreValid()){
-            prefs.put("saveDirectory", saveDirectoryText.getText());
-            prefs.put("numFrames", numFramesText.getText());
+        if(uiValuesAreValid()){
+            savePreferences();
 
-            int numFrames = Integer.parseInt(numFramesText.getText());
-            int framesPerSecond = Integer.parseInt(framesPerSecondText.getText());
-            String rootDirectory = saveDirectoryText.getText();
+            controller.startImageAcquisition(
+                Integer.parseInt(numFramesText.getText()),
+                Integer.parseInt(framesPerSecondText.getText()),
+                saveDirectoryText.getText(),
 
-            controller.startImageAcquisition(numFrames, framesPerSecond, rootDirectory);
+                enableStimulator.getState(),
+                Integer.parseInt(preStimulationTimeMsText.getText()),
+                Integer.parseInt(stimulationStrengthText.getText()),
+                Integer.parseInt(stimulationDurationMsText.getText()),
+                Integer.parseInt(stimulationCycleDurationMsText.getText()),
+                Integer.parseInt(numStimulationCyclesText.getText()),
+                enableRamp.getState(),
+                Integer.parseInt(rampBase.getText()),
+                Integer.parseInt(rampStart.getText()),
+                Integer.parseInt(rampEnd.getText()),
+
+                enableTracking.getState()
+            );
         } else {
             IJ.showMessage("directory or frame number is invalid");
         }
@@ -147,18 +176,29 @@ class TrackStimGUI extends PlugInFrame {
         return f.exists() && f.isDirectory();
     }
 
-    private boolean frameNumbersAreValid(){
+    private boolean textNumbersAreValid(){
         boolean valid = true;
 
         try {
             Integer.parseInt(numFramesText.getText());
             Integer.parseInt(framesPerSecondText.getText());
-
+            Integer.parseInt(preStimulationTimeMsText.getText());
+            Integer.parseInt(stimulationStrengthText.getText());
+            Integer.parseInt(stimulationDurationMsText.getText());
+            Integer.parseInt(stimulationCycleDurationMsText.getText());
+            Integer.parseInt(numStimulationCyclesText.getText());
+            Integer.parseInt(rampBase.getText());
+            Integer.parseInt(rampStart.getText());
+            Integer.parseInt(rampEnd.getText());
         } catch (java.lang.Exception e){
             valid = false;
         }
 
          return valid;
+    }
+
+    private boolean uiValuesAreValid(){
+        return saveDirectoryIsValid() && textNumbersAreValid();
     }
 
     // create the GUI
@@ -327,15 +367,15 @@ class TrackStimGUI extends PlugInFrame {
         gbl.setConstraints(labelcyclelength, gbc);
         add(labelcyclelength);
 
-        stimulationCycledurationMsText = new TextField(String.valueOf(10000), 6);
-        stimulationCycledurationMsText.setPreferredSize(new Dimension(50, 30));
+        stimulationCycleDurationMsText = new TextField(String.valueOf(10000), 6);
+        stimulationCycleDurationMsText.setPreferredSize(new Dimension(50, 30));
         gbc.gridx = 1;
         gbc.gridy = 9;
         gbc.gridwidth = 1;
         gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
-        gbl.setConstraints(stimulationCycledurationMsText, gbc);
-        add(stimulationCycledurationMsText);
+        gbl.setConstraints(stimulationCycleDurationMsText, gbc);
+        add(stimulationCycleDurationMsText);
 
         Label labelcyclenum = new Label("Cycle num");
         gbc.gridx = 0;
@@ -429,6 +469,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.insets = externalPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(enableTracking, gbc);
+        enableTracking.setEnabled(false);
         add(enableTracking);
 
         Label thresholdSliderLabel = new Label("Auto-tracking threshold");
