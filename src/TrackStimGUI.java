@@ -8,6 +8,7 @@ import java.awt.Point;
 import java.awt.Button;
 import java.awt.Choice;
 import java.awt.GridBagLayout;
+
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.Insets;
@@ -34,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 
 // provides the ui for track stim
 
-// implements a ImageJ plugin interface 
+// implements a ImageJ plugin interface
 // **NOTE**: There is a big difference between a micro manager plugin and an imagej plugin
 // this program was initially designed as an imageJ plugin, but is now wrapped inside a micromanager plugin
 // to migrate it to new versions of micromanager
@@ -45,34 +46,34 @@ class TrackStimGUI extends PlugInFrame {
     TextField saveDirectoryText;
     TextField framesPerSecondText;
     Checkbox enableTracking;
-    java.awt.Checkbox enableStimulator;	
-    TextField preStimulationTimeMsText;	
-    TextField stimulationStrengthText;	
-    TextField stimulationDurationMsText;	
-    TextField stimulationCycledurationMsText;	
-    TextField numStimulationCyclesText;	
-    java.awt.Checkbox enableRamp;	
-    TextField rampBase;	
-    TextField rampStart;	
-    TextField rampEnd;	
+    java.awt.Checkbox enableStimulator;
+    TextField preStimulationTimeMsText;
+    TextField stimulationStrengthText;
+    TextField stimulationDurationMsText;
+    TextField stimulationCycledurationMsText;
+    TextField numStimulationCyclesText;
+    java.awt.Checkbox enableRamp;
+    TextField rampBase;
+    TextField rampStart;
+    TextField rampEnd;
     JSlider slider;
-    
+
     Preferences prefs;
     TrackStimController controller;
 
     // legacy variables that will eventually be deleted
-    TextField numSkipFramesText;	
-    java.awt.Choice cameraExposureDurationSelector;	
-    java.awt.Choice cameraCycleDurationSelector;	
-    java.awt.Checkbox useClosest;// target definition method.	
-    java.awt.Checkbox trackRightSideScreen;// field for tacking source	
-    java.awt.Checkbox saveXYPositionsAsTextFile;// if save xy pos data into txt file. not inclued z.	
-    java.awt.Choice stageAccelerationSelector;	
-    java.awt.Choice thresholdMethodSelector;	
-    java.awt.Checkbox useCenterOfMassTracking;// center of mass method	
-    java.awt.Checkbox useManualTracking;	
-    java.awt.Checkbox useFullFieldImaging;// full size filed.	
-    java.awt.Checkbox useBrightFieldImaging;// Bright field tracking only works with full size	
+    TextField numSkipFramesText;
+    java.awt.Choice cameraExposureDurationSelector;
+    java.awt.Choice cameraCycleDurationSelector;
+    java.awt.Checkbox useClosest;// target definition method.
+    java.awt.Checkbox trackRightSideScreen;// field for tacking source
+    java.awt.Checkbox saveXYPositionsAsTextFile;// if save xy pos data into txt file. not inclued z.
+    java.awt.Choice stageAccelerationSelector;
+    java.awt.Choice thresholdMethodSelector;
+    java.awt.Checkbox useCenterOfMassTracking;// center of mass method
+    java.awt.Checkbox useManualTracking;
+    java.awt.Checkbox useFullFieldImaging;// full size filed.
+    java.awt.Checkbox useBrightFieldImaging;// Bright field tracking only works with full size
 
 
     public TrackStimGUI() {
@@ -172,46 +173,75 @@ class TrackStimGUI extends PlugInFrame {
         Insets externalPadding = new Insets(10, 5, 10, 5);
         Insets noPadding = new Insets(0, 0, 0, 0);
         Insets topPadding = new Insets(10, 0, 0, 0);
+        Insets leftLabelPadding = new Insets(5, 25, 5, 5);
+
+        Label imagingHeader = new Label("Imaging");
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.insets = externalPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbl.setConstraints(imagingHeader, gbc);
+        add(imagingHeader);
 
         Label labelframe = new Label("Number of frames");
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         gbc.gridwidth = 1;
-        gbc.insets = externalPadding;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(labelframe, gbc);
         add(labelframe);
 
         numFramesText = new TextField("300", 5);
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.insets = externalPadding;
         gbl.setConstraints(numFramesText, gbc);
         add(numFramesText);
 
-        Label labeldir = new Label("Save at");
-        gbc.gridx = 0;
-        gbc.gridy = 4;
+        Label fpsLabel = new Label("Frames per second");
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbl.setConstraints(fpsLabel, gbc);
+        add(fpsLabel);
+
+        framesPerSecondText = new TextField("10", 5);
+        gbc.gridx = 3;
+        gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.insets = externalPadding;
+        gbl.setConstraints(framesPerSecondText, gbc);
+        framesPerSecondText.setEnabled(false);
+        add(framesPerSecondText);
+
+
+        Label labeldir = new Label("Save at");
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(labeldir, gbc);
         add(labeldir);
 
-        saveDirectoryText = new TextField("", 40);
+        saveDirectoryText = new TextField("", 30);
         gbc.gridx = 1;
-        gbc.gridy = 4;
-        gbc.gridwidth = 5;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
         gbc.insets = externalPadding;
-        gbc.fill = GridBagConstraints.BOTH;
         gbl.setConstraints(saveDirectoryText, gbc);
         add(saveDirectoryText);
         saveDirectoryText.setEnabled(false);
-        gbc.fill = GridBagConstraints.NONE;// return to default
 
         Button b4 = new Button("Change dir");
-        gbc.gridx = 6;
-        gbc.gridy = 4;
-        gbc.gridwidth = 2;
+        gbc.gridx = 2;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
         gbc.insets = externalPadding;
         gbl.setConstraints(b4, gbc);
         b4.addActionListener(new java.awt.event.ActionListener() {
@@ -221,216 +251,191 @@ class TrackStimGUI extends PlugInFrame {
         });
         add(b4);
 
-        Button b2 = new Button("Go");
-        gbc.gridx = 2;
-        gbc.gridy = 10;
-        gbc.gridwidth = 1;
-        gbc.insets = externalPadding;
-        gbl.setConstraints(b2, gbc);
-        b2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                goBtnActionPerformed(evt);
-            }
-        });
-        add(b2);
-
-        Button b3 = new Button("Stop");
-        gbc.gridx = 5;
-        gbc.gridy = 10;
-        gbc.gridwidth = 1;
-        gbc.insets = externalPadding;
-        gbl.setConstraints(b3, gbc);
-        b3.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                stopBtnActionPerformed(evt);
-            }
-        });
-        add(b3);
-
         // gui for stimulation
         enableStimulator = new Checkbox("Enable stimulator", false);
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
-        gbc.insets = topPadding;
-        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.insets = externalPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(enableStimulator, gbc);
         add(enableStimulator);
 
         Label labelpre = new Label("Pre-stim");
-        gbc.gridx = 1;
-        gbc.gridy = 5;
+        gbc.gridx = 0;
+        gbc.gridy = 6;
         gbc.gridwidth = 1;
-        gbc.insets = topPadding;
-        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(labelpre, gbc);
         add(labelpre);
 
         preStimulationTimeMsText = new TextField(String.valueOf(10000), 6);
         preStimulationTimeMsText.setPreferredSize(new Dimension(50, 30));
-        gbc.gridx = 2;
-        gbc.gridy = 5;
+        gbc.gridx = 1;
+        gbc.gridy = 6;
         gbc.gridwidth = 1;
         gbc.insets = topPadding;
-        gbc.anchor = GridBagConstraints.EAST;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(preStimulationTimeMsText, gbc);
         add(preStimulationTimeMsText);
 
         Label labelstrength = new Label("Strength <= 63");
-        gbc.gridx = 1;
-        gbc.gridy = 6;
+        gbc.gridx = 0;
+        gbc.gridy = 7;
         gbc.gridwidth = 1;
-        gbc.insets = noPadding;
-        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(labelstrength, gbc);
         add(labelstrength);
 
         stimulationStrengthText = new TextField(String.valueOf(63), 6);
         stimulationStrengthText.setPreferredSize(new Dimension(50, 30));
-        gbc.gridx = 2;
-        gbc.gridy = 6;
-        gbc.gridwidth = 1;
-        gbc.insets = noPadding;
-        gbc.anchor = GridBagConstraints.EAST;
-        gbl.setConstraints(stimulationStrengthText, gbc);
-        add(stimulationStrengthText);
-
-        Label labelduration = new Label("Duration");
         gbc.gridx = 1;
         gbc.gridy = 7;
         gbc.gridwidth = 1;
         gbc.insets = noPadding;
-        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbl.setConstraints(stimulationStrengthText, gbc);
+        add(stimulationStrengthText);
+
+        Label labelduration = new Label("Duration");
+        gbc.gridx = 0;
+        gbc.gridy = 8;
+        gbc.gridwidth = 1;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(labelduration, gbc);
         add(labelduration);
 
         stimulationDurationMsText = new TextField(String.valueOf(5000), 6);
         stimulationDurationMsText.setPreferredSize(new Dimension(50, 30));
-        gbc.gridx = 2;
-        gbc.gridy = 7;
+        gbc.gridx = 1;
+        gbc.gridy = 8;
         gbc.gridwidth = 1;
         gbc.insets = noPadding;
-        gbc.anchor = GridBagConstraints.EAST;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(stimulationDurationMsText, gbc);
         add(stimulationDurationMsText);
 
         Label labelcyclelength = new Label("Cycle length");
-        gbc.gridx = 3;
-        gbc.gridy = 5;
+        gbc.gridx = 0;
+        gbc.gridy = 9;
         gbc.gridwidth = 1;
-        gbc.insets = topPadding;
-        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(labelcyclelength, gbc);
         add(labelcyclelength);
 
         stimulationCycledurationMsText = new TextField(String.valueOf(10000), 6);
         stimulationCycledurationMsText.setPreferredSize(new Dimension(50, 30));
-        gbc.gridx = 4;
-        gbc.gridy = 5;
+        gbc.gridx = 1;
+        gbc.gridy = 9;
         gbc.gridwidth = 1;
-        gbc.insets = topPadding;
-        gbc.anchor = GridBagConstraints.EAST;
+        gbc.insets = noPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(stimulationCycledurationMsText, gbc);
         add(stimulationCycledurationMsText);
 
         Label labelcyclenum = new Label("Cycle num");
-        gbc.gridx = 3;
-        gbc.gridy = 6;
+        gbc.gridx = 0;
+        gbc.gridy = 10;
         gbc.gridwidth = 1;
-        gbc.insets = noPadding;
-        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(labelcyclenum, gbc);
         add(labelcyclenum);
 
         numStimulationCyclesText = new TextField(String.valueOf(3), 6);
         numStimulationCyclesText.setPreferredSize(new Dimension(50, 30));
-        gbc.gridx = 4;
-        gbc.gridy = 6;
+        gbc.gridx = 1;
+        gbc.gridy = 10;
         gbc.gridwidth = 1;
         gbc.insets = noPadding;
-        gbc.anchor = GridBagConstraints.EAST;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(numStimulationCyclesText, gbc);
         add(numStimulationCyclesText);
 
         enableRamp = new Checkbox("ramp", false);
-        gbc.gridx = 5;
+        gbc.gridx = 2;
         gbc.gridy = 5;
         gbc.gridwidth = 1;
-        // gbc.gridheight=3;
         gbc.insets = topPadding;
-        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(enableRamp, gbc);
         add(enableRamp);
 
         Label labelbase = new Label("base");
-        gbc.gridx = 6;
-        gbc.gridy = 5;
+        gbc.gridx = 2;
+        gbc.gridy = 6;
         gbc.gridwidth = 1;
-        gbc.insets = topPadding;
-        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(labelbase, gbc);
         add(labelbase);
 
         rampBase = new TextField(String.valueOf(0), 3);
         rampBase.setPreferredSize(new Dimension(30, 30));
-        gbc.gridx = 7;
-        gbc.gridy = 5;
+        gbc.gridx = 3;
+        gbc.gridy = 6;
         gbc.gridwidth = 1;
-        gbc.insets = topPadding;
-        gbc.anchor = GridBagConstraints.EAST;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(rampBase, gbc);
         add(rampBase);
 
         Label labelrampstart = new Label("start");
-        gbc.gridx = 6;
-        gbc.gridy = 6;
+        gbc.gridx = 2;
+        gbc.gridy = 7;
         gbc.gridwidth = 1;
-        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbc.insets = leftLabelPadding;
         gbl.setConstraints(labelrampstart, gbc);
         add(labelrampstart);
 
         rampStart = new TextField(String.valueOf(0), 3);
         rampStart.setPreferredSize(new Dimension(30, 30));
-        gbc.gridx = 7;
-        gbc.gridy = 6;
+        gbc.gridx = 3;
+        gbc.gridy = 7;
         gbc.gridwidth = 1;
-        gbc.insets = noPadding;
-        gbc.anchor = GridBagConstraints.EAST;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(rampStart, gbc);
         add(rampStart);
 
         Label labelrampend = new Label("end");
-        gbc.gridx = 6;
-        gbc.gridy = 7;
+        gbc.gridx = 2;
+        gbc.gridy = 8;
         gbc.gridwidth = 1;
-        gbc.insets = noPadding;
-        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(labelrampend, gbc);
         add(labelrampend);
 
         rampEnd = new TextField(String.valueOf(63), 3);
         rampEnd.setPreferredSize(new Dimension(30, 30));
-        gbc.gridx = 7;
-        gbc.gridy = 7;
+        gbc.gridx = 3;
+        gbc.gridy = 8;
         gbc.gridwidth = 1;
-        gbc.insets = noPadding;
-        gbc.anchor = GridBagConstraints.EAST;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(rampEnd, gbc);
         add(rampEnd);
 
         enableTracking = new Checkbox("Enable auto-tracking", false);
         gbc.gridx = 0;
-        gbc.gridy = 8;
-        gbc.gridwidth = 2;
+        gbc.gridy = 11;
+        gbc.gridwidth = 1;
         gbc.insets = externalPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
         gbl.setConstraints(enableTracking, gbc);
         add(enableTracking);
-        
+
         Label thresholdSliderLabel = new Label("Auto-tracking threshold");
-        gbc.gridx = 3;
-        gbc.gridy = 8;
-        gbc.gridwidth = 2;
-        gbc.insets = externalPadding;
+        gbc.gridx = 0;
+        gbc.gridy = 12;
+        gbc.gridwidth = 1;
+        gbc.insets = leftLabelPadding;
         gbl.setConstraints(thresholdSliderLabel, gbc);
         add(thresholdSliderLabel);
 
@@ -438,7 +443,7 @@ class TrackStimGUI extends PlugInFrame {
         slider.setMajorTickSpacing(50);
         slider.setPaintTicks(true);
         slider.setPaintLabels(true);
-        
+
         Hashtable<Integer, JLabel> sliderTickLabels = new Hashtable<Integer, JLabel>();
 
         sliderTickLabels.put(0, new JLabel("Low"));
@@ -450,12 +455,44 @@ class TrackStimGUI extends PlugInFrame {
                 sliderValueChanged(e);
             }
         });
-        gbc.gridx = 5;
-        gbc.gridy = 8;
-        gbc.gridwidth = 5;
-        gbc.insets = externalPadding;
+        gbc.gridx = 1;
+        gbc.gridy = 12;
+        gbc.gridwidth = 1;
+        gbc.insets = leftLabelPadding;
         gbl.setConstraints(slider, gbc);
         add(slider);
+
+        Button b2 = new Button("Go");
+        gbc.gridx = 0;
+        gbc.gridy = 13;
+        gbc.gridwidth = 1;
+        gbc.ipadx = 10;
+        gbc.ipady = 10;
+        gbc.insets = externalPadding;
+        gbc.anchor = GridBagConstraints.LINE_END;
+        gbl.setConstraints(b2, gbc);
+        b2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                goBtnActionPerformed(evt);
+            }
+        });
+        add(b2);
+
+        Button b3 = new Button("Stop");
+        gbc.gridx = 1;
+        gbc.gridy = 13;
+        gbc.gridwidth = 1;
+        gbc.ipadx = 10;
+        gbc.ipady = 10;
+        gbc.insets = externalPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbl.setConstraints(b3, gbc);
+        b3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                stopBtnActionPerformed(evt);
+            }
+        });
+        add(b3);
 
 
                     // LEGACY VARIABLES
@@ -644,6 +681,7 @@ class TrackStimGUI extends PlugInFrame {
                     add(useBrightFieldImaging);
 
         pack();
+        setResizable(false);
     }
 
 }
