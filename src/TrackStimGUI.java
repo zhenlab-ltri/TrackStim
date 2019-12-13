@@ -114,7 +114,7 @@ class TrackStimGUI extends PlugInFrame {
         prefs.put("saveDirectory", saveDirectoryText.getText());
         prefs.put("numFrames", numFramesText.getText());
         prefs.put("sliderValue", String.valueOf(slider.getValue()));
-        prefs.put("framesPerSecond", String.valueOf(framesPerSecond.getText()));
+        prefs.put("framesPerSecond", String.valueOf(framesPerSecondText.getText()));
         prefs.put("enableTracking", String.valueOf(enableTracking.getState()));
         prefs.put("enableStimulator", String.valueOf(enableStimulator.getState()));
         prefs.put("enableRamp", String.valueOf(enableRamp.getState()));
