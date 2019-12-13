@@ -113,7 +113,6 @@ class Imager {
 
         ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
         ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
-        fps = 10; // fix fps at 10 for now
 
         long frameCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / fps); // take a pic every 100ms
 
