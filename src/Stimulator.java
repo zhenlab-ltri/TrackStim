@@ -28,41 +28,30 @@ class StimulationTask implements Runnable {
     }
 
     public static void turnOnLEDLight(CMMCore core, String port){
-        int signalData = 0 << 7 | ON_SIGNAL;
-        CharVector signalDataVec = new CharVector();
-        signalDataVec.add((char) signalData);
+        sendSignal(core, port, 0, ON_SIGNAL);
 
-        try {
-            core.writeToSerialPort(port, signalDataVec);
-        } catch (java.lang.Exception e) {
-            IJ.log(e.getMessage());
-        }
     }
 
     public static void turnOffLEDLight(CMMCore core, String port){
-        int signalData = 0 << 7 | OFF_SIGNAL;
+        sendSignal(core, port, 0, OFF_SIGNAL);
+    }
+
+    public static void sendSignal(CMMCore core_, String port_, int channel_, int signal_){
+        int signalData = channel_ << 7 | signal_;
         CharVector signalDataVec = new CharVector();
         signalDataVec.add((char) signalData);
 
         try {
-            core.writeToSerialPort(port, signalDataVec);
+            core_.writeToSerialPort(port_, signalDataVec);
         } catch (java.lang.Exception e) {
+            IJ.log("[ERROR] could not write data " + String.valueOf(signalDataVec) + " to the serial port " + port_);
             IJ.log(e.getMessage());
         }
     }
 
     // send signal data to the stimulator through the serial port
     public void run() {
-        int signalData = channel << 7 | signal;
-        CharVector signalDataVec = new CharVector();
-        signalDataVec.add((char) signalData);
-
-        try {
-            mmc.writeToSerialPort(stimulatorPort, signalDataVec);
-        } catch (java.lang.Exception e) {
-            IJ.log("StimulationTask: error trying to write data " + String.valueOf(signalDataVec) + " to the serial port " + stimulatorPort);
-            IJ.log(e.getMessage());
-        }
+        StimulationTask.sendSignal(mmc, stimulatorPort, channel, signal);
     }
 }
 
@@ -92,7 +81,7 @@ class Stimulator {
         // binary 192 -> 11000000
            // 11 -> set trigger setting
            // 000 -> set lower three bits for tigger cycle
-           // 000 -> set lower three bits for trigger length 
+           // 000 -> set lower three bits for trigger length
         // if we dont set trigger cycle and trigger length to 0,
         // we wont be able to turn the light on and off at the right times
         int initialSignal = (STIMULATION_CHANNEL << 8) | 192;
@@ -111,7 +100,7 @@ class Stimulator {
             IJ.log("[INFO] stimulator is connected at " + stimulatorPort);
 
         } catch (Exception e){
-            IJ.log("error getting stimulator port");
+            IJ.log("[ERROR] could not find stimulator port");
             IJ.log(e.getMessage());
         }
 
@@ -134,16 +123,16 @@ class Stimulator {
     //    signal: signal to send to the light -- usually 63 and it is rare if it is changed
     //    stimDurationMs: duration that the light is on in ms
     //    stimCycleDurationMs: duration that the light is off + duration that the light is on
-    //    numStimCycles: number of cycles 
+    //    numStimCycles: number of cycles
     //    rampBase: strength applied
     //    rampStart: signal at the start of the interval
     //    rampEnd: signal at the end of the interval
     public void scheduleStimulationTasks(
-        boolean useRamp, int preStimTimeMs, int signal, 
-        int stimDurationMs, int stimCycleDurationMs, int numStimCycles, 
+        boolean useRamp, int preStimTimeMs, int signal,
+        int stimDurationMs, int stimCycleDurationMs, int numStimCycles,
         int rampBase, int rampStart, int rampEnd) throws java.lang.Exception {
 
-        ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>(); 
+        ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
         if(!initialized){
             throw new Exception("could not run stimulation.  the stimulator is not initialized");
         }

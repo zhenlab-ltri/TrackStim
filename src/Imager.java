@@ -41,7 +41,8 @@ class ImagingTask implements Runnable {
 			IJ.log("[ERROR] Could not acquire image.  Live mode must be on.  Please press STOP." );
 			return;
 		}
-        ImagePlus liveModeImage = app.getSnapLiveWin().getImagePlus();
+
+		ImagePlus liveModeImage = app.getSnapLiveWin().getImagePlus();
 
 
 		saveSnapshotToTiff(liveModeImage);
@@ -62,8 +63,8 @@ class ImagingTask implements Runnable {
 			IJ.log(e.getMessage());
 		}
 
-		String stagePositionInfo ="xpos=" + String.valueOf(currXPos) + 
-			",ypos=" + String.valueOf(currYPos) + 
+		String stagePositionInfo ="xpos=" + String.valueOf(currXPos) +
+			",ypos=" + String.valueOf(currYPos) +
 			",zpos=" + String.valueOf(currZPos);
 
 		return stagePositionInfo;
@@ -113,11 +114,11 @@ class Imager {
 
 		String imageSaveDirectory = createImageSaveDirectory(rootDirectory);
 
-        ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
-        ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
+    	ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
+   		ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
 
 		long frameCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / fps); // take a pic every 100ms
-		
+
 		imagingTaskStartTime = System.nanoTime();
 
         for(int curFrameIndex = 0; curFrameIndex < numFrames; curFrameIndex++){
@@ -134,16 +135,16 @@ class Imager {
 				controller.onImageAcquisitionDone(computeImageTaskTimeInSeconds());
 			}
 		}, (numFrames - 1) * frameCycleNano, TimeUnit.NANOSECONDS);
-		imagingTasks.add(lastImagingTask);
+			imagingTasks.add(lastImagingTask);
 
-        imagingTasks = futureTasks;
+      imagingTasks = futureTasks;
     }
 
     public void cancelTasks(){
 		for (int i = 0; i < imagingTasks.size(); i++ ){
-            imagingTasks.get(i).cancel(true);
+      imagingTasks.get(i).cancel(true);
 		}
-		
+
 		controller.onImageAcquisitionDone(computeImageTaskTimeInSeconds());
 	}
 
@@ -151,27 +152,27 @@ class Imager {
 		double imagingTaskDoneTime = System.nanoTime();
 		return (imagingTaskDoneTime - imagingTaskStartTime) / 1000000000.0;
 	}
-    
-    private String createImageSaveDirectory(String root){
-        // get count number of directories N so that we can create directory N+1
-        File saveDirectoryFile = new File(root);
-        File[] fileList = saveDirectoryFile.listFiles();
-        int numSubDirectories = 0;
-        for (int i = 0; i < fileList.length; i++) {
-            if (fileList[i].isDirectory()) {
-                numSubDirectories++;
-            }
-        }
 
-        // choose first temp<i> which does not exist yet and create directory with name tempi
-        int i = 1;
-        File newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
-        while (newdir.exists()) {
-            i++;
-            newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
-        }
+	private String createImageSaveDirectory(String root){
+		// get count number of directories N so that we can create directory N+1
+		File saveDirectoryFile = new File(root);
+		File[] fileList = saveDirectoryFile.listFiles();
+		int numSubDirectories = 0;
+		for (int i = 0; i < fileList.length; i++) {
+				if (fileList[i].isDirectory()) {
+						numSubDirectories++;
+				}
+		}
 
-        newdir.mkdir();
-        return newdir.getPath();
-    }
+		// choose first temp<i> which does not exist yet and create directory with name tempi
+		int i = 1;
+		File newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
+		while (newdir.exists()) {
+				i++;
+				newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
+		}
+
+		newdir.mkdir();
+		return newdir.getPath();
+	}
 }

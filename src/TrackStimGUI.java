@@ -153,7 +153,7 @@ class TrackStimGUI extends PlugInFrame {
                 enableTracking.getState()
             );
         } else {
-            IJ.showMessage("directory or frame number is invalid");
+            IJ.showMessage("Some UI values are invalid");
         }
     }
 

@@ -50,9 +50,9 @@ class TrackStimController {
         tracker.initialize();
 
         imager = new Imager(this);
-        
+
         thresholdValue = 1.0;
-        
+
         micromanagerLiveModeProcessor = Executors.newSingleThreadScheduledExecutor();
         binarizedLiveModeImage = new ImagePlus("Binarized images");
         processLiveModeImages();
@@ -76,7 +76,7 @@ class TrackStimController {
     public void startImageAcquisition(
         int numFrames, int framesPerSecond, String rootDirectory, // imaging args
         boolean enableStimulator, int preStim, int stimStrength, int stimDuration, // stimulator args
-        int stimCycleDuration, int numStimCycles, boolean enableRamp, 
+        int stimCycleDuration, int numStimCycles, boolean enableRamp,
         int rampBase, int rampStart, int rampEnd,
         boolean enableTracking // tracking args
     ){
@@ -97,8 +97,8 @@ class TrackStimController {
         if( stimulator.initialized && enableStimulator ){
             try {
                 stimulator.scheduleStimulationTasks(
-                    enableRamp, preStim, stimStrength, 
-                    stimDuration, stimCycleDuration, numStimCycles, 
+                    enableRamp, preStim, stimStrength,
+                    stimDuration, stimCycleDuration, numStimCycles,
                     rampBase, rampStart, rampEnd
                 );
             } catch (java.lang.Exception e){
@@ -126,7 +126,7 @@ class TrackStimController {
         app.enableLiveMode(true);
     }
 
-    // show processed binarized images and show where the center of mass is 
+    // show processed binarized images and where the center of mass is
     // (ideally it will be wormPos, but not always)
     private void processLiveModeImages(){
         micromanagerLiveModeProcessor.scheduleAtFixedRate(new Runnable() {
@@ -138,14 +138,14 @@ class TrackStimController {
 
                     ImagePlus binarized = TrackingTask.binarizeImage(liveModeImage, thresholdValue);
                     double[] wormPosition = TrackingTask.detectWormPosition(binarized);
-                    
+
                     Double wormPosX = new Double(wormPosition[0]);
                     Double wormPosY = new Double(wormPosition[1]);
-                    
+
                     if(!wormPosX.isNaN() && !wormPosY.isNaN()){
                         PointRoi centerOfMassRoi = new PointRoi(wormPosX, wormPosY);
                         binarizedLiveModeImage.setRoi(centerOfMassRoi);
-                    }                   
+                    }
 
                     binarizedLiveModeImage.setProcessor(binarized.getProcessor());
                     binarizedLiveModeImage.show();
