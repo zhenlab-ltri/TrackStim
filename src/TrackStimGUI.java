@@ -58,6 +58,10 @@ class TrackStimGUI extends PlugInFrame {
     TextField rampEnd;
     JSlider slider;
 
+    Button changeDirectoryBtn;
+    Button stopBtn;
+    Button goBtn;
+
     Preferences prefs;
     TrackStimController controller;
 
@@ -278,18 +282,18 @@ class TrackStimGUI extends PlugInFrame {
         add(saveDirectoryText);
         saveDirectoryText.setEnabled(false);
 
-        Button b4 = new Button("Change dir");
+        changeDirectoryBtn = new Button("Change dir");
         gbc.gridx = 2;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
         gbc.insets = externalPadding;
-        gbl.setConstraints(b4, gbc);
-        b4.addActionListener(new java.awt.event.ActionListener() {
+        gbl.setConstraints(changeDirectoryBtn, gbc);
+        changeDirectoryBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 directoryBtnActionPerformed(evt);
             }
         });
-        add(b4);
+        add(changeDirectoryBtn);
 
         // gui for stimulation
         enableStimulator = new Checkbox("Enable stimulator", false);
@@ -502,7 +506,7 @@ class TrackStimGUI extends PlugInFrame {
         gbl.setConstraints(slider, gbc);
         add(slider);
 
-        Button b2 = new Button("Go");
+        goBtn = new Button("Go");
         gbc.gridx = 0;
         gbc.gridy = 13;
         gbc.gridwidth = 1;
@@ -510,15 +514,15 @@ class TrackStimGUI extends PlugInFrame {
         gbc.ipady = 10;
         gbc.insets = externalPadding;
         gbc.anchor = GridBagConstraints.LINE_END;
-        gbl.setConstraints(b2, gbc);
-        b2.addActionListener(new java.awt.event.ActionListener() {
+        gbl.setConstraints(goBtn, gbc);
+        goBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 goBtnActionPerformed(evt);
             }
         });
-        add(b2);
+        add(goBtn);
 
-        Button b3 = new Button("Stop");
+        stopBtn = new Button("Stop");
         gbc.gridx = 1;
         gbc.gridy = 13;
         gbc.gridwidth = 1;
@@ -526,13 +530,13 @@ class TrackStimGUI extends PlugInFrame {
         gbc.ipady = 10;
         gbc.insets = externalPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
-        gbl.setConstraints(b3, gbc);
-        b3.addActionListener(new java.awt.event.ActionListener() {
+        gbl.setConstraints(stopBtn, gbc);
+        stopBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 stopBtnActionPerformed(evt);
             }
         });
-        add(b3);
+        add(stopBtn);
 
 
                     // LEGACY VARIABLES

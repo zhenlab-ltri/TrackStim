@@ -81,6 +81,7 @@ class TrackStimController {
         boolean enableTracking // tracking args
     ){
 
+        taskRunningDisableUI();
         // ensure micro manager live mode is on so we can capture images
         if( !app.isLiveModeOn() ){
             app.enableLiveMode(true);
@@ -124,6 +125,55 @@ class TrackStimController {
         app.enableLiveMode(false);
         IJ.showMessage("Task finished in " + String.valueOf(totalTaskTimeSeconds) + " seconds");
         app.enableLiveMode(true);
+
+        noTaskRunningEnableUI();
+    }
+
+    // block ui interaction when a imaging task is running
+    private void taskRunningDisableUI(){
+        // the user shouldnt be allowed to alter these while task is running
+        gui.numFramesText.setEnabled(false);
+        gui.framesPerSecondText.setEnabled(false);
+        gui.saveDirectoryText.setEnabled(false);
+        gui.changeDirectoryBtn.setEnabled(false);
+        gui.enableStimulator.setEnabled(false);
+        gui.preStimulationTimeMsText.setEnabled(false);
+        gui.stimulationStrengthText.setEnabled(false);
+        gui.stimulationDurationMsText.setEnabled(false);
+        gui.stimulationCycleDurationMsText.setEnabled(false);
+        gui.numStimulationCyclesText.setEnabled(false);
+        gui.enableRamp.setEnabled(false);
+        gui.rampBase.setEnabled(false);
+        gui.rampStart.setEnabled(false);
+        gui.rampEnd.setEnabled(false);
+        gui.enableTracking.setEnabled(false);
+        gui.goBtn.setEnabled(false);
+
+        // the user should be able to stop the task
+        gui.stopBtn.setEnabled(true);
+    }
+
+    private void noTaskRunningEnableUI(){
+        // the user should be allowed to alter these when no task is running
+        gui.numFramesText.setEnabled(true);
+        gui.framesPerSecondText.setEnabled(true);
+        gui.saveDirectoryText.setEnabled(true);
+        gui.changeDirectoryBtn.setEnabled(true);
+        gui.enableStimulator.setEnabled(true);
+        gui.preStimulationTimeMsText.setEnabled(true);
+        gui.stimulationStrengthText.setEnabled(true);
+        gui.stimulationDurationMsText.setEnabled(true);
+        gui.stimulationCycleDurationMsText.setEnabled(true);
+        gui.numStimulationCyclesText.setEnabled(true);
+        gui.enableRamp.setEnabled(true);
+        gui.rampBase.setEnabled(true);
+        gui.rampStart.setEnabled(true);
+        gui.rampEnd.setEnabled(true);
+        gui.enableTracking.setEnabled(true);
+        gui.goBtn.setEnabled(true);
+
+        // the user should not be able to press stop when there is no task running
+        gui.stopBtn.setEnabled(false);
     }
 
     // show processed binarized images and where the center of mass is
