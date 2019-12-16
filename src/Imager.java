@@ -97,6 +97,7 @@ class Imager {
 	TrackStimController controller;
 
 	private ArrayList<ScheduledFuture> imagingTasks;
+	private ScheduledExecutorService imagingScheduler;
 	private long imagingTaskStartTime;
 
 
@@ -114,7 +115,7 @@ class Imager {
 
 		String imageSaveDirectory = createImageSaveDirectory(rootDirectory);
 
-    	ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
+    	imagingScheduler = Executors.newSingleThreadScheduledExecutor();
    		ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
 
 		long frameCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / fps); // take a pic every 100ms
@@ -125,11 +126,11 @@ class Imager {
             long timePtNano = curFrameIndex * frameCycleNano; // e.g. 0 ms, 100ms, 200ms, etc..
             ImagingTask s = new ImagingTask(controller.core, controller.app, timePtNano, imageSaveDirectory, curFrameIndex);
 
-            ScheduledFuture snapShot = ses.schedule(s, timePtNano, TimeUnit.NANOSECONDS);
+            ScheduledFuture snapShot = imagingScheduler.schedule(s, timePtNano, TimeUnit.NANOSECONDS);
             futureTasks.add(snapShot);
 		}
 
-		ScheduledFuture lastImagingTask = ses.schedule(new Runnable() {
+		ScheduledFuture lastImagingTask = imagingScheduler.schedule(new Runnable() {
 			@Override
 			public void run(){
 				controller.onImageAcquisitionDone(computeImageTaskTimeInSeconds());
@@ -142,10 +143,11 @@ class Imager {
 
     public void cancelTasks(){
 		for (int i = 0; i < imagingTasks.size(); i++ ){
-      imagingTasks.get(i).cancel(true);
+			ScheduledFuture task = imagingTasks.get(i);
+      		task.cancel(true);
 		}
 
-		controller.onImageAcquisitionDone(computeImageTaskTimeInSeconds());
+		imagingScheduler.shutdownNow();
 	}
 
 	private double computeImageTaskTimeInSeconds(){

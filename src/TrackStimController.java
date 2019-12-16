@@ -1,6 +1,7 @@
 import java.io.File;
 
 import java.util.ArrayList;
+import java.text.DecimalFormat;
 
 import mmcorej.CMMCore;
 
@@ -120,6 +121,8 @@ class TrackStimController {
         imager.cancelTasks();
         tracker.cancelTasks();
         stimulator.cancelTasks();
+
+        noTaskRunningEnableUI();
     }
 
     public void onImageAcquisitionDone(double totalTaskTimeSeconds){
@@ -129,7 +132,8 @@ class TrackStimController {
         // enable the gui again
 
         app.enableLiveMode(false);
-        IJ.showMessage("Task finished in " + String.valueOf(totalTaskTimeSeconds) + " seconds");
+        String formattedTaskTime = new DecimalFormat("##.##").format(totalTaskTimeSeconds);
+        IJ.showMessage("Task finished in " + formattedTaskTime + " seconds");
         app.enableLiveMode(true);
 
         noTaskRunningEnableUI();
@@ -140,7 +144,6 @@ class TrackStimController {
         // the user shouldnt be allowed to alter these while task is running
         gui.numFramesText.setEnabled(false);
         gui.framesPerSecondText.setEnabled(false);
-        gui.saveDirectoryText.setEnabled(false);
         gui.changeDirectoryBtn.setEnabled(false);
         gui.enableStimulator.setEnabled(false);
         gui.preStimulationTimeMsText.setEnabled(false);
@@ -163,7 +166,6 @@ class TrackStimController {
         // the user should be allowed to alter these when no task is running
         gui.numFramesText.setEnabled(true);
         gui.framesPerSecondText.setEnabled(true);
-        gui.saveDirectoryText.setEnabled(true);
         gui.changeDirectoryBtn.setEnabled(true);
         gui.enableStimulator.setEnabled(true);
         gui.preStimulationTimeMsText.setEnabled(true);
@@ -180,6 +182,7 @@ class TrackStimController {
 
         // the user should not be able to press stop when there is no task running
         gui.stopBtn.setEnabled(false);
+        gui.goBtn.setEnabled(true);
     }
 
     // show processed binarized images and where the center of mass is
