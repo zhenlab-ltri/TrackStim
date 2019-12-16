@@ -56,7 +56,8 @@ class TrackStimGUI extends PlugInFrame {
     TextField rampBase;
     TextField rampStart;
     TextField rampEnd;
-    JSlider slider;
+    JSlider thresholdSlider;
+    JSlider trackerSpeedSlider;
 
     Button changeDirectoryBtn;
     Button stopBtn;
@@ -94,7 +95,8 @@ class TrackStimGUI extends PlugInFrame {
 
     public void setController(TrackStimController c){
         controller = c;
-        c.updateThresholdValue(slider.getValue());
+        c.updateThresholdValue(thresholdSlider.getValue());
+        c.updateTrackerSpeedValue(trackerSpeedSlider.getValue());
     }
 
     private void loadPreferences(){
@@ -117,7 +119,6 @@ class TrackStimGUI extends PlugInFrame {
     private void savePreferences(){
         prefs.put("saveDirectory", saveDirectoryText.getText());
         prefs.put("numFrames", numFramesText.getText());
-        prefs.put("sliderValue", String.valueOf(slider.getValue()));
         prefs.put("framesPerSecond", String.valueOf(framesPerSecondText.getText()));
         prefs.put("enableTracking", String.valueOf(enableTracking.getState()));
         prefs.put("enableStimulator", String.valueOf(enableStimulator.getState()));
@@ -171,9 +172,14 @@ class TrackStimGUI extends PlugInFrame {
         controller.stopImageAcquisition();
     }
 
-    private void sliderValueChanged(ChangeEvent e){
+    private void thresholdSliderValueChanged(ChangeEvent e){
         JSlider s = (JSlider) e.getSource();
         controller.updateThresholdValue(s.getValue());
+    }
+
+    private void trackerSpeedValueChanged(ChangeEvent e){
+        JSlider s = (JSlider) e.getSource();
+        controller.updateTrackerSpeedValue(s.getValue());
     }
 
     private boolean saveDirectoryIsValid(){
@@ -483,32 +489,63 @@ class TrackStimGUI extends PlugInFrame {
         gbl.setConstraints(thresholdSliderLabel, gbc);
         add(thresholdSliderLabel);
 
-        slider = new JSlider(0, 200, 100);
-        slider.setMajorTickSpacing(50);
-        slider.setPaintTicks(true);
-        slider.setPaintLabels(true);
+        thresholdSlider = new JSlider(0, 200, 100);
+        thresholdSlider.setMajorTickSpacing(50);
+        thresholdSlider.setPaintTicks(true);
+        thresholdSlider.setPaintLabels(true);
 
-        Hashtable<Integer, JLabel> sliderTickLabels = new Hashtable<Integer, JLabel>();
+        Hashtable<Integer, JLabel> thresholdSliderTickLabels = new Hashtable<Integer, JLabel>();
 
-        sliderTickLabels.put(0, new JLabel("Low"));
-        sliderTickLabels.put(100, new JLabel("Average"));
-        sliderTickLabels.put(200, new JLabel("High"));
-        slider.setLabelTable(sliderTickLabels);
-        slider.addChangeListener(new ChangeListener(){
+        thresholdSliderTickLabels.put(0, new JLabel("Low"));
+        thresholdSliderTickLabels.put(100, new JLabel("Average"));
+        thresholdSliderTickLabels.put(200, new JLabel("High"));
+        thresholdSlider.setLabelTable(thresholdSliderTickLabels);
+        thresholdSlider.addChangeListener(new ChangeListener(){
             public void stateChanged(ChangeEvent e){
-                sliderValueChanged(e);
+                thresholdSliderValueChanged(e);
             }
         });
         gbc.gridx = 1;
         gbc.gridy = 12;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
-        gbl.setConstraints(slider, gbc);
-        add(slider);
+        gbl.setConstraints(thresholdSlider, gbc);
+        add(thresholdSlider);
+
+        Label trackerSpeedLabel = new Label("Auto-tracking speed");
+        gbc.gridx = 0;
+        gbc.gridy = 13;
+        gbc.gridwidth = 1;
+        gbc.insets = leftLabelPadding;
+        gbl.setConstraints(trackerSpeedLabel, gbc);
+        add(trackerSpeedLabel);
+
+        trackerSpeedSlider = new JSlider(1, 7, 4);
+        trackerSpeedSlider.setMajorTickSpacing(1);
+        trackerSpeedSlider.setPaintTicks(true);
+        trackerSpeedSlider.setPaintLabels(true);
+
+        Hashtable<Integer, JLabel> trackerSpeedSliderLabels = new Hashtable<Integer, JLabel>();
+
+        trackerSpeedSliderLabels.put(1, new JLabel("Slow"));
+        trackerSpeedSliderLabels.put(4, new JLabel("Normal"));
+        trackerSpeedSliderLabels.put(7, new JLabel("Ludicrous"));
+        trackerSpeedSlider.setLabelTable(trackerSpeedSliderLabels);
+        trackerSpeedSlider.addChangeListener(new ChangeListener(){
+            public void stateChanged(ChangeEvent e){
+                trackerSpeedValueChanged(e);
+            }
+        });
+        gbc.gridx = 1;
+        gbc.gridy = 13;
+        gbc.gridwidth = 1;
+        gbc.insets = leftLabelPadding;
+        gbl.setConstraints(trackerSpeedSlider, gbc);
+        add(trackerSpeedSlider);
 
         goBtn = new Button("Go");
         gbc.gridx = 0;
-        gbc.gridy = 13;
+        gbc.gridy = 14;
         gbc.gridwidth = 1;
         gbc.ipadx = 10;
         gbc.ipady = 10;
@@ -524,7 +561,7 @@ class TrackStimGUI extends PlugInFrame {
 
         stopBtn = new Button("Stop");
         gbc.gridx = 1;
-        gbc.gridy = 13;
+        gbc.gridy = 14;
         gbc.gridwidth = 1;
         gbc.ipadx = 10;
         gbc.ipady = 10;

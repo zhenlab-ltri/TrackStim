@@ -35,6 +35,7 @@ class TrackStimController {
 
     // sycned to threshold slider, used for thresholding images
     public volatile double thresholdValue;
+    public volatile int trackerSpeedFactor;
 
     public CMMCore core;
     public ScriptInterface app;
@@ -52,6 +53,7 @@ class TrackStimController {
         imager = new Imager(this);
 
         thresholdValue = 1.0;
+        trackerSpeedFactor = 3;
 
         micromanagerLiveModeProcessor = Executors.newSingleThreadScheduledExecutor();
         binarizedLiveModeImage = new ImagePlus("Binarized images");
@@ -71,6 +73,10 @@ class TrackStimController {
     public void updateThresholdValue(int newThresholdVal){
         double val = (double) newThresholdVal / 100;
         thresholdValue = 1.0 + val;
+    }
+
+    public void updateTrackerSpeedValue(int newSpeedVal){
+        trackerSpeedFactor = newSpeedVal;
     }
 
     public void startImageAcquisition(

@@ -36,11 +36,11 @@ class TrackingTask implements Runnable {
 
     // return an estimate of the worm position in a binarized image
     // uses center of mass to detect position
-    // 
+    //
     public static double[] detectWormPosition(ImagePlus binarizedImage){
         ImageStatistics stats = binarizedImage.getStatistics(Measurements.CENTROID + Measurements.CENTER_OF_MASS);
 
-        double[] position = { stats.xCenterOfMass, stats.yCenterOfMass };    
+        double[] position = { stats.xCenterOfMass, stats.yCenterOfMass };
 
         return position;
     }
@@ -50,7 +50,7 @@ class TrackingTask implements Runnable {
         int width = binarizedImage.getWidth();
         int height = binarizedImage.getHeight();
 
-        // take a oval region at the center of the image, spanning 2/3 width/height of the image 
+        // take a oval region at the center of the image, spanning 2/3 width/height of the image
         double centerRoiX = (width / 2) - (width / 3);
         double centerRoiY = (height / 2) - (height / 3);
         OvalRoi centerRoi = new OvalRoi(centerRoiX, centerRoiY, 2 * width / 3, 2 * height / 3);
@@ -96,12 +96,12 @@ class TrackingTask implements Runnable {
             // legacy calculation to caclulate a velocity for the stage to move to
             // dont know what 0.0018 is
             // 3 is the acceleration factor, keep it constant for now
-            int accelerationFactor = 3;
+            int accelerationFactor = controller.trackerSpeedFactor;
             double xVelocity = Math.round(-xDistFromCenter * accelerationFactor * 0.0018 * 1000.0) / 1000.0;
             double yVelocity = Math.round(yDistFromCenter * accelerationFactor * 0.0018 * 1000.0) / 1000.0;
 
             stageVelocityCommand = "VECTOR X=" + String.valueOf(xVelocity) + " Y=" + String.valueOf(yVelocity);
-        }   
+        }
 
         return stageVelocityCommand;
     }
@@ -189,7 +189,7 @@ class Tracker {
         ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
 
         long imagingTaskTimeNano = TimeUnit.SECONDS.toNanos(numFrames / fps);
-        
+
         // perform tracking every 250ms
         long trackingCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / NUM_TRACKING_TASKS_PER_SECOND);
 
