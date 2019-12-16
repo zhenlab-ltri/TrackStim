@@ -171,8 +171,6 @@ class Tracker {
             IJ.log(e.getMessage());
         }
 
-        IJ.log("[INFO] tracker xy stage port is " + trackerXYStagePort);
-
         return portFound;
     }
 

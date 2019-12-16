@@ -96,9 +96,6 @@ class Stimulator {
             mmc.writeToSerialPort(stimulatorPort, initialSignalData);
             portFound = true;
 
-            IJ.log("[INFO] stimulator port found");
-            IJ.log("[INFO] stimulator is connected at " + stimulatorPort);
-
         } catch (Exception e){
             IJ.log("[ERROR] could not find stimulator port");
             IJ.log(e.getMessage());

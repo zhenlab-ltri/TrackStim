@@ -34,9 +34,6 @@ class ImagingTask implements Runnable {
 	}
 
 	public void run(){
-		double nanoTimePtInSeconds = timePoint / 1000000000.0;
-		IJ.log("[INFO] Acquring image at time " + String.valueOf((double) nanoTimePtInSeconds) + " seconds");
-
 		if( !app.isLiveModeOn() ){
 			IJ.log("[ERROR] Could not acquire image.  Live mode must be on.  Please press STOP." );
 			return;
