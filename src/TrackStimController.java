@@ -143,7 +143,7 @@ class TrackStimController {
     private void taskRunningDisableUI(){
         // the user shouldnt be allowed to alter these while task is running
         gui.numFramesText.setEnabled(false);
-        gui.framesPerSecondText.setEnabled(false);
+        gui.framesPerSecondSelector.setEnabled(false);
         gui.changeDirectoryBtn.setEnabled(false);
         gui.enableStimulator.setEnabled(false);
         gui.preStimulationTimeMsText.setEnabled(false);
@@ -165,7 +165,7 @@ class TrackStimController {
     private void noTaskRunningEnableUI(){
         // the user should be allowed to alter these when no task is running
         gui.numFramesText.setEnabled(true);
-        gui.framesPerSecondText.setEnabled(true);
+        gui.framesPerSecondSelector.setEnabled(true);
         gui.changeDirectoryBtn.setEnabled(true);
         gui.enableStimulator.setEnabled(true);
         gui.preStimulationTimeMsText.setEnabled(true);

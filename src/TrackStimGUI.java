@@ -44,7 +44,7 @@ class TrackStimGUI extends PlugInFrame {
     // variables in use
     TextField numFramesText;
     TextField saveDirectoryText;
-    TextField framesPerSecondText;
+    Choice framesPerSecondSelector;
     Checkbox enableTracking;
     java.awt.Checkbox enableStimulator;
     java.awt.Checkbox enableRamp;
@@ -65,21 +65,6 @@ class TrackStimGUI extends PlugInFrame {
 
     Preferences prefs;
     TrackStimController controller;
-
-    // legacy variables that will eventually be deleted
-    TextField numSkipFramesText;
-    java.awt.Choice cameraExposureDurationSelector;
-    java.awt.Choice cameraCycleDurationSelector;
-    java.awt.Checkbox useClosest;// target definition method.
-    java.awt.Checkbox trackRightSideScreen;// field for tacking source
-    java.awt.Checkbox saveXYPositionsAsTextFile;// if save xy pos data into txt file. not inclued z.
-    java.awt.Choice stageAccelerationSelector;
-    java.awt.Choice thresholdMethodSelector;
-    java.awt.Checkbox useCenterOfMassTracking;// center of mass method
-    java.awt.Checkbox useManualTracking;
-    java.awt.Checkbox useFullFieldImaging;// full size filed.
-    java.awt.Checkbox useBrightFieldImaging;// Bright field tracking only works with full size
-
 
     public TrackStimGUI() {
         super("TrackStim");
@@ -102,6 +87,7 @@ class TrackStimGUI extends PlugInFrame {
     private void loadPreferences(){
         prefs = Preferences.userNodeForPackage(this.getClass());
         numFramesText.setText(prefs.get("numFrames", "3000"));
+        framesPerSecondSelector.select(prefs.get("framesPerSecond", "26"));
         saveDirectoryText.setText(prefs.get("saveDirectory", ""));
         enableTracking.setState(prefs.getBoolean("enableTracking", false));
         enableStimulator.setState(prefs.getBoolean("enableStimulator", false));
@@ -119,7 +105,7 @@ class TrackStimGUI extends PlugInFrame {
     private void savePreferences(){
         prefs.put("saveDirectory", saveDirectoryText.getText());
         prefs.put("numFrames", numFramesText.getText());
-        prefs.put("framesPerSecond", String.valueOf(framesPerSecondText.getText()));
+        prefs.put("framesPerSecond", String.valueOf(framesPerSecondSelector.getSelectedItem()));
         prefs.put("enableTracking", String.valueOf(enableTracking.getState()));
         prefs.put("enableStimulator", String.valueOf(enableStimulator.getState()));
         prefs.put("enableRamp", String.valueOf(enableRamp.getState()));
@@ -141,7 +127,7 @@ class TrackStimGUI extends PlugInFrame {
 
             controller.startImageAcquisition(
                 Integer.parseInt(numFramesText.getText()),
-                Integer.parseInt(framesPerSecondText.getText()),
+                Integer.parseInt(framesPerSecondSelector.getSelectedItem()),
                 saveDirectoryText.getText(),
 
                 enableStimulator.getState(),
@@ -157,8 +143,6 @@ class TrackStimGUI extends PlugInFrame {
 
                 enableTracking.getState()
             );
-        } else {
-            IJ.showMessage("Some UI values are invalid");
         }
     }
 
@@ -189,18 +173,66 @@ class TrackStimGUI extends PlugInFrame {
 
     private boolean textNumbersAreValid(){
         boolean valid = true;
-
+        int frame;
+        int preStim;
+        int stimStrength;
+        int stimDuration;
+        int stimCycleDuration;
+        int numStimCycles;
+        int rBase;
+        int rEnd;
+        int rStart;
         try {
-            Integer.parseInt(numFramesText.getText());
-            Integer.parseInt(framesPerSecondText.getText());
-            Integer.parseInt(preStimulationTimeMsText.getText());
-            Integer.parseInt(stimulationStrengthText.getText());
-            Integer.parseInt(stimulationDurationMsText.getText());
-            Integer.parseInt(stimulationCycleDurationMsText.getText());
-            Integer.parseInt(numStimulationCyclesText.getText());
-            Integer.parseInt(rampBase.getText());
-            Integer.parseInt(rampStart.getText());
-            Integer.parseInt(rampEnd.getText());
+            frame = Integer.parseInt(numFramesText.getText());
+            preStim = Integer.parseInt(preStimulationTimeMsText.getText());
+            stimStrength = Integer.parseInt(stimulationStrengthText.getText());
+            stimDuration = Integer.parseInt(stimulationDurationMsText.getText());
+            stimCycleDuration = Integer.parseInt(stimulationCycleDurationMsText.getText());
+            numStimCycles = Integer.parseInt(numStimulationCyclesText.getText());
+            rBase = Integer.parseInt(rampBase.getText());
+            rStart = Integer.parseInt(rampStart.getText());
+            rEnd = Integer.parseInt(rampEnd.getText());
+
+            if(frame <= 0 || frame > 15600){
+                valid = false;
+                IJ.showMessage("Number of frames must be in the range of [1, 15600]");
+            }
+
+            if(preStim <= 0){
+                valid = false;
+                IJ.showMessage("Pre stimulation must be greater than 0");
+            }
+
+            if(stimStrength > 63 || stimStrength < 0){
+                valid = false;
+                IJ.showMessage("Stimulation strength must be in the range of [1, 63]");
+            }
+
+            if(stimCycleDuration <= 0){
+                valid = false;
+                IJ.showMessage("Stim cycle duration must be greater than 0");
+            }
+
+            if(numStimCycles <= 0){
+                valid = false;
+                IJ.showMessage("Num stim cycles must be greater than 0");
+            }
+
+            if(rBase < 0){
+                valid = false;
+                IJ.showMessage("Ramp base must be non-negative");
+            }
+
+            if(rStart < 0){
+                valid = false;
+                IJ.showMessage("Ramp start must be non-negative");
+            }
+
+            if(rEnd < 0 || rEnd > 63){
+                valid = false;
+                IJ.showMessage("Ramp end must be in the range of [0, 63]");
+            }
+
         } catch (java.lang.Exception e){
             valid = false;
         }
@@ -261,13 +293,17 @@ class TrackStimGUI extends PlugInFrame {
         gbl.setConstraints(fpsLabel, gbc);
         add(fpsLabel);
 
-        framesPerSecondText = new TextField("10", 5);
+        framesPerSecondSelector = new Choice();
+        framesPerSecondSelector.add("1");
+        framesPerSecondSelector.add("10");
+        framesPerSecondSelector.add("20");
+        framesPerSecondSelector.add("26");
         gbc.gridx = 3;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.insets = externalPadding;
-        gbl.setConstraints(framesPerSecondText, gbc);
-        add(framesPerSecondText);
+        gbl.setConstraints(framesPerSecondSelector, gbc);
+        add(framesPerSecondSelector);
 
 
         Label labeldir = new Label("Save at");
@@ -574,192 +610,6 @@ class TrackStimGUI extends PlugInFrame {
             }
         });
         add(stopBtn);
-
-
-                    // LEGACY VARIABLES
-
-                    // test stimulator
-                    b = new Button("Run");
-                    b.setPreferredSize(new Dimension(40, 20));
-                    gbc.gridx = 0;
-                    gbc.gridy = 6;
-                    gbc.gridwidth = 1;
-                    gbc.gridheight = 2;
-                    gbc.anchor = GridBagConstraints.CENTER;
-                    gbl.setConstraints(b, gbc);
-                    b.setVisible(false);
-                    add(b);
-                    gbc.gridheight = 1;
-
-
-                    b = new Button("Ready");
-                    gbc.gridx = 0;
-                    gbc.gridy = 0;
-                    gbc.gridwidth = 2;
-                    gbl.setConstraints(b, gbc);
-                    b.setVisible(false);
-                    add(b);
-
-
-                    Label labelexpduration = new Label("exposure");
-                    gbc.gridx = 6;
-                    gbc.gridy = 0;
-                    gbc.gridwidth = 1;
-                    gbc.gridheight = 1;
-                    labelexpduration.setVisible(false);
-                    add(labelexpduration);
-
-                    cameraExposureDurationSelector = new Choice();
-                    cameraExposureDurationSelector.setPreferredSize(new Dimension(80, 20));
-                    gbc.gridx = 7;
-                    gbc.gridy = 0;
-                    gbc.gridwidth = 1;
-                    cameraExposureDurationSelector.add("0");
-                    cameraExposureDurationSelector.add("1");
-                    cameraExposureDurationSelector.add("10");
-                    cameraExposureDurationSelector.add("50");
-                    cameraExposureDurationSelector.add("100");
-                    cameraExposureDurationSelector.add("200");
-                    cameraExposureDurationSelector.add("500");
-                    cameraExposureDurationSelector.add("1000");
-                    gbl.setConstraints(cameraExposureDurationSelector, gbc);
-                    cameraExposureDurationSelector.setVisible(false);
-                    add(cameraExposureDurationSelector);
-
-                    Label labelcameracyclelength = new Label("cycle len.");
-                    gbc.gridx = 6;
-                    gbc.gridy = 1;
-                    gbc.gridwidth = 1;
-                    gbl.setConstraints(labelcameracyclelength, gbc);
-                    labelcameracyclelength.setVisible(false);
-                    add(labelcameracyclelength);
-
-                    cameraCycleDurationSelector = new Choice();
-                    cameraCycleDurationSelector.setPreferredSize(new Dimension(80, 20));
-                    gbc.gridx = 7;
-                    gbc.gridy = 1;
-                    gbc.gridwidth = 1;
-                    cameraCycleDurationSelector.add("0");
-                    cameraCycleDurationSelector.add("50");
-                    cameraCycleDurationSelector.add("100");
-                    cameraCycleDurationSelector.add("200");
-                    cameraCycleDurationSelector.add("500");
-                    cameraCycleDurationSelector.add("1000");
-                    cameraCycleDurationSelector.add("2000");
-                    gbl.setConstraints(cameraCycleDurationSelector, gbc);
-                    cameraCycleDurationSelector.setVisible(false);
-                    add(cameraCycleDurationSelector);
-
-                    useClosest = new Checkbox("Just closest", true);
-                    gbc.gridx = 2;
-                    gbc.gridy = 2;
-                    gbc.gridwidth = 1;
-                    gbl.setConstraints(useClosest, gbc);
-                    useClosest.setVisible(false);
-                    add(useClosest);
-
-                    stageAccelerationSelector = new Choice();
-                    gbc.gridx = 3;
-                    gbc.gridy = 2;
-                    gbc.gridwidth = 1;
-                    stageAccelerationSelector.add("1x");
-                    stageAccelerationSelector.add("2x");
-                    stageAccelerationSelector.add("4x");
-                    stageAccelerationSelector.add("5x");
-                    stageAccelerationSelector.add("6x");
-                    gbl.setConstraints(stageAccelerationSelector, gbc);
-                    stageAccelerationSelector.setVisible(false);
-                    add(stageAccelerationSelector);
-
-                    thresholdMethodSelector = new Choice();
-                    gbc.gridx = 4;
-                    gbc.gridy = 2;
-                    gbc.gridwidth = 1;
-                    thresholdMethodSelector.add("Yen");// good for normal
-                    thresholdMethodSelector.add("Triangle");// good for on coli
-                    thresholdMethodSelector.add("Otsu");// good for ventral cord?
-
-                    thresholdMethodSelector.add("Default");
-                    thresholdMethodSelector.add("Huang");
-                    thresholdMethodSelector.add("Intermodes");
-                    thresholdMethodSelector.add("IsoData");
-                    thresholdMethodSelector.add("Li");
-                    thresholdMethodSelector.add("MaxEntropy");
-                    thresholdMethodSelector.add("Mean");
-                    thresholdMethodSelector.add("MinError(I)");
-                    thresholdMethodSelector.add("Minimum");
-                    thresholdMethodSelector.add("Moments");
-                    thresholdMethodSelector.add("Percentile");
-                    thresholdMethodSelector.add("RenyiEntropy");
-                    thresholdMethodSelector.add("Shanbhag");
-                    thresholdMethodSelector.setPreferredSize(new Dimension(80, 20));
-                    gbl.setConstraints(thresholdMethodSelector, gbc);
-                    thresholdMethodSelector.setVisible(false);
-                    add(thresholdMethodSelector);
-
-                    trackRightSideScreen = new Checkbox("Use right", false);
-                    gbc.gridx = 5;
-                    gbc.gridy = 2;
-                    gbc.gridwidth = 1;
-                    gbl.setConstraints(trackRightSideScreen, gbc);
-                    trackRightSideScreen.setVisible(false);
-                    add(trackRightSideScreen);
-
-                    saveXYPositionsAsTextFile = new Checkbox("Save xypos file", false);
-                    gbc.gridx = 6;
-                    gbc.gridy = 2;
-                    gbc.gridwidth = 2;
-                    gbl.setConstraints(saveXYPositionsAsTextFile, gbc);
-                    saveXYPositionsAsTextFile.setVisible(false);
-                    add(saveXYPositionsAsTextFile);
-
-                    Label labelskip = new Label("one of ");
-                    gbc.gridx = 0;
-                    gbc.gridy = 3;
-                    gbc.gridwidth = 1;
-                    gbl.setConstraints(labelskip, gbc);
-                    labelskip.setVisible(false);
-                    add(labelskip);
-
-                    numSkipFramesText = new TextField("1", 2);
-                    gbc.gridx = 1;
-                    gbc.gridy = 3;
-                    gbc.gridwidth = 1;
-                    gbl.setConstraints(numSkipFramesText, gbc);
-                    numSkipFramesText.setVisible(false);
-                    add(numSkipFramesText);
-
-                    useCenterOfMassTracking = new Checkbox("Center of Mass", false);
-                    gbc.gridx = 2;
-                    gbc.gridy = 3;
-                    gbc.gridwidth = 1;
-                    gbl.setConstraints(useCenterOfMassTracking, gbc);
-                    useCenterOfMassTracking.setVisible(false);
-                    add(useCenterOfMassTracking);
-
-                    useManualTracking = new Checkbox("manual track", false);
-                    gbc.gridx = 3;
-                    gbc.gridy = 3;
-                    gbc.gridwidth = 2;
-                    gbl.setConstraints(useManualTracking, gbc);
-                    useManualTracking.setVisible(false);
-                    add(useManualTracking);
-
-                    useFullFieldImaging = new Checkbox("Full field", false);
-                    gbc.gridx = 5;
-                    gbc.gridy = 3;
-                    gbc.gridwidth = 1;
-                    gbl.setConstraints(useFullFieldImaging, gbc);
-                    useFullFieldImaging.setVisible(false);
-                    add(useFullFieldImaging);
-
-                    useBrightFieldImaging = new Checkbox("Bright field", false);
-                    gbc.gridx = 6;
-                    gbc.gridy = 3;
-                    gbc.gridwidth = 1;
-                    gbl.setConstraints(useBrightFieldImaging, gbc);
-                    useBrightFieldImaging.setVisible(false);
-                    add(useBrightFieldImaging);
 
         pack();
         setResizable(false);
