@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.micromanager.api.ScriptInterface;
 
-
+// Take an image and save it
 class ImagingTask implements Runnable {
 	CMMCore core;
 	ScriptInterface app;
@@ -45,7 +45,7 @@ class ImagingTask implements Runnable {
 		saveSnapshotToTiff(liveModeImage);
 	}
 
-	// encode stage position as a string
+	// encode XYZ stage position as a string
 	private String getStagePositionInfo(){
 		double currXPos = 0.0;
 		double currYPos = 0.0;
@@ -88,7 +88,7 @@ class ImagingTask implements Runnable {
 	}
 }
 
-
+// Handles the scheduling of imaging tasks 
 class Imager {
 
 	TrackStimController controller;
@@ -115,10 +115,11 @@ class Imager {
     	imagingScheduler = Executors.newSingleThreadScheduledExecutor();
    		ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
 
-		long frameCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / fps); // take a pic every 100ms
+		long frameCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / fps); // take a pic every cycle
 
 		imagingTaskStartTime = System.nanoTime();
 
+		// schedule when each frame should be taken
         for(int curFrameIndex = 0; curFrameIndex < numFrames; curFrameIndex++){
             long timePtNano = curFrameIndex * frameCycleNano; // e.g. 0 ms, 100ms, 200ms, etc..
             ImagingTask s = new ImagingTask(controller.core, controller.app, timePtNano, imageSaveDirectory, curFrameIndex);
@@ -127,6 +128,7 @@ class Imager {
             futureTasks.add(snapShot);
 		}
 
+		// schedule an additional task to let the controller know when the last frame has been taken
 		ScheduledFuture lastImagingTask = imagingScheduler.schedule(new Runnable() {
 			@Override
 			public void run(){
@@ -138,6 +140,7 @@ class Imager {
       imagingTasks = futureTasks;
     }
 
+	// cancel all imaging tasks
     public void cancelTasks(){
 		for (int i = 0; i < imagingTasks.size(); i++ ){
 			ScheduledFuture task = imagingTasks.get(i);
@@ -152,6 +155,8 @@ class Imager {
 		return (imagingTaskDoneTime - imagingTaskStartTime) / 1000000000.0;
 	}
 
+	// create a directory of the form temp<i> where i is the first available
+	// i such that temp<i> can be created
 	private String createImageSaveDirectory(String root){
 		// get count number of directories N so that we can create directory N+1
 		File saveDirectoryFile = new File(root);

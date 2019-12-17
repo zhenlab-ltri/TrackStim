@@ -36,7 +36,6 @@ class TrackingTask implements Runnable {
 
     // return an estimate of the worm position in a binarized image
     // uses center of mass to detect position
-    //
     public static double[] detectWormPosition(ImagePlus binarizedImage){
         ImageStatistics stats = binarizedImage.getStatistics(Measurements.CENTROID + Measurements.CENTER_OF_MASS);
 
@@ -45,12 +44,13 @@ class TrackingTask implements Runnable {
         return position;
     }
 
+    // apply binarization to an image
     public static ImagePlus binarizeImage(ImagePlus imp, double thresholdValue){
         ImagePlus binarizedImage = imp.duplicate();
         int width = binarizedImage.getWidth();
         int height = binarizedImage.getHeight();
 
-        // take a oval region at the center of the image, spanning 2/3 width/height of the image
+        // take a central region spanning 2/3 width/height of the image
         double centerRoiX = (width / 2) - (width / 3);
         double centerRoiY = (height / 2) - (height / 3);
         OvalRoi centerRoi = new OvalRoi(centerRoiX, centerRoiY, 2 * width / 3, 2 * height / 3);
@@ -58,17 +58,18 @@ class TrackingTask implements Runnable {
 
         // invert the image
         ImageProcessor ip = binarizedImage.getProcessor();
-        // ip.setRoi(centerRoi);
         ip.invert();
 
         // apply rank filtering (sort of like gaussian blur)
         // the second arg put in the rank function is the radius
         // the value is sort of arbitrary and just chosen via empirical
         // observation
+        // https://en.wikipedia.org/wiki/Median_filter
         RankFilters rf = new RankFilters();
         rf.rank(ip, 5.0, RankFilters.MEDIAN);
 
         // get the statistics and threshold according to the mean
+        // https://en.wikipedia.org/wiki/Thresholding_(image_processing)
         ImageStatistics stats = binarizedImage.getStatistics();
         ip.threshold( (int) (stats.mean * thresholdValue) );
 
@@ -77,25 +78,25 @@ class TrackingTask implements Runnable {
         return binarizedImage;
     }
 
-    private String translateWormPosToStageCommandVelocity(ImagePlus binarizedImage, double[] wormPosition){
-        Double wormPosX = new Double(wormPosition[0]);
-        Double wormPosY = new Double(wormPosition[1]);
+    private String translateWormPosToStageCommandVelocity(ImagePlus binarizedImage, double wormPosX, double wormPosY){
+        Double wPosX = new Double(wormPosX);
+        Double wPosY = new Double(wormPosY);
 
         int width = binarizedImage.getWidth();
         int height = binarizedImage.getHeight();
 
         String stageVelocityCommand = null;
 
-        // sometimes a worm position is not able to be detected
-        if(!wormPosX.isNaN() && !wormPosY.isNaN()){
-            double xDistFromCenter = (width / 2) - wormPosX;
-            double yDistFromCenter = (height / 2) - wormPosY;
+        // sometimes a worm position is not able to be detected (it will be NaN)
+        if(!wPosX.isNaN() && !wPosY.isNaN()){
+            double xDistFromCenter = (width / 2) - wPosX;
+            double yDistFromCenter = (height / 2) - wPosY;
 
             double distScalar = Math.sqrt((xDistFromCenter * xDistFromCenter) + (yDistFromCenter * yDistFromCenter));
 
-            // legacy calculation to caclulate a velocity for the stage to move to
+            // legacy calculation to caclulate a velocity for the stage
             // dont know what 0.0018 is
-            // 3 is the acceleration factor, keep it constant for now
+            // acceleration factor is injected from the controller, and modified via the UI
             int accelerationFactor = controller.trackerSpeedFactor;
             double xVelocity = Math.round(-xDistFromCenter * accelerationFactor * 0.0018 * 1000.0) / 1000.0;
             double yVelocity = Math.round(yDistFromCenter * accelerationFactor * 0.0018 * 1000.0) / 1000.0;
@@ -106,35 +107,44 @@ class TrackingTask implements Runnable {
         return stageVelocityCommand;
     }
 
+    // accelerate to a specific velocity
+    // the stage will continue indefinitely unless it is stopped by another command
     private void setXYStageVelocity(String velocityCommand){
-        // accelerate to a specific point given by velocityCommand
-        // the stage will continue indefinitely unless it is stopped by another command
         try {
             controller.core.setSerialPortCommand(trackerXYStagePort, velocityCommand, "\r");
             Point2D pos = controller.core.getXYStagePosition();
         } catch (java.lang.Exception e) {
-            IJ.log("startAcq: error setting serial port command " + velocityCommand);
+            IJ.log("[ERROR] could not send " + velocityCommand + " command to the stage port");
             IJ.log(e.getMessage());
         }
     }
 
+    // because the stage will keep going after calls to setXYStageVelocity()
+    // we need to call this when we want the stage to stop
     public static void stopAutoTracking(CMMCore mmc, String trackerPort){
         String stopVelocitycommand = "VECTOR X=0 Y=0";
         try {
             mmc.setSerialPortCommand(trackerPort, stopVelocitycommand, "\r");
         } catch (java.lang.Exception e) {
-            IJ.log("startAcq: error setting serial port command " + stopVelocitycommand);
+            IJ.log("[ERROR] could not send " + stopVelocitycommand + " command to the stage port");
             IJ.log(e.getMessage());
         }
     }
 
     public void run(){
         if (controller.app.isLiveModeOn()){
+            // get the image from micro manager live mode window
             ImagePlus liveModeImage = controller.app.getSnapLiveWin().getImagePlus();
 
+            // binarize the image
             ImagePlus binarized = binarizeImage(liveModeImage, controller.thresholdValue);
+
+            // get an estimate of the worm position from the binarized image
             double[] wormPosition = detectWormPosition(binarized);
-            String stageCommand = translateWormPosToStageCommandVelocity(binarized, wormPosition);
+            
+
+            String stageCommand = translateWormPosToStageCommandVelocity(binarized, wormPosition[0], wormPosition[1]);
+            
             setXYStageVelocity(stageCommand);
         }
     }
@@ -186,18 +196,17 @@ class Tracker {
         ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
         ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
 
+        // compute the total number of seconds the imaging tasks will take
         long imagingTaskTimeNano = TimeUnit.SECONDS.toNanos(numFrames / fps);
 
-        // perform tracking every 250ms
+        // convert num tracking tasks per second to milliseconds
         long trackingCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / NUM_TRACKING_TASKS_PER_SECOND);
 
         int totalTrackingTasks = (int) (imagingTaskTimeNano / trackingCycleNano);
 
-        IJ.log("[INFO] total tracking tasks " + String.valueOf(totalTrackingTasks));
-
-
+        // schedule the tracking tasks at time intervals previously computed
         for(int trackingTaskIndex = 0; trackingTaskIndex < totalTrackingTasks; trackingTaskIndex++){
-            long timePtNano = trackingTaskIndex * trackingCycleNano; // e.g. 0 ms, 250ms, 500ms, etc..
+            long timePtNano = trackingTaskIndex * trackingCycleNano; // time when the tracking task will run
             TrackingTask t = new TrackingTask(controller, trackerXYStagePort);
             ScheduledFuture trackingTask = ses.schedule(t, timePtNano, TimeUnit.NANOSECONDS);
             futureTasks.add(trackingTask);

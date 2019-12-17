@@ -34,7 +34,7 @@ class TrackStimController {
     private Tracker tracker;
     private Imager imager;
 
-    // sycned to threshold slider, used for thresholding images
+    // sycned to ui sliders, used for thresholding images and the tracker velocity
     public volatile double thresholdValue;
     public volatile int trackerSpeedFactor;
 
@@ -45,7 +45,7 @@ class TrackStimController {
         core = core_;
         app = app_;
 
-        stimulator = new Stimulator(core_);
+        stimulator = new Stimulator(this);
         stimulator.initialize();
 
         tracker = new Tracker(this);
@@ -56,6 +56,7 @@ class TrackStimController {
         thresholdValue = 1.0;
         trackerSpeedFactor = 3;
 
+        // start processing live mode images to show the user
         micromanagerLiveModeProcessor = Executors.newSingleThreadScheduledExecutor();
         binarizedLiveModeImage = new ImagePlus("Binarized images");
         processLiveModeImages();
@@ -80,6 +81,9 @@ class TrackStimController {
         trackerSpeedFactor = newSpeedVal;
     }
 
+    // main function called when the user presses the go btn
+    // receives imaging, stimulator, and tracking args
+    // calls the imager, tracker, and stimulator to schedule tasks
     public void startImageAcquisition(
         int numFrames, int framesPerSecond, String rootDirectory, // imaging args
         boolean enableStimulator, int preStim, int stimStrength, int stimDuration, // stimulator args
@@ -125,6 +129,7 @@ class TrackStimController {
         noTaskRunningEnableUI();
     }
 
+    // called once the imaging tasks are finished
     public void onImageAcquisitionDone(double totalTaskTimeSeconds){
         // stop live mode again
         // show how long it took to finish the task

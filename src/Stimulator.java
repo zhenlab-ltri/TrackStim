@@ -36,6 +36,7 @@ class StimulationTask implements Runnable {
         sendSignal(core, port, 0, OFF_SIGNAL);
     }
 
+    // use micromanager to send a signal to the USB connection of the stimulator
     public static void sendSignal(CMMCore core_, String port_, int channel_, int signal_){
         int signalData = channel_ << 7 | signal_;
         CharVector signalDataVec = new CharVector();
@@ -56,7 +57,7 @@ class StimulationTask implements Runnable {
 }
 
 class Stimulator {
-    CMMCore mmc;
+    TrackStimController controller;
     String stimulatorPort;
     boolean initialized = false;
 
@@ -65,8 +66,8 @@ class Stimulator {
     static final int STIMULATION_CHANNEL = 0; // the channel to send ths signals to
     static final String STIMULATOR_DEVICE_LABEL = "FreeSerialPort"; // hardcoded device label found in config trackstim-mm1.4.23mac.cfg
 
-    Stimulator(CMMCore cmmcore){
-        mmc = cmmcore;
+    Stimulator(TrackStimController c){
+        controller = c;
         stimulatorPort = "";
 
         stimulatorTasks = new ArrayList<ScheduledFuture>();
@@ -90,10 +91,10 @@ class Stimulator {
 
 
         try {
-            stimulatorPort = mmc.getProperty(STIMULATOR_DEVICE_LABEL, "Port");
+            stimulatorPort = controller.core.getProperty(STIMULATOR_DEVICE_LABEL, "Port");
 
             // send initial signal to stimulator port
-            mmc.writeToSerialPort(stimulatorPort, initialSignalData);
+            controller.core.writeToSerialPort(stimulatorPort, initialSignalData);
             portFound = true;
 
         } catch (Exception e){
@@ -109,8 +110,8 @@ class Stimulator {
         for (int k = 0; k < stimulatorTasks.size(); k++){
             stimulatorTasks.get(k).cancel(true);
         }
-
-        StimulationTask.turnOffLEDLight(mmc, stimulatorPort);
+        // turn the light off if it is currently in the middle of a stimulation cycle
+        StimulationTask.turnOffLEDLight(controller.core, stimulatorPort);
     }
 
     // schedules signals that will be run in the future at specific time points and intervals based on
@@ -166,7 +167,7 @@ class Stimulator {
                 }
             }
         } catch (java.lang.Exception e) {
-            IJ.log("Stimulator.prepSignals: error sending signals");
+            IJ.log("[ERROR] could not send signals to the stimulator");
             IJ.log(e.getMessage());
         }
 
@@ -176,7 +177,7 @@ class Stimulator {
     // schedule a task to send a (on/off w/ certain intensity) signal to the LED light
     private ScheduledFuture scheduleSignal(int timePointMs, final int signal) {
         ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
-        StimulationTask stimulationTask = new StimulationTask(mmc, stimulatorPort, STIMULATION_CHANNEL, signal);
+        StimulationTask stimulationTask = new StimulationTask(controller.core, stimulatorPort, STIMULATION_CHANNEL, signal);
 
         // convert the timepoint to microseconds
         // legacy decision, not sure why we need to do it like this

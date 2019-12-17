@@ -84,6 +84,7 @@ class TrackStimGUI extends PlugInFrame {
         c.updateTrackerSpeedValue(trackerSpeedSlider.getValue());
     }
 
+    // load the previous values of the ui from the last session (before ther user quit)
     private void loadPreferences(){
         prefs = Preferences.userNodeForPackage(this.getClass());
         numFramesText.setText(prefs.get("numFrames", "3000"));
@@ -102,6 +103,7 @@ class TrackStimGUI extends PlugInFrame {
         rampEnd.setText(prefs.get("rampEnd", "63"));
     }
 
+    // save the current values of the ui to preferences
     private void savePreferences(){
         prefs.put("saveDirectory", saveDirectoryText.getText());
         prefs.put("numFrames", numFramesText.getText());
@@ -156,11 +158,13 @@ class TrackStimGUI extends PlugInFrame {
         controller.stopImageAcquisition();
     }
 
+    // when the user updates the threshold slider, update it in the controller
     private void thresholdSliderValueChanged(ChangeEvent e){
         JSlider s = (JSlider) e.getSource();
         controller.updateThresholdValue(s.getValue());
     }
 
+    // when the user updates the tracker speed slider, update it in the controller
     private void trackerSpeedValueChanged(ChangeEvent e){
         JSlider s = (JSlider) e.getSource();
         controller.updateTrackerSpeedValue(s.getValue());
@@ -168,9 +172,15 @@ class TrackStimGUI extends PlugInFrame {
 
     private boolean saveDirectoryIsValid(){
         File f = new File(saveDirectoryText.getText());
-        return f.exists() && f.isDirectory();
+        boolean isValid = f.exists() && f.isDirectory();
+        if( !isValid ){
+            IJ.showMessage("Save directory does not exist or is a file");
+        }
+
+        return isValid;
     }
 
+    // validate integer ui values
     private boolean textNumbersAreValid(){
         boolean valid = true;
         int frame;
