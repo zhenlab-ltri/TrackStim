@@ -158,6 +158,7 @@ class Tracker {
     boolean initialized = false;
 
     private ArrayList<ScheduledFuture> trackerTasks;
+    private ScheduledExecutorService trackingScheduler;
     private static final int NUM_TRACKING_TASKS_PER_SECOND = 1;
 
     Tracker(TrackStimController controller_){
@@ -189,11 +190,13 @@ class Tracker {
             trackerTasks.get(k).cancel(true);
         }
 
+        trackingScheduler.shutdownNow();
+
         TrackingTask.stopAutoTracking(controller.core, trackerXYStagePort);
     }
 
     public void scheduleTrackingTasks(int numFrames, int fps){
-        ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
+        trackingScheduler = Executors.newSingleThreadScheduledExecutor();
         ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
 
         // compute the total number of seconds the imaging tasks will take
@@ -208,12 +211,12 @@ class Tracker {
         for(int trackingTaskIndex = 0; trackingTaskIndex < totalTrackingTasks; trackingTaskIndex++){
             long timePtNano = trackingTaskIndex * trackingCycleNano; // time when the tracking task will run
             TrackingTask t = new TrackingTask(controller, trackerXYStagePort);
-            ScheduledFuture trackingTask = ses.schedule(t, timePtNano, TimeUnit.NANOSECONDS);
+            ScheduledFuture trackingTask = trackingScheduler.schedule(t, timePtNano, TimeUnit.NANOSECONDS);
             futureTasks.add(trackingTask);
         }
 
         // after all tracking tasks, execute a final task to stop auto tracking
-        ScheduledFuture lastTrackingTask = ses.schedule(new Runnable() {
+        ScheduledFuture lastTrackingTask = trackingScheduler.schedule(new Runnable() {
             @Override
             public void run(){
                 TrackingTask.stopAutoTracking(controller.core, trackerXYStagePort);
