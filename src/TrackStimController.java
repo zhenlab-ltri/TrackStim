@@ -26,7 +26,7 @@ import org.micromanager.api.ScriptInterface;
 class TrackStimController {
     // take live mode images and process them to show the user
     private ScheduledExecutorService micromanagerLiveModeProcessor;
-    private ImagePlus binarizedLiveModeImage;
+    private ImagePlus trackerViewImage;
 
     // main components that generate imaging, stimulation, and tracking tasks
     private TrackStimGUI gui;
@@ -58,7 +58,7 @@ class TrackStimController {
 
         // start processing live mode images to show the user
         micromanagerLiveModeProcessor = Executors.newSingleThreadScheduledExecutor();
-        binarizedLiveModeImage = new ImagePlus("Binarized images");
+        trackerViewImage = new ImagePlus("Tracker View");
         processLiveModeImages();
 
     }
@@ -70,6 +70,8 @@ class TrackStimController {
     public void destroy(){
         stopImageAcquisition();
         micromanagerLiveModeProcessor.shutdownNow();
+        trackerViewImage.changes = false;
+        trackerViewImage.close();
     }
 
     public void updateThresholdValue(int newThresholdVal){
@@ -133,12 +135,20 @@ class TrackStimController {
     public void onImageAcquisitionDone(double totalTaskTimeSeconds){
         // stop live mode again
         // show how long it took to finish the task
+        // flush the live mode circular buffer
         // start live mode again
         // enable the gui again
 
         app.enableLiveMode(false);
         String formattedTaskTime = new DecimalFormat("##.##").format(totalTaskTimeSeconds);
         IJ.showMessage("Task finished in " + formattedTaskTime + " seconds");
+        try {
+            core.clearCircularBuffer();
+
+        } catch(java.lang.Exception e){
+            IJ.log("[ERROR] unable to clear circular buffer");
+            IJ.log(e.getMessage());
+        }
         app.enableLiveMode(true);
 
         noTaskRunningEnableUI();
@@ -208,11 +218,11 @@ class TrackStimController {
 
                     if(!wormPosX.isNaN() && !wormPosY.isNaN()){
                         PointRoi centerOfMassRoi = new PointRoi(wormPosX, wormPosY);
-                        binarizedLiveModeImage.setRoi(centerOfMassRoi);
+                        trackerViewImage.setRoi(centerOfMassRoi);
                     }
 
-                    binarizedLiveModeImage.setProcessor(binarized.getProcessor());
-                    binarizedLiveModeImage.show();
+                    trackerViewImage.setProcessor(binarized.getProcessor());
+                    trackerViewImage.show("Tracker View");
                 }
             }
         }, 0, 100, TimeUnit.MILLISECONDS);

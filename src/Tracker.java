@@ -159,7 +159,7 @@ class Tracker {
 
     private ArrayList<ScheduledFuture> trackerTasks;
     private ScheduledExecutorService trackingScheduler;
-    private static final int NUM_TRACKING_TASKS_PER_SECOND = 1;
+    private static final int DEFAULT_TRACKING_TASKS_PER_SECOND = 10;
 
     Tracker(TrackStimController controller_){
         controller = controller_;
@@ -203,7 +203,7 @@ class Tracker {
         long imagingTaskTimeNano = TimeUnit.SECONDS.toNanos(numFrames / fps);
 
         // convert num tracking tasks per second to milliseconds
-        long trackingCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / NUM_TRACKING_TASKS_PER_SECOND);
+        long trackingCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / DEFAULT_TRACKING_TASKS_PER_SECOND);
 
         int totalTrackingTasks = (int) (imagingTaskTimeNano / trackingCycleNano);
 
