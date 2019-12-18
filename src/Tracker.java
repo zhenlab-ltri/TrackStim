@@ -50,12 +50,6 @@ class TrackingTask implements Runnable {
         int width = binarizedImage.getWidth();
         int height = binarizedImage.getHeight();
 
-        // take a central region spanning 2/3 width/height of the image
-        double centerRoiX = (width / 2) - (width / 3);
-        double centerRoiY = (height / 2) - (height / 3);
-        OvalRoi centerRoi = new OvalRoi(centerRoiX, centerRoiY, 2 * width / 3, 2 * height / 3);
-        binarizedImage.setRoi(centerRoi);
-
         // invert the image
         ImageProcessor ip = binarizedImage.getProcessor();
         ip.invert();
