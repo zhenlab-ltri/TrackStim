@@ -25,12 +25,31 @@ class ImagingTask implements Runnable {
 	String saveDirectory;
 	int frameIndex;
 
-	ImagingTask(CMMCore core_, ScriptInterface app_, long timePoint_, String saveDirectory_, int frameIndex_){
+	int[] frameStimStrengthMap;
+	String[]framePosMap;
+
+	TrackStimController controller;
+
+	ImagingTask(
+		CMMCore core_, 
+		ScriptInterface app_, 
+		long timePoint_, 
+		String saveDirectory_, 
+		int frameIndex_, 
+		int[] frameStimStrengthMap_, 
+		String[] framePosMap_,
+		TrackStimController c
+		){
 		core = core_;
 		timePoint = timePoint_;
 		app = app_;
 		saveDirectory = saveDirectory_;
 		frameIndex = frameIndex_;
+
+		frameStimStrengthMap = frameStimStrengthMap_;
+		framePosMap = framePosMap_;
+
+		controller = c;
 	}
 
 	public void run(){
@@ -40,9 +59,13 @@ class ImagingTask implements Runnable {
 		}
 
 		ImagePlus liveModeImage = app.getSnapLiveWin().getImagePlus();
+		String stagePosInfo = getStagePositionInfo();
+		int stimStrength = controller.getStimulatorStrength();
 
+		frameStimStrengthMap[frameIndex] = stimStrength;
+		framePosMap[frameIndex] = stagePosInfo;
 
-		saveSnapshotToTiff(liveModeImage);
+		saveSnapshotToTiff(liveModeImage, stagePosInfo);
 	}
 
 	// encode XYZ stage position as a string
@@ -67,11 +90,11 @@ class ImagingTask implements Runnable {
 		return stagePositionInfo;
 	}
 
-	private void saveSnapshotToTiff(ImagePlus snapshot){
+	private void saveSnapshotToTiff(ImagePlus snapshot, String stagePosInfo){
 		String filePath = saveDirectory + "/" + String.valueOf(frameIndex) + ".tiff";
 		FileInfo fi = snapshot.getFileInfo();
 
-		fi.info = getStagePositionInfo();
+		fi.info = stagePosInfo;
 
 		try {
 			File toSave = new File(filePath);
@@ -97,6 +120,8 @@ class Imager {
 	private ScheduledExecutorService imagingScheduler;
 	private long imagingTaskStartTime;
 
+	private int[] frameStimulatorStrengthMap;  // map frame index to current stimulator strength
+	private String[] frameStagePositionMap;    // map frame to stage position
 
 	Imager(TrackStimController c){
 
@@ -119,10 +144,22 @@ class Imager {
 
 		imagingTaskStartTime = System.nanoTime();
 
+		frameStimulatorStrengthMap = new int[numFrames];
+		frameStagePositionMap = new String[numFrames];
+
 		// schedule when each frame should be taken
         for(int curFrameIndex = 0; curFrameIndex < numFrames; curFrameIndex++){
             long timePtNano = curFrameIndex * frameCycleNano; // e.g. 0 ms, 100ms, 200ms, etc..
-            ImagingTask s = new ImagingTask(controller.core, controller.app, timePtNano, imageSaveDirectory, curFrameIndex);
+            ImagingTask s = new ImagingTask(
+				controller.core, 
+				controller.app, 
+				timePtNano, 
+				imageSaveDirectory, 
+				curFrameIndex, 
+				frameStimulatorStrengthMap,
+				frameStagePositionMap,
+				controller
+			);
 
             ScheduledFuture snapShot = imagingScheduler.schedule(s, timePtNano, TimeUnit.NANOSECONDS);
             futureTasks.add(snapShot);
@@ -133,6 +170,8 @@ class Imager {
 			@Override
 			public void run(){
 				controller.onImageAcquisitionDone(computeImageTaskTimeInSeconds());
+				saveFrameStimulationStrengthToFile();
+				saveFrameStagePositionToFile();
 			}
 		}, (numFrames - 1) * frameCycleNano, TimeUnit.NANOSECONDS);
 			imagingTasks.add(lastImagingTask);
@@ -148,6 +187,18 @@ class Imager {
 		}
 
 		imagingScheduler.shutdownNow();
+	}
+
+	private void saveFrameStimulationStrengthToFile(){
+		// TODO
+		// save stimulator frame file comma seperated by new lines
+		// to the same directory as the images
+	}
+
+	private void saveFrameStagePositionToFile(){
+		// TODO
+		// save stage pos to file comma seperated by new lines
+		// to the same directory as the images
 	}
 
 	private double computeImageTaskTimeInSeconds(){
