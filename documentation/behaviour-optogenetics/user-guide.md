@@ -42,6 +42,7 @@ To use the roi picker:
 1. click and drag on the micromanager live window to create a roi
 2. you should see the roi updated in the TrackerView
 3. you can adjust the roi by dragging the squares at the bounds
+4. ***Note: Make sure you make the roi near the center of the screen or camera won't capture the worm at center of the image***
 
 ![](roi-picker.png)
 
