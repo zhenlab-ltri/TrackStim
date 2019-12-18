@@ -68,18 +68,7 @@ Take ```TrackStim_.jar``` and copy it to ```/Applications/Micro-Manager1.4/mmplu
 
 TODO
 - more detail
-- guide for static imaging
 - guide for calcium imaging
-- guide for behaviour analysis
-
-### Troubleshooting Common Behaviours
-In it's current state, TrackStim is an unstable program.  Performing multiple acquisitions sequentially may not be possible depending on the settings you use.
-
-If TrackStim does not work when you are are running it or if there are errors when you start it, here are some things you an do:
-1. ensure that the camera and stage are both connected to the mac and turned on
-2. quit Micro-Manager and TrackStim and open them again
-3. if you encounter errors where TrackStim or Micro-Manager won't start, shutdown your computer and restart it.
-4. every time an image acquisition finishes, TrackStim stops live mode.  You will have to restart live mode after every image acquisition by pressing the live mode button in Micro-Manager
 
 ### Development Guide/Documentation
 TODO
