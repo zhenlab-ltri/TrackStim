@@ -1,5 +1,11 @@
 ### Known problems
 
+#### General strategy
+Here is what to do when you notice strange behaviour while running an imaging job and you don't know what to do:
+1. Stop the imaging job
+2. Restart micromanager
+3. Setup TrackStim again
+
 #### Live mode stops
 Sometimes during an image acquisition task, micromanager live mode stops and the same image will be shown continuously.  
 
