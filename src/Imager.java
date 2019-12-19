@@ -63,9 +63,11 @@ class ImagingTask implements Runnable {
 		double[] stagePosInfo = getStagePositionInfo();
 		int stimStrength = controller.getStimulatorStrength();
 
+		// add the stim strength at this current frame to the data to save
 		String frameAndStimStrengthData = String.valueOf(frameIndex) + ", " + String.valueOf(stimStrength) + System.getProperty("line.separator");
 		stimStrengthFrameData[frameIndex] = frameAndStimStrengthData;
 
+		// add the stage position at this current frame to the data to save
 		String stagePosInfoCSV = String.valueOf(stagePosInfo[0]) + ", " + String.valueOf(stagePosInfo[1]) + ", " + String.valueOf(stagePosInfo[2]);
 		String frameStagePosStr = String.valueOf(frameIndex) + ", " + stagePosInfoCSV + System.getProperty("line.separator");
 		stagePosFrameData[frameIndex] = frameStagePosStr;
@@ -125,8 +127,8 @@ class Imager {
 	private ScheduledExecutorService imagingScheduler;
 	private long imagingTaskStartTime;
 
-	String[] stimStrengthFrameData;  // get the current stimulation strength per frame
-	String[] stagePosFrameData;      // get the current stage pos per frame
+	private String[] stimStrengthFrameData;  // each frame will append the current stimulator value here
+	private String[] stagePosFrameData;      // each frame will append its stage position here
 
 	Imager(TrackStimController c){
 
@@ -192,6 +194,7 @@ class Imager {
 		imagingScheduler.shutdownNow();
 	}
 
+	// take all the stim strength data per frame and save it to a file
 	private void saveStimStrengthDataToFile(String directory){
 		PrintWriter p = null;
 		try {
@@ -208,7 +211,8 @@ class Imager {
 			}
 		}
 	}
-
+	
+	// take all the stage pos data per frame and save it to a file
 	private void saveStagePosDataToFile(String directory){
 		PrintWriter p = null;
 		try {

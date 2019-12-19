@@ -18,9 +18,6 @@ class StimulationTask implements Runnable {
     String stimulatorPort;
     Stimulator stimulator;
 
-    public static final int ON_SIGNAL = 63;
-    public static final int OFF_SIGNAL = 0;
-
     StimulationTask(CMMCore cmmcore_, String stimulatorPort_, int channel_, int signal_, Stimulator s) {
         mmc = cmmcore_;
         stimulatorPort = stimulatorPort_;
@@ -62,6 +59,9 @@ class Stimulator {
     static final int STIMULATION_CHANNEL = 0; // the channel to send ths signals to
     static final String STIMULATOR_DEVICE_LABEL = "FreeSerialPort"; // hardcoded device label found in config
 
+    public static final int ON_SIGNAL = 63; // max strength signal to turn the light on
+    public static final int OFF_SIGNAL = 0; // signal to turn the light off
+
     public volatile int currStimulationStrength;
 
     Stimulator(TrackStimController c){
@@ -69,17 +69,17 @@ class Stimulator {
         stimulatorPort = "";
 
         stimulatorTasks = new ArrayList<ScheduledFuture>();
-        currStimulationStrength = StimulationTask.OFF_SIGNAL;
+        currStimulationStrength = OFF_SIGNAL;
     }
 
     public void turnOnLEDLight(CMMCore core, String port){
-        StimulationTask.sendSignal(controller.core, stimulatorPort, 0, StimulationTask.ON_SIGNAL);
-        currStimulationStrength = StimulationTask.ON_SIGNAL;
+        StimulationTask.sendSignal(controller.core, stimulatorPort, 0, ON_SIGNAL);
+        currStimulationStrength = ON_SIGNAL;
     }
 
     public void turnOffLEDLight(CMMCore core, String port){
-        StimulationTask.sendSignal(controller.core, stimulatorPort, 0, StimulationTask.OFF_SIGNAL);
-        currStimulationStrength = StimulationTask.OFF_SIGNAL;
+        StimulationTask.sendSignal(controller.core, stimulatorPort, 0, OFF_SIGNAL);
+        currStimulationStrength = OFF_SIGNAL;
     }
 
     public boolean isLEDLightOn(){
