@@ -26,6 +26,8 @@ class ImagingTask implements Runnable {
 	String saveDirectory;
 	int frameIndex;
 
+	long jobStartTime;
+
 	String[] stimStrengthFrameData;
 	String[] stagePosFrameData;
 
@@ -39,7 +41,8 @@ class ImagingTask implements Runnable {
 		int frameIndex_, 
 		String[] stimStrengthFrameData_, 
 		String[] stagePosFrameData_,
-		TrackStimController c
+		TrackStimController c,
+		long jobStartTime_
 		){
 		core = core_;
 		timePoint = timePoint_;
@@ -51,6 +54,8 @@ class ImagingTask implements Runnable {
 		stagePosFrameData = stagePosFrameData_;
 
 		controller = c;
+
+		jobStartTime = jobStartTime_;
 	}
 
 	public void run(){
@@ -62,14 +67,17 @@ class ImagingTask implements Runnable {
 		ImagePlus liveModeImage = app.getSnapLiveWin().getImagePlus();
 		double[] stagePosInfo = getStagePositionInfo();
 		int stimStrength = controller.getStimulatorStrength();
+		long currTime = System.nanoTime();
 
+		// compute timestamp relative to when the job first started
+		String timeStampStr = String.valueOf(TimeUnit.NANOSECONDS.toMillis(currTime - jobStartTime));
 		// add the stim strength at this current frame to the data to save
-		String frameAndStimStrengthData = String.valueOf(frameIndex) + ", " + String.valueOf(stimStrength) + System.getProperty("line.separator");
+		String frameAndStimStrengthData = String.valueOf(frameIndex) + ", " + timeStampStr + ", " + String.valueOf(stimStrength);
 		stimStrengthFrameData[frameIndex] = frameAndStimStrengthData;
 
 		// add the stage position at this current frame to the data to save
 		String stagePosInfoCSV = String.valueOf(stagePosInfo[0]) + ", " + String.valueOf(stagePosInfo[1]) + ", " + String.valueOf(stagePosInfo[2]);
-		String frameStagePosStr = String.valueOf(frameIndex) + ", " + stagePosInfoCSV + System.getProperty("line.separator");
+		String frameStagePosStr = String.valueOf(frameIndex) + ", " + timeStampStr + ", " + stagePosInfoCSV;
 		stagePosFrameData[frameIndex] = frameStagePosStr;
 
 		saveSnapshotToTiff(liveModeImage, stagePosInfo);
@@ -125,7 +133,7 @@ class Imager {
 
 	private ArrayList<ScheduledFuture> imagingTasks;
 	private ScheduledExecutorService imagingScheduler;
-	private long imagingTaskStartTime;
+	private long imagingStartTime;
 
 	private String[] stimStrengthFrameData;  // each frame will append the current stimulator value here
 	private String[] stagePosFrameData;      // each frame will append its stage position here
@@ -135,7 +143,7 @@ class Imager {
 		controller = c;
 
 		imagingTasks = new ArrayList<ScheduledFuture>();
-		imagingTaskStartTime = 0;
+		imagingStartTime = 0;
 	}
 
     // schedule a number of snapshots at fixed time interval to ensure that images are taken
@@ -150,7 +158,7 @@ class Imager {
 
 		long frameCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / fps); // take a pic every cycle
 
-		imagingTaskStartTime = System.nanoTime();
+		imagingStartTime = System.nanoTime();
 
 		// schedule when each frame should be taken
         for(int curFrameIndex = 0; curFrameIndex < numFrames; curFrameIndex++){
@@ -163,7 +171,8 @@ class Imager {
 				curFrameIndex, 
 				stimStrengthFrameData,
 				stagePosFrameData,
-				controller
+				controller,
+				imagingStartTime
 			);
 
             ScheduledFuture snapShot = imagingScheduler.schedule(s, timePtNano, TimeUnit.NANOSECONDS);
@@ -198,7 +207,10 @@ class Imager {
 	private void saveStimStrengthDataToFile(String directory){
 		PrintWriter p = null;
 		try {
-			p = new PrintWriter(directory + "/" + "stim-strength.txt");
+			p = new PrintWriter(directory + "/" + "stim-strength.csv");
+			
+			String stimStrengthCSVHeader = "frame, timestamp(ms), stimulator signal";
+			p.println(stimStrengthCSVHeader);
 
 			for( int i = 0; i < stimStrengthFrameData.length; i++ ){
 				p.println(stimStrengthFrameData[i]);
@@ -216,7 +228,10 @@ class Imager {
 	private void saveStagePosDataToFile(String directory){
 		PrintWriter p = null;
 		try {
-			p = new PrintWriter(directory + "/" + "stage-pos.txt");
+			p = new PrintWriter(directory + "/" + "stage-pos.csv");
+
+			String stagePosCsvHeader = "frame, timestamp(ms), x, y, z";
+			p.println(stagePosCsvHeader);
 
 			for( int i = 0; i < stagePosFrameData.length; i++ ){
 				p.println(stagePosFrameData[i]);
@@ -232,7 +247,7 @@ class Imager {
 
 	private double computeImageTaskTimeInSeconds(){
 		double imagingTaskDoneTime = System.nanoTime();
-		return (imagingTaskDoneTime - imagingTaskStartTime) / 1000000000.0;
+		return (imagingTaskDoneTime - imagingStartTime) / 1000000000.0;
 	}
 
 	// create a directory of the form temp<i> where i is the first available
