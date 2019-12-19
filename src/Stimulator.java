@@ -46,10 +46,9 @@ class StimulationTask implements Runnable {
 
     // send signal data to the stimulator through the serial port
     public void run() {
+        StimulationTask.sendSignal(mmc, stimulatorPort, channel, signal);
         // update the current stimulation signal so the stimulator can check if the LED light is on
         stimulator.currStimulationStrength = signal;
-
-        StimulationTask.sendSignal(mmc, stimulatorPort, channel, signal);
     }
 }
 

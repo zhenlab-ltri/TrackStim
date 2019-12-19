@@ -6,7 +6,7 @@ import ij.io.TiffEncoder;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import mmcorej.CMMCore;
@@ -26,8 +26,8 @@ class ImagingTask implements Runnable {
 	String saveDirectory;
 	int frameIndex;
 
-	FileWriter stimStrengthFrameData;
-	FileWriter stagePosFrameData;
+	String[] stimStrengthFrameData;
+	String[] stagePosFrameData;
 
 	TrackStimController controller;
 
@@ -37,8 +37,8 @@ class ImagingTask implements Runnable {
 		long timePoint_, 
 		String saveDirectory_, 
 		int frameIndex_, 
-		FileWriter stimStrengthFrameData_, 
-		FileWriter stagePosFrameData_,
+		String[] stimStrengthFrameData_, 
+		String[] stagePosFrameData_,
 		TrackStimController c
 		){
 		core = core_;
@@ -63,8 +63,13 @@ class ImagingTask implements Runnable {
 		double[] stagePosInfo = getStagePositionInfo();
 		int stimStrength = controller.getStimulatorStrength();
 
-		saveStagePosToFile(stagePosInfo);
-		saveStimStrengthToFile(stimStrength);
+		String frameAndStimStrengthData = String.valueOf(frameIndex) + ", " + String.valueOf(stimStrength) + System.getProperty("line.separator");
+		stimStrengthFrameData[frameIndex] = frameAndStimStrengthData;
+
+		String stagePosInfoCSV = String.valueOf(stagePosInfo[0]) + ", " + String.valueOf(stagePosInfo[1]) + ", " + String.valueOf(stagePosInfo[2]);
+		String frameStagePosStr = String.valueOf(frameIndex) + ", " + stagePosInfoCSV + System.getProperty("line.separator");
+		stagePosFrameData[frameIndex] = frameStagePosStr;
+
 		saveSnapshotToTiff(liveModeImage, stagePosInfo);
 	}
 
@@ -83,30 +88,6 @@ class ImagingTask implements Runnable {
 		}
 
 		return new double[]{ currXPos, currYPos, currZPos };
-	}
-
-	private void saveStimStrengthToFile(int currStimStrength){
-		if( stimStrengthFrameData != null ){
-			try {
-				String frameAndStimStrengthData = String.valueOf(frameIndex) + ", " + String.valueOf(currStimStrength) + System.getProperty("line.separator");
-				stimStrengthFrameData.write(frameAndStimStrengthData);
-			} catch( java.io.IOException e){
-				IJ.log("[ERROR] unable to save stim strength to file");
-			}
-		}
-	}
-
-	private void saveStagePosToFile(double[] stagePositionInfo){
-		if( stagePosFrameData != null ){
-			try {
-				// encode stage position in a comma seperated value format
-				String stagePosInfoCSV = String.valueOf(stagePositionInfo[0]) + ", " + String.valueOf(stagePositionInfo[1]) + ", " + String.valueOf(stagePositionInfo[2]);
-				String frameStagePosStr = String.valueOf(frameIndex) + ", " + stagePosInfoCSV + System.getProperty("line.separator");
-				stagePosFrameData.write(frameStagePosStr);
-			} catch( java.io.IOException e){
-				IJ.log("[ERROR] unable to save stage pos to file");
-			}
-		}
 	}
 
 	private void saveSnapshotToTiff(ImagePlus snapshot, double[] stagePosInfo){
@@ -144,8 +125,8 @@ class Imager {
 	private ScheduledExecutorService imagingScheduler;
 	private long imagingTaskStartTime;
 
-	FileWriter stimStrengthFrameData;  // get the current stimulation strength per frame
-	FileWriter stagePosFrameData;      // get the current stage pos per frame
+	String[] stimStrengthFrameData;  // get the current stimulation strength per frame
+	String[] stagePosFrameData;      // get the current stage pos per frame
 
 	Imager(TrackStimController c){
 
@@ -158,16 +139,9 @@ class Imager {
     // schedule a number of snapshots at fixed time interval to ensure that images are taken
     // at the given fps
     public void scheduleImagingTasks(int numFrames, int fps, String rootDirectory){
-		String imageSaveDirectory = createImageSaveDirectory(rootDirectory);
-
-		try {
-			stimStrengthFrameData = new FileWriter(imageSaveDirectory + "/" + "stim-strength.txt", true);
-			stagePosFrameData = new FileWriter(imageSaveDirectory + "/" + "stage-pos.txt", true);	
-		} catch (java.io.IOException e){
-			IJ.log("[ERROR] unable to create stim-strength.txt and stage-pos.txt");
-			stimStrengthFrameData = null;
-			stagePosFrameData = null;
-		}
+		final String imageSaveDirectory = createImageSaveDirectory(rootDirectory);
+		stimStrengthFrameData = new String[numFrames];
+		stagePosFrameData = new String[numFrames];
 
     	imagingScheduler = Executors.newSingleThreadScheduledExecutor();
    		ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
@@ -198,9 +172,11 @@ class Imager {
 		ScheduledFuture lastImagingTask = imagingScheduler.schedule(new Runnable() {
 			@Override
 			public void run(){
+				saveStimStrengthDataToFile(imageSaveDirectory);
+				saveStagePosDataToFile(imageSaveDirectory);
 				controller.onImageAcquisitionDone(computeImageTaskTimeInSeconds());
 			}
-		}, (numFrames - 1) * frameCycleNano, TimeUnit.NANOSECONDS);
+		}, (numFrames + 1) * frameCycleNano, TimeUnit.NANOSECONDS);
 			imagingTasks.add(lastImagingTask);
 
       imagingTasks = futureTasks;
@@ -214,6 +190,40 @@ class Imager {
 		}
 
 		imagingScheduler.shutdownNow();
+	}
+
+	private void saveStimStrengthDataToFile(String directory){
+		PrintWriter p = null;
+		try {
+			p = new PrintWriter(directory + "/" + "stim-strength.txt");
+
+			for( int i = 0; i < stimStrengthFrameData.length; i++ ){
+				p.println(stimStrengthFrameData[i]);
+			}
+		} catch (java.io.IOException e){
+			IJ.log("[ERROR] unable to write stim strength file");
+		} finally {
+			if( p != null ){
+				p.close();
+			}
+		}
+	}
+
+	private void saveStagePosDataToFile(String directory){
+		PrintWriter p = null;
+		try {
+			p = new PrintWriter(directory + "/" + "stage-pos.txt");
+
+			for( int i = 0; i < stagePosFrameData.length; i++ ){
+				p.println(stagePosFrameData[i]);
+			}
+		} catch (java.io.IOException e){
+			IJ.log("[ERROR] unable to write stage pos file");
+		} finally {
+			if( p != null ){
+				p.close();
+			}
+		}
 	}
 
 	private double computeImageTaskTimeInSeconds(){
