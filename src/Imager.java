@@ -217,7 +217,9 @@ class Imager {
 			p.println(stimStrengthCSVHeader);
 
 			for( int i = 0; i < stimStrengthFrameData.length; i++ ){
-				p.println(stimStrengthFrameData[i]);
+				if( stimStrengthFrameData[i] != null ){
+					p.println(stimStrengthFrameData[i]);
+				}
 			}
 		} catch (java.io.IOException e){
 			IJ.log("[ERROR] unable to write stim strength file");
@@ -238,7 +240,9 @@ class Imager {
 			p.println(stagePosCsvHeader);
 
 			for( int i = 0; i < stagePosFrameData.length; i++ ){
-				p.println(stagePosFrameData[i]);
+				if( stagePosFrameData[i] != null ){
+					p.println(stagePosFrameData[i]);
+				}
 			}
 		} catch (java.io.IOException e){
 			IJ.log("[ERROR] unable to write stage pos file");
