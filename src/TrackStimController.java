@@ -74,6 +74,10 @@ class TrackStimController {
         trackerViewImage.close();
     }
 
+    public int getStimulatorStrength(){
+        return stimulator.currStimulationStrength;
+    }
+
     public void updateThresholdValue(int newThresholdVal){
         double val = (double) newThresholdVal / 100;
         thresholdValue = 1.0 + val;

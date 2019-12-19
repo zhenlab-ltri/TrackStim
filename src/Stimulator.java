@@ -16,24 +16,15 @@ class StimulationTask implements Runnable {
     int channel;
     int signal;
     String stimulatorPort;
+    Stimulator stimulator;
 
-    public static final int ON_SIGNAL = 63;
-    public static final int OFF_SIGNAL = 0;
-
-    StimulationTask(CMMCore cmmcore_, String stimulatorPort_, int channel_, int signal_) {
+    StimulationTask(CMMCore cmmcore_, String stimulatorPort_, int channel_, int signal_, Stimulator s) {
         mmc = cmmcore_;
         stimulatorPort = stimulatorPort_;
         channel = channel_;
         signal = signal_;
-    }
-
-    public static void turnOnLEDLight(CMMCore core, String port){
-        sendSignal(core, port, 0, ON_SIGNAL);
-
-    }
-
-    public static void turnOffLEDLight(CMMCore core, String port){
-        sendSignal(core, port, 0, OFF_SIGNAL);
+        
+        stimulator = s;
     }
 
     // use micromanager to send a signal to the USB connection of the stimulator
@@ -53,6 +44,8 @@ class StimulationTask implements Runnable {
     // send signal data to the stimulator through the serial port
     public void run() {
         StimulationTask.sendSignal(mmc, stimulatorPort, channel, signal);
+        // update the current stimulation signal so the stimulator can check if the LED light is on
+        stimulator.currStimulationStrength = signal;
     }
 }
 
@@ -64,13 +57,33 @@ class Stimulator {
     private ArrayList<ScheduledFuture> stimulatorTasks;
 
     static final int STIMULATION_CHANNEL = 0; // the channel to send ths signals to
-    static final String STIMULATOR_DEVICE_LABEL = "FreeSerialPort"; // hardcoded device label found in config trackstim-mm1.4.23mac.cfg
+    static final String STIMULATOR_DEVICE_LABEL = "FreeSerialPort"; // hardcoded device label found in config
+
+    public static final int ON_SIGNAL = 63; // max strength signal to turn the light on
+    public static final int OFF_SIGNAL = 0; // signal to turn the light off
+
+    public volatile int currStimulationStrength;
 
     Stimulator(TrackStimController c){
         controller = c;
         stimulatorPort = "";
 
         stimulatorTasks = new ArrayList<ScheduledFuture>();
+        currStimulationStrength = OFF_SIGNAL;
+    }
+
+    public void turnOnLEDLight(CMMCore core, String port){
+        StimulationTask.sendSignal(controller.core, stimulatorPort, 0, ON_SIGNAL);
+        currStimulationStrength = ON_SIGNAL;
+    }
+
+    public void turnOffLEDLight(CMMCore core, String port){
+        StimulationTask.sendSignal(controller.core, stimulatorPort, 0, OFF_SIGNAL);
+        currStimulationStrength = OFF_SIGNAL;
+    }
+
+    public boolean isLEDLightOn(){
+        return currStimulationStrength > 0;
     }
 
     // find and connect to the LED light stimulator
@@ -111,7 +124,7 @@ class Stimulator {
             stimulatorTasks.get(k).cancel(true);
         }
         // turn the light off if it is currently in the middle of a stimulation cycle
-        StimulationTask.turnOffLEDLight(controller.core, stimulatorPort);
+        turnOffLEDLight(controller.core, stimulatorPort);
     }
 
     // schedules signals that will be run in the future at specific time points and intervals based on
@@ -177,7 +190,7 @@ class Stimulator {
     // schedule a task to send a (on/off w/ certain intensity) signal to the LED light
     private ScheduledFuture scheduleSignal(int timePointMs, final int signal) {
         ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
-        StimulationTask stimulationTask = new StimulationTask(controller.core, stimulatorPort, STIMULATION_CHANNEL, signal);
+        StimulationTask stimulationTask = new StimulationTask(controller.core, stimulatorPort, STIMULATION_CHANNEL, signal, this);
 
         // convert the timepoint to microseconds
         // legacy decision, not sure why we need to do it like this
