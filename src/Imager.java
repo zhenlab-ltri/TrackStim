@@ -137,6 +137,7 @@ class Imager {
 
 	private String[] stimStrengthFrameData;  // each frame will append the current stimulator value here
 	private String[] stagePosFrameData;      // each frame will append its stage position here
+	private String imageSaveDir;
 
 	Imager(TrackStimController c){
 
@@ -159,6 +160,7 @@ class Imager {
 		long frameCycleNano = TimeUnit.MILLISECONDS.toNanos(1000 / fps); // take a pic every cycle
 
 		imagingStartTime = System.nanoTime();
+		imageSaveDir = imageSaveDirectory;
 
 		// schedule when each frame should be taken
         for(int curFrameIndex = 0; curFrameIndex < numFrames; curFrameIndex++){
@@ -201,6 +203,8 @@ class Imager {
 		}
 
 		imagingScheduler.shutdownNow();
+		saveStimStrengthDataToFile(imageSaveDir);
+		saveStagePosDataToFile(imageSaveDir);
 	}
 
 	// take all the stim strength data per frame and save it to a file
