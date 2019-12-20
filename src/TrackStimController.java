@@ -128,6 +128,7 @@ class TrackStimController {
         }
 
         imager.scheduleImagingTasks(numFrames, framesPerSecond, imageSaveDirectory);
+        saveImagingJobArgs(imageSaveDirectory, numFrames, framesPerSecond, enableStimulator, preStim, stimStrength, stimDuration, stimCycleDuration, numStimCycles, enableRamp, rampBase, rampStart, rampEnd, enableTracking);
     }
 
     public void stopImageAcquisition(){
@@ -292,9 +293,12 @@ class TrackStimController {
                 p.println("stimulation cycle duration (ms): " + String.valueOf(stimCycleDur)); 
                 p.println("number of cycles: " + String.valueOf(numCycle)); 
                 p.println("ramp enabled: " + String.valueOf(useRamp)); 
-                p.println("ramp base: " + String.valueOf(rampBase)); 
-                p.println("ramp start: " + String.valueOf(rampStart)); 
-                p.println("ramp end: " + String.valueOf(rampEnd));    
+
+                if(useRamp){
+                    p.println("ramp base: " + String.valueOf(rampBase)); 
+                    p.println("ramp start: " + String.valueOf(rampStart)); 
+                    p.println("ramp end: " + String.valueOf(rampEnd));    
+                }
             }
             p.println("auto-tracking enabled: " + String.valueOf(useTracking)); 
 
