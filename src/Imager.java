@@ -149,8 +149,7 @@ class Imager {
 
     // schedule a number of snapshots at fixed time interval to ensure that images are taken
     // at the given fps
-    public void scheduleImagingTasks(int numFrames, int fps, String rootDirectory){
-		final String imageSaveDirectory = createImageSaveDirectory(rootDirectory);
+    public void scheduleImagingTasks(int numFrames, int fps, final String imageSaveDirectory){
 		stimStrengthFrameData = new String[numFrames];
 		stagePosFrameData = new String[numFrames];
 
@@ -256,30 +255,5 @@ class Imager {
 	private double computeImageTaskTimeInSeconds(){
 		double imagingTaskDoneTime = System.nanoTime();
 		return (imagingTaskDoneTime - imagingStartTime) / 1000000000.0;
-	}
-
-	// create a directory of the form temp<i> where i is the first available
-	// i such that temp<i> can be created
-	private String createImageSaveDirectory(String root){
-		// get count number of directories N so that we can create directory N+1
-		File saveDirectoryFile = new File(root);
-		File[] fileList = saveDirectoryFile.listFiles();
-		int numSubDirectories = 0;
-		for (int i = 0; i < fileList.length; i++) {
-				if (fileList[i].isDirectory()) {
-						numSubDirectories++;
-				}
-		}
-
-		// choose first temp<i> which does not exist yet and create directory with name tempi
-		int i = 1;
-		File newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
-		while (newdir.exists()) {
-				i++;
-				newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
-		}
-
-		newdir.mkdir();
-		return newdir.getPath();
 	}
 }

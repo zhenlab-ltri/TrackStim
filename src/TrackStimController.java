@@ -15,6 +15,8 @@ import ij.gui.PointRoi;
 
 import ij.measure.Measurements;
 
+import java.io.PrintWriter;
+
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
@@ -97,6 +99,7 @@ class TrackStimController {
         int rampBase, int rampStart, int rampEnd,
         boolean enableTracking // tracking args
     ){
+        String imageSaveDirectory = createImageSaveDirectory(rootDirectory);
 
         taskRunningDisableUI();
         // ensure micro manager live mode is on so we can capture images
@@ -124,7 +127,7 @@ class TrackStimController {
             }
         }
 
-        imager.scheduleImagingTasks(numFrames, framesPerSecond, rootDirectory);
+        imager.scheduleImagingTasks(numFrames, framesPerSecond, imageSaveDirectory);
     }
 
     public void stopImageAcquisition(){
@@ -230,5 +233,77 @@ class TrackStimController {
                 }
             }
         }, 0, 100, TimeUnit.MILLISECONDS);
+    }
+    
+    // create a directory of the form temp<i> where i is the first available
+	// i such that temp<i> can be created
+	private String createImageSaveDirectory(String root){
+		// get count number of directories N so that we can create directory N+1
+		File saveDirectoryFile = new File(root);
+		File[] fileList = saveDirectoryFile.listFiles();
+		int numSubDirectories = 0;
+		for (int i = 0; i < fileList.length; i++) {
+				if (fileList[i].isDirectory()) {
+						numSubDirectories++;
+				}
+		}
+
+		// choose first temp<i> which does not exist yet and create directory with name tempi
+		int i = 1;
+		File newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
+		while (newdir.exists()) {
+				i++;
+				newdir = new File(root + "temp" + String.valueOf(numSubDirectories + i));
+		}
+
+		newdir.mkdir();
+		return newdir.getPath();
+    }
+
+	// save all job arguments for later reference
+	private void saveImagingJobArgs(
+        String directory, 
+        int frameArg, 
+        int fpsArg, 
+        boolean useStim, 
+        int preStim, 
+        int stimStr, 
+        int stimDur, 
+        int stimCycleDur, 
+        int numCycle, 
+        boolean useRamp, 
+        int rampBase, 
+        int rampStart, 
+        int rampEnd,
+        boolean useTracking
+    ){
+		PrintWriter p = null;
+		try {
+			p = new PrintWriter(directory + "/" + "job-args.txt");
+
+            p.println("number of frames: " + String.valueOf(frameArg));
+            p.println("frames per second: " + String.valueOf(fpsArg));
+            p.println("stimulator enabled: " + String.valueOf(useStim));
+
+            if(useStim){
+                p.println("pre stimulation (ms): " + String.valueOf(preStim));
+                p.println("stimulation strength: " + String.valueOf(stimStr));
+                p.println("stimulation duration (ms): " + String.valueOf(stimDur)); 
+                p.println("stimulation cycle duration (ms): " + String.valueOf(stimCycleDur)); 
+                p.println("number of cycles: " + String.valueOf(numCycle)); 
+                p.println("ramp enabled: " + String.valueOf(useRamp)); 
+                p.println("ramp base: " + String.valueOf(rampBase)); 
+                p.println("ramp start: " + String.valueOf(rampStart)); 
+                p.println("ramp end: " + String.valueOf(rampEnd));    
+            }
+            p.println("auto-tracking enabled: " + String.valueOf(useTracking)); 
+
+		} catch (java.io.IOException e){
+			IJ.log("[ERROR] unable to write job args to file");
+		} finally {
+			if( p != null ){
+				p.close();
+			}
+        }
     }
 }
