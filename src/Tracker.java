@@ -189,9 +189,13 @@ class Tracker {
         TrackingTask.stopAutoTracking(controller.core, trackerXYStagePort);
     }
 
-    public void scheduleTrackingTasks(int numFrames, int fps){
+    public void scheduleTrackingTasks(int numFrames, int fps) throws java.lang.Exception {
         trackingScheduler = Executors.newSingleThreadScheduledExecutor();
         ArrayList<ScheduledFuture> futureTasks = new ArrayList<ScheduledFuture>();
+
+        if(!initialized){
+            throw new Exception("could not run tracker.  the tracker is not initialized");
+        }
 
         // compute the total number of seconds the imaging tasks will take
         long imagingTaskTimeNano = TimeUnit.SECONDS.toNanos(numFrames / fps);
