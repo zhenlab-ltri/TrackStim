@@ -35,14 +35,14 @@ The worm should be fully white and the background should be fully black.  You wi
 
 
 #### Tracking mechanisms
-There are two mechanisms for tracking the worm provided by TrackStim.  They are the threshold slider, and the roi(region of interest) picker
+There are two mechanisms for tracking the worm provided by TrackStim.  They are the threshold slider, and the roi(region of interest) picker.
 
 ##### Roi picker
 To use the roi picker:
 1. click and drag on the micromanager live window to create a roi
 2. you should see the roi updated in the TrackerView
 3. you can adjust the roi by dragging the squares at the bounds
-4. ***Note: Make sure you make the roi near the center of the screen or camera won't capture the worm at center of the image***
+4. ***Note: Make sure you make the roi near the center of the screen or the camera won't capture the worm at center of the image***
 
 ![](roi-picker.png)
 
@@ -80,7 +80,7 @@ Control how many frames to take, frames per second, and where to save the images
 Control the LED light and turn it on/off programmatically
 - ```Enable stimulator```: must be enabled for the following options to work
 - ```Pre-stim```: duration in ms before the first light cycle starts
-- ```Strength```: LED strength - must be in the range of [1. 63]
+- ```Strength```: LED strength - must be in the range of [1, 63]
 - ```Duration```: duration that the light is on each cycle in ms
 - ```Cycle length```: total cycle length in ms
 - ```Cycle num```: number of cycles
