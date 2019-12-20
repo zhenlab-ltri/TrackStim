@@ -6,6 +6,10 @@ Here is what to do when you notice strange behaviour while running an imaging jo
 2. Restart micromanager
 3. Start TrackStim again
 
+#### Tracking fails when the worm goes to the edge of the plate
+Unfortunately this is an unsolved and difficult problem.  
+The only thing that can be done right now is to stop the job after tracking fails.
+
 #### Live mode stops
 Sometimes during an image acquisition task, micromanager live mode stops and the same image will be shown continuously.  
 
