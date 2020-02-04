@@ -93,7 +93,7 @@ class TrackStimController {
     // receives imaging, stimulator, and tracking args
     // calls the imager, tracker, and stimulator to schedule tasks
     public void startImageAcquisition(
-        int numFrames, int framesPerSecond, String rootDirectory, // imaging args
+        int numFrames, int framesPerSecond, String rootDirectory, String outputFormat, // imaging args
         boolean enableStimulator, int preStim, int stimStrength, int stimDuration, // stimulator args
         int stimCycleDuration, int numStimCycles, boolean enableRamp,
         int rampBase, int rampStart, int rampEnd,
@@ -168,6 +168,7 @@ class TrackStimController {
         gui.numFramesText.setEnabled(false);
         gui.framesPerSecondSelector.setEnabled(false);
         gui.changeDirectoryBtn.setEnabled(false);
+        gui.fileFormatSelector.setEnabled(false);
         gui.enableStimulator.setEnabled(false);
         gui.preStimulationTimeMsText.setEnabled(false);
         gui.stimulationStrengthText.setEnabled(false);
@@ -189,6 +190,7 @@ class TrackStimController {
         // the user should be allowed to alter these when no task is running
         gui.numFramesText.setEnabled(true);
         gui.framesPerSecondSelector.setEnabled(true);
+        gui.fileFormatSelector.setEnabled(true);
         gui.changeDirectoryBtn.setEnabled(true);
         gui.enableStimulator.setEnabled(true);
         gui.preStimulationTimeMsText.setEnabled(true);
@@ -265,7 +267,7 @@ class TrackStimController {
 	private void saveImagingJobArgs(
         String directory, 
         int frameArg, 
-        int fpsArg, 
+        int fpsArg,
         boolean useStim, 
         int preStim, 
         int stimStr, 

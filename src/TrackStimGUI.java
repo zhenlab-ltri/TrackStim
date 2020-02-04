@@ -58,6 +58,7 @@ class TrackStimGUI extends PlugInFrame {
     TextField rampEnd;
     JSlider thresholdSlider;
     JSlider trackerSpeedSlider;
+    Choice fileFormatSelector;
 
     Button changeDirectoryBtn;
     Button stopBtn;
@@ -90,6 +91,7 @@ class TrackStimGUI extends PlugInFrame {
         numFramesText.setText(prefs.get("numFrames", "3000"));
         framesPerSecondSelector.select(prefs.get("framesPerSecond", "26"));
         saveDirectoryText.setText(prefs.get("saveDirectory", ""));
+        fileFormatSelector.select(prefs.get("saveAsFileFormat", "avi"));
         enableTracking.setState(prefs.getBoolean("enableTracking", false));
         enableStimulator.setState(prefs.getBoolean("enableStimulator", false));
         enableRamp.setState(prefs.getBoolean("enableRamp", false));
@@ -108,6 +110,7 @@ class TrackStimGUI extends PlugInFrame {
         prefs.put("saveDirectory", saveDirectoryText.getText());
         prefs.put("numFrames", numFramesText.getText());
         prefs.put("framesPerSecond", String.valueOf(framesPerSecondSelector.getSelectedItem()));
+        prefs.put("saveAsFileFormat", fileFormatSelector.getSelectedItem());
         prefs.put("enableTracking", String.valueOf(enableTracking.getState()));
         prefs.put("enableStimulator", String.valueOf(enableStimulator.getState()));
         prefs.put("enableRamp", String.valueOf(enableRamp.getState()));
@@ -131,6 +134,7 @@ class TrackStimGUI extends PlugInFrame {
                 Integer.parseInt(numFramesText.getText()),
                 Integer.parseInt(framesPerSecondSelector.getSelectedItem()),
                 saveDirectoryText.getText(),
+                fileFormatSelector.getSelectedItem(),
 
                 enableStimulator.getState(),
                 Integer.parseInt(preStimulationTimeMsText.getText()),
@@ -347,10 +351,29 @@ class TrackStimGUI extends PlugInFrame {
         });
         add(changeDirectoryBtn);
 
+        Label fileFormatLabel = new Label("Save as format");
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.gridwidth = 1;
+        gbc.insets = leftLabelPadding;
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbl.setConstraints(fileFormatLabel, gbc);
+        add(fileFormatLabel);
+
+        fileFormatSelector = new Choice();
+        fileFormatSelector.add("tiff");
+        fileFormatSelector.add("avi");
+        gbc.gridx = 1;
+        gbc.gridy = 5;
+        gbc.gridwidth = 1;
+        gbc.insets = externalPadding;
+        gbl.setConstraints(fileFormatSelector, gbc);
+        add(fileFormatSelector);
+
         // gui for stimulation
         enableStimulator = new Checkbox("Enable stimulator", false);
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         gbc.gridwidth = 1;
         gbc.insets = externalPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -359,7 +382,7 @@ class TrackStimGUI extends PlugInFrame {
 
         Label labelpre = new Label("Pre-stim");
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -369,7 +392,7 @@ class TrackStimGUI extends PlugInFrame {
         preStimulationTimeMsText = new TextField(String.valueOf(10000), 6);
         preStimulationTimeMsText.setPreferredSize(new Dimension(50, 30));
         gbc.gridx = 1;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.gridwidth = 1;
         gbc.insets = topPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -378,7 +401,7 @@ class TrackStimGUI extends PlugInFrame {
 
         Label labelstrength = new Label("Strength <= 63");
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -388,7 +411,7 @@ class TrackStimGUI extends PlugInFrame {
         stimulationStrengthText = new TextField(String.valueOf(63), 6);
         stimulationStrengthText.setPreferredSize(new Dimension(50, 30));
         gbc.gridx = 1;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         gbc.gridwidth = 1;
         gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -397,7 +420,7 @@ class TrackStimGUI extends PlugInFrame {
 
         Label labelduration = new Label("Duration");
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -407,7 +430,7 @@ class TrackStimGUI extends PlugInFrame {
         stimulationDurationMsText = new TextField(String.valueOf(5000), 6);
         stimulationDurationMsText.setPreferredSize(new Dimension(50, 30));
         gbc.gridx = 1;
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         gbc.gridwidth = 1;
         gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -416,7 +439,7 @@ class TrackStimGUI extends PlugInFrame {
 
         Label labelcyclelength = new Label("Cycle length");
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 10;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -426,7 +449,7 @@ class TrackStimGUI extends PlugInFrame {
         stimulationCycleDurationMsText = new TextField(String.valueOf(10000), 6);
         stimulationCycleDurationMsText.setPreferredSize(new Dimension(50, 30));
         gbc.gridx = 1;
-        gbc.gridy = 9;
+        gbc.gridy = 10;
         gbc.gridwidth = 1;
         gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -435,7 +458,7 @@ class TrackStimGUI extends PlugInFrame {
 
         Label labelcyclenum = new Label("Cycle num");
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -445,7 +468,7 @@ class TrackStimGUI extends PlugInFrame {
         numStimulationCyclesText = new TextField(String.valueOf(3), 6);
         numStimulationCyclesText.setPreferredSize(new Dimension(50, 30));
         gbc.gridx = 1;
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         gbc.gridwidth = 1;
         gbc.insets = noPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -454,7 +477,7 @@ class TrackStimGUI extends PlugInFrame {
 
         enableRamp = new Checkbox("ramp", false);
         gbc.gridx = 2;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         gbc.gridwidth = 1;
         gbc.insets = topPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -463,7 +486,7 @@ class TrackStimGUI extends PlugInFrame {
 
         Label labelbase = new Label("base");
         gbc.gridx = 2;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -473,7 +496,7 @@ class TrackStimGUI extends PlugInFrame {
         rampBase = new TextField(String.valueOf(0), 3);
         rampBase.setPreferredSize(new Dimension(30, 30));
         gbc.gridx = 3;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -482,7 +505,7 @@ class TrackStimGUI extends PlugInFrame {
 
         Label labelrampstart = new Label("start");
         gbc.gridx = 2;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.LINE_START;
         gbc.insets = leftLabelPadding;
@@ -492,7 +515,7 @@ class TrackStimGUI extends PlugInFrame {
         rampStart = new TextField(String.valueOf(0), 3);
         rampStart.setPreferredSize(new Dimension(30, 30));
         gbc.gridx = 3;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -501,7 +524,7 @@ class TrackStimGUI extends PlugInFrame {
 
         Label labelrampend = new Label("end");
         gbc.gridx = 2;
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -511,7 +534,7 @@ class TrackStimGUI extends PlugInFrame {
         rampEnd = new TextField(String.valueOf(63), 3);
         rampEnd.setPreferredSize(new Dimension(30, 30));
         gbc.gridx = 3;
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -520,7 +543,7 @@ class TrackStimGUI extends PlugInFrame {
 
         enableTracking = new Checkbox("Enable auto-tracking", false);
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 12;
         gbc.gridwidth = 1;
         gbc.insets = externalPadding;
         gbc.anchor = GridBagConstraints.LINE_START;
@@ -529,7 +552,7 @@ class TrackStimGUI extends PlugInFrame {
 
         Label thresholdSliderLabel = new Label("Auto-tracking threshold");
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy = 13;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbl.setConstraints(thresholdSliderLabel, gbc);
@@ -552,7 +575,7 @@ class TrackStimGUI extends PlugInFrame {
             }
         });
         gbc.gridx = 1;
-        gbc.gridy = 12;
+        gbc.gridy = 13;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbl.setConstraints(thresholdSlider, gbc);
@@ -560,7 +583,7 @@ class TrackStimGUI extends PlugInFrame {
 
         Label trackerSpeedLabel = new Label("Auto-tracking speed");
         gbc.gridx = 0;
-        gbc.gridy = 13;
+        gbc.gridy = 14;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbl.setConstraints(trackerSpeedLabel, gbc);
@@ -583,7 +606,7 @@ class TrackStimGUI extends PlugInFrame {
             }
         });
         gbc.gridx = 1;
-        gbc.gridy = 13;
+        gbc.gridy = 14;
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbl.setConstraints(trackerSpeedSlider, gbc);
@@ -591,7 +614,7 @@ class TrackStimGUI extends PlugInFrame {
 
         goBtn = new Button("Go");
         gbc.gridx = 0;
-        gbc.gridy = 14;
+        gbc.gridy = 15;
         gbc.gridwidth = 1;
         gbc.ipadx = 10;
         gbc.ipady = 10;
@@ -607,7 +630,7 @@ class TrackStimGUI extends PlugInFrame {
 
         stopBtn = new Button("Stop");
         gbc.gridx = 1;
-        gbc.gridy = 14;
+        gbc.gridy = 15;
         gbc.gridwidth = 1;
         gbc.ipadx = 10;
         gbc.ipady = 10;
