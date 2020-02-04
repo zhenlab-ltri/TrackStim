@@ -2,11 +2,8 @@ import ij.ImagePlus;
 import ij.IJ;
 
 import ij.io.FileInfo;
-import ij.io.TiffEncoder;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import mmcorej.CMMCore;
@@ -101,7 +98,6 @@ class ImagingTask implements Runnable {
 	}
 
 	private void saveSnapshotToTiff(ImagePlus snapshot, double[] stagePosInfo){
-		String filePath = saveDirectory + "/" + String.valueOf(frameIndex) + ".tiff";
 		FileInfo fi = snapshot.getFileInfo();
 
 		// legacy info that Yanning and Anson scripts depend on
@@ -110,19 +106,7 @@ class ImagingTask implements Runnable {
 		",zpos=" + String.valueOf(stagePosInfo[2]);
 
 		fi.info = stagePositionInfoString;
-
-		try {
-			File toSave = new File(filePath);
-			toSave.createNewFile();
-			FileOutputStream outputStream = new FileOutputStream(toSave);
-			TiffEncoder te = new TiffEncoder(fi);
-
-			te.write(outputStream);
-			outputStream.close();
-		} catch (java.lang.Exception e){
-			IJ.log("[ERROR] unable to write tiff file with stage position info");
-			IJ.log(e.getMessage());
-		}
+		FileSaver.saveTiffFile(saveDirectory, String.valueOf(frameIndex), fi);
 	}
 }
 
@@ -208,48 +192,14 @@ class Imager {
 
 	// take all the stim strength data per frame and save it to a file
 	private void saveStimStrengthDataToFile(String directory){
-		PrintWriter p = null;
-		try {
-			p = new PrintWriter(directory + "/" + "stim-strength.csv");
-			
-			String stimStrengthCSVHeader = "frame, timestamp(ms), stimulator signal";
-			p.println(stimStrengthCSVHeader);
-
-			for( int i = 0; i < stimStrengthFrameData.length; i++ ){
-				if( stimStrengthFrameData[i] != null ){
-					p.println(stimStrengthFrameData[i]);
-				}
-			}
-		} catch (java.io.IOException e){
-			IJ.log("[ERROR] unable to write stim strength file");
-		} finally {
-			if( p != null ){
-				p.close();
-			}
-		}
+		String stimStrengthCSVHeader = "frame, timestamp(ms), stimulator signal";
+		FileSaver.saveCsvFile(directory, "stimulator-strength", stimStrengthCSVHeader, stimStrengthFrameData);
 	}
 	
 	// take all the stage pos data per frame and save it to a file
 	private void saveStagePosDataToFile(String directory){
-		PrintWriter p = null;
-		try {
-			p = new PrintWriter(directory + "/" + "stage-pos.csv");
-
-			String stagePosCsvHeader = "frame, timestamp(ms), x, y, z";
-			p.println(stagePosCsvHeader);
-
-			for( int i = 0; i < stagePosFrameData.length; i++ ){
-				if( stagePosFrameData[i] != null ){
-					p.println(stagePosFrameData[i]);
-				}
-			}
-		} catch (java.io.IOException e){
-			IJ.log("[ERROR] unable to write stage pos file");
-		} finally {
-			if( p != null ){
-				p.close();
-			}
-		}
+		String stagePosCsvHeader = "frame, timestamp(ms), x, y, z";
+		FileSaver.saveCsvFile(directory, "stage-position", stagePosCsvHeader, stagePosFrameData);
 	}
 
 	private double computeImageTaskTimeInSeconds(){
