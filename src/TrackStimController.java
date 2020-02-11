@@ -99,7 +99,7 @@ class TrackStimController {
         int rampBase, int rampStart, int rampEnd,
         boolean enableTracking // tracking args
     ){
-        String imageSaveDirectory = FileSaver.createImageSaveDirectory(rootDirectory);
+        String imageSaveDirectory = FileUtil.createImageSaveDirectory(rootDirectory);
 
         taskRunningDisableUI();
         // ensure micro manager live mode is on so we can capture images
@@ -266,6 +266,6 @@ class TrackStimController {
         }
         content.add("auto-tracking enabled: " + String.valueOf(useTracking));
 
-        FileSaver.saveContentToTextFile(directory, "job-parameters", (String[]) content.toArray());
+        FileUtil.saveContentToTextFile(directory, "job-parameters", (String[]) content.toArray());
     }
 }

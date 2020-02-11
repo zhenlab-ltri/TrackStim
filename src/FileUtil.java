@@ -1,13 +1,15 @@
 import ij.io.FileInfo;
 import ij.io.TiffEncoder;
+import ij.io.FileSaver;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import ij.IJ;
+import ij.ImagePlus;
 
 
-class FileSaver {
+class FileUtil {
 	// create a directory of the form temp<i> where i is the first available
 	// i such that temp<i> can be created
 	static String createImageSaveDirectory(String root){
@@ -31,6 +33,21 @@ class FileSaver {
 
 		newdir.mkdir();
 		return newdir.getPath();
+	}
+
+	static void savePngFile(String directory, String fname, ImagePlus imp) {
+		String filePath = directory + "/" + fname + ".png";
+		
+		FileSaver f = new FileSaver(imp);
+		f.saveAsPng();
+	}
+
+	static void saveJpgFile(String directory, String fname, ImagePlus imp) {
+		String filePath = directory + "/" + fname + ".jpg";
+		
+		FileSaver f = new FileSaver(imp);
+		f.setDefaultJpegQuality(100);
+		f.saveAsPng();
 	}
 	
 	static void saveTiffFile(String directory, String fname, FileInfo fi) {

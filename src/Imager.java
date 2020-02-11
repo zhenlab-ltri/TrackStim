@@ -106,7 +106,7 @@ class ImagingTask implements Runnable {
 		",zpos=" + String.valueOf(stagePosInfo[2]);
 
 		fi.info = stagePositionInfoString;
-		FileSaver.saveTiffFile(saveDirectory, String.valueOf(frameIndex), fi);
+		FileUtil.savePngFile(saveDirectory, String.valueOf(frameIndex), snapshot);
 	}
 }
 
@@ -193,13 +193,13 @@ class Imager {
 	// take all the stim strength data per frame and save it to a file
 	private void saveStimStrengthDataToFile(String directory){
 		String stimStrengthCSVHeader = "frame, timestamp(ms), stimulator signal";
-		FileSaver.saveCsvFile(directory, "stimulator-strength", stimStrengthCSVHeader, stimStrengthFrameData);
+		FileUtil.saveCsvFile(directory, "stimulator-strength", stimStrengthCSVHeader, stimStrengthFrameData);
 	}
 	
 	// take all the stage pos data per frame and save it to a file
 	private void saveStagePosDataToFile(String directory){
 		String stagePosCsvHeader = "frame, timestamp(ms), x, y, z";
-		FileSaver.saveCsvFile(directory, "stage-position", stagePosCsvHeader, stagePosFrameData);
+		FileUtil.saveCsvFile(directory, "stage-position", stagePosCsvHeader, stagePosFrameData);
 	}
 
 	private double computeImageTaskTimeInSeconds(){
