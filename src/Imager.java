@@ -106,7 +106,10 @@ class ImagingTask implements Runnable {
 		",zpos=" + String.valueOf(stagePosInfo[2]);
 
 		fi.info = stagePositionInfoString;
-		FileUtil.savePngFile(saveDirectory, String.valueOf(frameIndex), snapshot);
+		// FileUtil.saveJpegFile(saveDirectory, String.valueOf(frameIndex), snapshot);
+		// FileUtil.savePngFile(saveDirectory, String.valueOf(frameIndex), snapshot);
+		// FileUtil.saveTiffFile(saveDirectory, String.valueOf(frameIndex), snapshot);
+		FileUtil.saveTiffFile(saveDirectory, String.valueOf(frameIndex), fi);
 	}
 }
 

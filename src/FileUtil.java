@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.process.ImageProcessor;
+import ij.process.ByteProcessor;
 
 
 class FileUtil {
@@ -37,17 +39,25 @@ class FileUtil {
 
 	static void savePngFile(String directory, String fname, ImagePlus imp) {
 		String filePath = directory + "/" + fname + ".png";
-		
-		FileSaver f = new FileSaver(imp);
-		f.saveAsPng();
+		ImagePlus copy = imp.duplicate();
+		ImageProcessor ip = copy.getProcessor();
+		ip.resetRoi();
+		ByteProcessor bp = ip.convertToByteProcessor(true); // save as 8-bit
+		copy.setProcessor(bp);            
+		FileSaver f = new FileSaver(copy);
+		f.saveAsPng(filePath);
 	}
 
-	static void saveJpgFile(String directory, String fname, ImagePlus imp) {
+	static void saveJpegFile(String directory, String fname, ImagePlus imp) {
 		String filePath = directory + "/" + fname + ".jpg";
-		
-		FileSaver f = new FileSaver(imp);
-		f.setDefaultJpegQuality(100);
-		f.saveAsPng();
+		ImagePlus copy = imp.duplicate();
+		ImageProcessor ip = copy.getProcessor();
+		ip.resetRoi();
+		ByteProcessor bp = ip.convertToByteProcessor(true); // save as 8-bit
+		copy.setProcessor(bp);            
+		FileSaver f = new FileSaver(copy);
+		f.setJpegQuality(100);
+		f.saveAsJpeg(filePath);
 	}
 	
 	static void saveTiffFile(String directory, String fname, FileInfo fi) {
@@ -67,6 +77,16 @@ class FileUtil {
 		}
 	}
 
+	static void saveTiffFile(String directory, String fname, ImagePlus imp) {
+		String filePath = directory + "/" + fname + ".tiff";
+		ImagePlus copy = imp.duplicate();
+		ImageProcessor ip = copy.getProcessor();
+		ip.resetRoi();
+		ByteProcessor bp = ip.convertToByteProcessor(true); // save as 8-bit
+		copy.setProcessor(bp);            
+		FileSaver f = new FileSaver(copy);
+		f.saveAsTiff(filePath);
+	}
 
     static void saveCsvFile(String directory, String fname, String csvHeader, String[] csvData){
         PrintWriter p = null;
