@@ -56,7 +56,7 @@ class TrackStimController {
         imager = new Imager(this);
 
         thresholdValue = 1.0;
-        trackerSpeedFactor = 3;
+        trackerSpeedFactor = 7;
 
         // start processing live mode images to show the user
         micromanagerLiveModeProcessor = Executors.newSingleThreadScheduledExecutor();
