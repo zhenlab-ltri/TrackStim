@@ -40,6 +40,9 @@ class TrackStimController {
     public volatile double thresholdValue;
     public volatile int trackerSpeedFactor;
 
+    // current job id 
+    public int currentJobId;
+
     public CMMCore core;
     public ScriptInterface app;
 
@@ -57,6 +60,7 @@ class TrackStimController {
 
         thresholdValue = 1.0;
         trackerSpeedFactor = 7;
+        currentJobId = 0;
 
         // start processing live mode images to show the user
         micromanagerLiveModeProcessor = Executors.newSingleThreadScheduledExecutor();
@@ -258,6 +262,7 @@ class TrackStimController {
 		}
 
 		newdir.mkdir();
+        currentJobId = numSubDirectories + i;
 		return newdir.getPath();
     }
 
@@ -280,7 +285,7 @@ class TrackStimController {
     ){
 		PrintWriter p = null;
 		try {
-			p = new PrintWriter(directory + "/" + "job-args.txt");
+			p = new PrintWriter(directory + "/" + "temp" + String.valueOf(currentJobId) + "_" + "job-args.txt");
 
             p.println("number of frames: " + String.valueOf(frameArg));
             p.println("frames per second: " + String.valueOf(fpsArg));

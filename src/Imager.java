@@ -210,7 +210,7 @@ class Imager {
 	private void saveStimStrengthDataToFile(String directory){
 		PrintWriter p = null;
 		try {
-			p = new PrintWriter(directory + "/" + "stim-strength.csv");
+			p = new PrintWriter(directory + "/" + "temp" + String.valueOf(controller.currentJobId) + "_" + "stim-strength.csv");
 			
 			String stimStrengthCSVHeader = "frame, timestamp(ms), stimulator signal";
 			p.println(stimStrengthCSVHeader);
@@ -233,7 +233,7 @@ class Imager {
 	private void saveStagePosDataToFile(String directory){
 		PrintWriter p = null;
 		try {
-			p = new PrintWriter(directory + "/" + "stage-pos.csv");
+			p = new PrintWriter(directory + "/" + "temp" + String.valueOf(controller.currentJobId) + "_" +"stage-pos.csv");
 
 			String stagePosCsvHeader = "frame, timestamp(ms), x, y, z";
 			p.println(stagePosCsvHeader);
