@@ -566,16 +566,16 @@ class TrackStimGUI extends PlugInFrame {
         gbl.setConstraints(trackerSpeedLabel, gbc);
         add(trackerSpeedLabel);
 
-        trackerSpeedSlider = new JSlider(1, 7, 4);
+        trackerSpeedSlider = new JSlider(5, 12, 7);
         trackerSpeedSlider.setMajorTickSpacing(1);
         trackerSpeedSlider.setPaintTicks(true);
         trackerSpeedSlider.setPaintLabels(true);
 
         Hashtable<Integer, JLabel> trackerSpeedSliderLabels = new Hashtable<Integer, JLabel>();
 
-        trackerSpeedSliderLabels.put(1, new JLabel("Slow"));
-        trackerSpeedSliderLabels.put(4, new JLabel("Normal"));
-        trackerSpeedSliderLabels.put(7, new JLabel("Ludicrous"));
+        trackerSpeedSliderLabels.put(5, new JLabel("Slow"));
+        trackerSpeedSliderLabels.put(8, new JLabel("Normal"));
+        trackerSpeedSliderLabels.put(12, new JLabel("Ludicrous"));
         trackerSpeedSlider.setLabelTable(trackerSpeedSliderLabels);
         trackerSpeedSlider.addChangeListener(new ChangeListener(){
             public void stateChanged(ChangeEvent e){
