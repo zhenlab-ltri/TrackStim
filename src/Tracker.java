@@ -96,6 +96,8 @@ class TrackingTask implements Runnable {
             double yVelocity = Math.round(yDistFromCenter * accelerationFactor * 0.0018 * 1000.0) / 1000.0;
 
             stageVelocityCommand = "VECTOR X=" + String.valueOf(xVelocity) + " Y=" + String.valueOf(yVelocity);
+        } else {
+            TrackingTask.stopAutoTracking(controller.core, trackerXYStagePort);
         }
 
         return stageVelocityCommand;
@@ -135,10 +137,10 @@ class TrackingTask implements Runnable {
 
             // get an estimate of the worm position from the binarized image
             double[] wormPosition = detectWormPosition(binarized);
-            
+
 
             String stageCommand = translateWormPosToStageCommandVelocity(binarized, wormPosition[0], wormPosition[1]);
-            
+
             setXYStageVelocity(stageCommand);
         }
     }
