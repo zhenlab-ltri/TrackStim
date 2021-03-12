@@ -97,6 +97,7 @@ class TrackingTask implements Runnable {
 
             stageVelocityCommand = "VECTOR X=" + String.valueOf(xVelocity) + " Y=" + String.valueOf(yVelocity);
         } else {
+            IJ.log("[ERROR] could not find the worm position, releasing automated control of the stage until a position is found");
             TrackingTask.stopAutoTracking(controller.core, trackerXYStagePort);
         }
 
