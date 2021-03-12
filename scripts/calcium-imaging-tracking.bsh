@@ -1,0 +1,34 @@
+
+setAccessibility(true);
+
+
+img = ij.IJ.getImage();
+roi = img.getRoi();
+ip = img.getProcessor();
+ipCropped = ip.crop();
+imgCropped = new ij.ImagePlus("cropped", ipCropped);
+
+
+imgStats = imgCropped.getStatistics(ij.measure.Measurements.MEAN);
+mean = imgStats.mean;
+ipBgSubtracted = imgCropped.getProcessor().duplicate();
+ipBgSubtracted.add(-mean * 1.5);
+rf = new ij.plugin.filter.RankFilters();
+rf.rank(ipBgSubtracted, 0.0, ij.plugin.filter.RankFilters.MEDIAN);
+ipBgSubtracted.threshold(10);
+
+
+
+imgBgSubtracted = new ij.ImagePlus("subtracted", ipBgSubtracted);
+bgSubtractedImgStats = imgBgSubtracted.getStatistics(ij.measure.Measurements.CENTROID + ij.measure.Measurements.CENTER_OF_MASS);
+print(bgSubtractedImgStats.xCenterOfMass);
+print(bgSubtractedImgStats.yCenterOfMass);
+
+centerOfMassPt = new ij.gui.PointRoi(bgSubtractedImgStats.xCenterOfMass, bgSubtractedImgStats.yCenterOfMass);
+
+imgBgSubtracted.setRoi(centerOfMassPt);
+imgBgSubtracted.show();
+//imgCropped.show();
+//print(img);
+//print(img.getDimensions());
+//print(roi);
