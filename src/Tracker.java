@@ -37,7 +37,7 @@ class TrackingTask implements Runnable {
     // return an estimate of the worm position in a processed image
     // uses center of mass to detect position
     public static double[] detectWormPosition(ImagePlus processedImage){
-        ImageStatistics stats = binarizedImage.getStatistics(Measurements.CENTROID + Measurements.CENTER_OF_MASS);
+        ImageStatistics stats = processedImage.getStatistics(Measurements.CENTROID + Measurements.CENTER_OF_MASS);
 
         double[] position = { stats.xCenterOfMass, stats.yCenterOfMass };
 
@@ -48,8 +48,8 @@ class TrackingTask implements Runnable {
     // these usually contain bright spots over dark backgrounds
     public static ImagePlus processCalciumImage(ImagePlus imp){
         ImagePlus processedImage = imp.duplicate();
-        int width = binarizedImage.getWidth();
-        int height = binarizedImage.getHeight();
+        int width = processedImage.getWidth();
+        int height = processedImage.getHeight();
         ImageStatistics stats = processedImage.getStatistics(Measurements.MEAN);
         double mean = stats.mean;
 
@@ -71,12 +71,20 @@ class TrackingTask implements Runnable {
         int width = binarizedImage.getWidth();
         int height = binarizedImage.getHeight();
 
+        // calcium imaging images are split in the middle to show two channels
+        // the user may want to track the left or right channel
+        // determine which channel to track by comparing the worm x position
+        // if worm pos x < half width track the left channel
+        // otherwise track the right channel
+        double centerX = wormPosX <= width / 2 ? width / 3 : width * (2 / 3);
+        double centerY = height / 2;
+
         String stageVelocityCommand = null;
 
         // sometimes a worm position is not able to be detected (it will be NaN)
         if(!wPosX.isNaN() && !wPosY.isNaN()){
-            double xDistFromCenter = (width / 2) - wPosX;
-            double yDistFromCenter = (height / 2) - wPosY;
+            double xDistFromCenter = centerX - wPosX;
+            double yDistFromCenter = centerY - wPosY;
 
             double distScalar = Math.sqrt((xDistFromCenter * xDistFromCenter) + (yDistFromCenter * yDistFromCenter));
 
@@ -126,7 +134,7 @@ class TrackingTask implements Runnable {
             ImagePlus liveModeImage = controller.app.getSnapLiveWin().getImagePlus();
 
             // process the image
-            ImagePlus processedImage = processCalciumImage(liveModeImage, controller.thresholdValue);
+            ImagePlus processedImage = processCalciumImage(liveModeImage);
 
             // get an estimate of the worm position from the processed image
             double[] wormPosition = detectWormPosition(processedImage);
