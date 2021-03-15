@@ -34,9 +34,9 @@ class TrackingTask implements Runnable {
         trackerXYStagePort = port;
     }
 
-    // return an estimate of the worm position in a binarized image
+    // return an estimate of the worm position in a processed image
     // uses center of mass to detect position
-    public static double[] detectWormPosition(ImagePlus binarizedImage){
+    public static double[] detectWormPosition(ImagePlus processedImage){
         ImageStatistics stats = binarizedImage.getStatistics(Measurements.CENTROID + Measurements.CENTER_OF_MASS);
 
         double[] position = { stats.xCenterOfMass, stats.yCenterOfMass };
@@ -44,32 +44,24 @@ class TrackingTask implements Runnable {
         return position;
     }
 
-    // apply binarization to an image
-    public static ImagePlus binarizeImage(ImagePlus imp, double thresholdValue){
-        ImagePlus binarizedImage = imp.duplicate();
+    // process images related to calcium imaging
+    // these usually contain bright spots over dark backgrounds
+    public static ImagePlus processCalciumImage(ImagePlus imp){
+        ImagePlus processedImage = imp.duplicate();
         int width = binarizedImage.getWidth();
         int height = binarizedImage.getHeight();
+        ImageStatistics stats = processedImage.getStatistics(Measurements.MEAN);
+        double mean = stats.mean;
 
-        // invert the image
-        ImageProcessor ip = binarizedImage.getProcessor();
-        ip.invert();
+        ImageProcessor ip = processedImage.getProcessor();
+        ip.add(-1 * mean * 1.5);
 
-        // apply rank filtering (sort of like gaussian blur)
-        // the second arg put in the rank function is the radius
-        // the value is sort of arbitrary and just chosen via empirical
-        // observation
-        // https://en.wikipedia.org/wiki/Median_filter
         RankFilters rf = new RankFilters();
-        rf.rank(ip, 5.0, RankFilters.MEDIAN);
+        rf.rank(ip, 0.0, RankFilters.MEDIAN);
 
-        // get the statistics and threshold according to the mean
-        // https://en.wikipedia.org/wiki/Thresholding_(image_processing)
-        ImageStatistics stats = binarizedImage.getStatistics();
-        ip.threshold( (int) (stats.mean * thresholdValue) );
+        processedImage.setProcessor(ip);
 
-        binarizedImage.setProcessor(ip);
-
-        return binarizedImage;
+        return processedImage;
     }
 
     private String translateWormPosToStageCommandVelocity(ImagePlus binarizedImage, double wormPosX, double wormPosY){
@@ -97,7 +89,7 @@ class TrackingTask implements Runnable {
 
             stageVelocityCommand = "VECTOR X=" + String.valueOf(xVelocity) + " Y=" + String.valueOf(yVelocity);
         } else {
-            IJ.log("[ERROR] could not find the worm position, releasing automated control of the stage until a position is found");
+            IJ.log("[WARNING] could not find the worm position, releasing automated control of the stage until a position is found");
             TrackingTask.stopAutoTracking(controller.core, trackerXYStagePort);
         }
 
@@ -133,14 +125,14 @@ class TrackingTask implements Runnable {
             // get the image from micro manager live mode window
             ImagePlus liveModeImage = controller.app.getSnapLiveWin().getImagePlus();
 
-            // binarize the image
-            ImagePlus binarized = binarizeImage(liveModeImage, controller.thresholdValue);
+            // process the image
+            ImagePlus processedImage = processCalciumImage(liveModeImage, controller.thresholdValue);
 
-            // get an estimate of the worm position from the binarized image
-            double[] wormPosition = detectWormPosition(binarized);
+            // get an estimate of the worm position from the processed image
+            double[] wormPosition = detectWormPosition(processedImage);
 
 
-            String stageCommand = translateWormPosToStageCommandVelocity(binarized, wormPosition[0], wormPosition[1]);
+            String stageCommand = translateWormPosToStageCommandVelocity(processedImage, wormPosition[0], wormPosition[1]);
 
             setXYStageVelocity(stageCommand);
         }

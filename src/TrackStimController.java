@@ -40,7 +40,7 @@ class TrackStimController {
     public volatile double thresholdValue;
     public volatile int trackerSpeedFactor;
 
-    // current job id 
+    // current job id
     public int currentJobId;
 
     public CMMCore core;
@@ -222,7 +222,7 @@ class TrackStimController {
                     // take the current live mode image, binarize it and show the result
                     ImagePlus liveModeImage = app.getSnapLiveWin().getImagePlus();
 
-                    ImagePlus binarized = TrackingTask.binarizeImage(liveModeImage, thresholdValue);
+                    ImagePlus binarized = TrackingTask.processCalciumImage(liveModeImage);
                     double[] wormPosition = TrackingTask.detectWormPosition(binarized);
 
                     Double wormPosX = new Double(wormPosition[0]);
@@ -239,7 +239,7 @@ class TrackStimController {
             }
         }, 0, 100, TimeUnit.MILLISECONDS);
     }
-    
+
     // create a directory of the form temp<i> where i is the first available
 	// i such that temp<i> can be created
 	private String createImageSaveDirectory(String root){
@@ -268,18 +268,18 @@ class TrackStimController {
 
 	// save all job arguments for later reference
 	private void saveImagingJobArgs(
-        String directory, 
-        int frameArg, 
-        int fpsArg, 
-        boolean useStim, 
-        int preStim, 
-        int stimStr, 
-        int stimDur, 
-        int stimCycleDur, 
-        int numCycle, 
-        boolean useRamp, 
-        int rampBase, 
-        int rampStart, 
+        String directory,
+        int frameArg,
+        int fpsArg,
+        boolean useStim,
+        int preStim,
+        int stimStr,
+        int stimDur,
+        int stimCycleDur,
+        int numCycle,
+        boolean useRamp,
+        int rampBase,
+        int rampStart,
         int rampEnd,
         boolean useTracking
     ){
@@ -294,18 +294,18 @@ class TrackStimController {
             if(useStim){
                 p.println("pre stimulation (ms): " + String.valueOf(preStim));
                 p.println("stimulation strength: " + String.valueOf(stimStr));
-                p.println("stimulation duration (ms): " + String.valueOf(stimDur)); 
-                p.println("stimulation cycle duration (ms): " + String.valueOf(stimCycleDur)); 
-                p.println("number of cycles: " + String.valueOf(numCycle)); 
-                p.println("ramp enabled: " + String.valueOf(useRamp)); 
+                p.println("stimulation duration (ms): " + String.valueOf(stimDur));
+                p.println("stimulation cycle duration (ms): " + String.valueOf(stimCycleDur));
+                p.println("number of cycles: " + String.valueOf(numCycle));
+                p.println("ramp enabled: " + String.valueOf(useRamp));
 
                 if(useRamp){
-                    p.println("ramp base: " + String.valueOf(rampBase)); 
-                    p.println("ramp start: " + String.valueOf(rampStart)); 
-                    p.println("ramp end: " + String.valueOf(rampEnd));    
+                    p.println("ramp base: " + String.valueOf(rampBase));
+                    p.println("ramp start: " + String.valueOf(rampStart));
+                    p.println("ramp end: " + String.valueOf(rampEnd));
                 }
             }
-            p.println("auto-tracking enabled: " + String.valueOf(useTracking)); 
+            p.println("auto-tracking enabled: " + String.valueOf(useTracking));
 
 		} catch (java.io.IOException e){
 			IJ.log("[ERROR] unable to write job args to file");
