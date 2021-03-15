@@ -172,16 +172,6 @@ class TrackStimController {
         gui.numFramesText.setEnabled(false);
         gui.framesPerSecondSelector.setEnabled(false);
         gui.changeDirectoryBtn.setEnabled(false);
-        gui.enableStimulator.setEnabled(false);
-        gui.preStimulationTimeMsText.setEnabled(false);
-        gui.stimulationStrengthText.setEnabled(false);
-        gui.stimulationDurationMsText.setEnabled(false);
-        gui.stimulationCycleDurationMsText.setEnabled(false);
-        gui.numStimulationCyclesText.setEnabled(false);
-        gui.enableRamp.setEnabled(false);
-        gui.rampBase.setEnabled(false);
-        gui.rampStart.setEnabled(false);
-        gui.rampEnd.setEnabled(false);
         gui.enableTracking.setEnabled(false);
         gui.goBtn.setEnabled(false);
 
@@ -194,16 +184,6 @@ class TrackStimController {
         gui.numFramesText.setEnabled(true);
         gui.framesPerSecondSelector.setEnabled(true);
         gui.changeDirectoryBtn.setEnabled(true);
-        gui.enableStimulator.setEnabled(true);
-        gui.preStimulationTimeMsText.setEnabled(true);
-        gui.stimulationStrengthText.setEnabled(true);
-        gui.stimulationDurationMsText.setEnabled(true);
-        gui.stimulationCycleDurationMsText.setEnabled(true);
-        gui.numStimulationCyclesText.setEnabled(true);
-        gui.enableRamp.setEnabled(true);
-        gui.rampBase.setEnabled(true);
-        gui.rampStart.setEnabled(true);
-        gui.rampEnd.setEnabled(true);
         gui.enableTracking.setEnabled(true);
         gui.goBtn.setEnabled(true);
 
