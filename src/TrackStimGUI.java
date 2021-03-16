@@ -302,7 +302,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbl.setConstraints(thresholdSliderLabel, gbc);
-        add(thresholdSliderLabel);
+        // add(thresholdSliderLabel);
 
         thresholdSlider = new JSlider(0, 200, 100);
         thresholdSlider.setMajorTickSpacing(50);
@@ -325,7 +325,7 @@ class TrackStimGUI extends PlugInFrame {
         gbc.gridwidth = 1;
         gbc.insets = leftLabelPadding;
         gbl.setConstraints(thresholdSlider, gbc);
-        add(thresholdSlider);
+        // add(thresholdSlider);
 
         Label trackerSpeedLabel = new Label("Auto-tracking speed");
         gbc.gridx = 0;
