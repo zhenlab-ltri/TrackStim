@@ -37,9 +37,11 @@ class TrackingTask implements Runnable {
     // return an estimate of the worm position in a processed image
     // uses center of mass to detect position
     public static double[] detectWormPosition(ImagePlus processedImage){
+        ImageProcessor ip = processedmage.getProcessor();
         ImageStatistics stats = processedImage.getStatistics(Measurements.CENTROID + Measurements.CENTER_OF_MASS);
 
-        double[] position = { stats.xCenterOfMass, stats.yCenterOfMass };
+        // shift the center of mass by the position of the region of interest
+        double[] position = { stats.xCenterOfMass + ip.roiX, stats.yCenterOfMass + ip.roiY };
 
         return position;
     }

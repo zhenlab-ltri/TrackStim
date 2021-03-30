@@ -1,5 +1,4 @@
 
-setAccessibility(true);
 
 
 img = ij.IJ.getImage();
@@ -7,28 +6,36 @@ roi = img.getRoi();
 ip = img.getProcessor();
 ipCropped = ip.crop();
 imgCropped = new ij.ImagePlus("cropped", ipCropped);
+centerX = img.getWidth() * ( 1 / 3);
+centerY = img.getHeight() / 2;
 
 
+
+
+// segmentation
 imgStats = imgCropped.getStatistics(ij.measure.Measurements.MEAN);
 mean = imgStats.mean;
 ipBgSubtracted = imgCropped.getProcessor().duplicate();
-ipBgSubtracted.add(-mean * 1.5);
+//ipBgSubtracted.add(-mean * 0.5);
 rf = new ij.plugin.filter.RankFilters();
 rf.rank(ipBgSubtracted, 0.0, ij.plugin.filter.RankFilters.MEDIAN);
-ipBgSubtracted.threshold(10);
 
 
-
+// show segmented image
 imgBgSubtracted = new ij.ImagePlus("subtracted", ipBgSubtracted);
 bgSubtractedImgStats = imgBgSubtracted.getStatistics(ij.measure.Measurements.CENTROID + ij.measure.Measurements.CENTER_OF_MASS);
+
 print(bgSubtractedImgStats.xCenterOfMass);
 print(bgSubtractedImgStats.yCenterOfMass);
-
 centerOfMassPt = new ij.gui.PointRoi(bgSubtractedImgStats.xCenterOfMass, bgSubtractedImgStats.yCenterOfMass);
-
 imgBgSubtracted.setRoi(centerOfMassPt);
 imgBgSubtracted.show();
-//imgCropped.show();
-//print(img);
-//print(img.getDimensions());
-//print(roi);
+
+
+
+// show image center point
+//centerOfMassPtTranslated = new ij.gui.PointRoi(bgSubtractedImgStats.xCenterOfMass + ( img.getWidth() * (1/2)) , bgSubtractedImgStats.yCenterOfMass + (img.getHeight() / 2));
+centerOfMassPtTranslated = new ij.gui.PointRoi(bgSubtractedImgStats.xCenterOfMass + ip.roiX, bgSubtractedImgStats.yCenterOfMass + ip.roiY);
+
+//centerPt = new ij.gui.PointRoi(centerX, centerY);
+img.setRoi(centerOfMassPtTranslated);
