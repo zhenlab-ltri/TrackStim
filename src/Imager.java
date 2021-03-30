@@ -34,12 +34,12 @@ class ImagingTask implements Runnable {
 	TrackStimController controller;
 
 	ImagingTask(
-		CMMCore core_, 
-		ScriptInterface app_, 
-		long timePoint_, 
-		String saveDirectory_, 
-		int frameIndex_, 
-		String[] stimStrengthFrameData_, 
+		CMMCore core_,
+		ScriptInterface app_,
+		long timePoint_,
+		String saveDirectory_,
+		int frameIndex_,
+		String[] stimStrengthFrameData_,
 		String[] stagePosFrameData_,
 		TrackStimController c,
 		long jobStartTime_
@@ -81,6 +81,9 @@ class ImagingTask implements Runnable {
 		stagePosFrameData[frameIndex] = frameStagePosStr;
 
 		saveSnapshotToTiff(liveModeImage, stagePosInfo);
+
+		IJ.log("[INFO] Saved frame: " + String.valueOf(frameIndex));
+
 	}
 
 	private double[] getStagePositionInfo(){
@@ -126,7 +129,7 @@ class ImagingTask implements Runnable {
 	}
 }
 
-// Handles the scheduling of imaging tasks 
+// Handles the scheduling of imaging tasks
 class Imager {
 
 	TrackStimController controller;
@@ -165,11 +168,11 @@ class Imager {
         for(int curFrameIndex = 0; curFrameIndex < numFrames; curFrameIndex++){
             long timePtNano = curFrameIndex * frameCycleNano; // e.g. 0 ms, 100ms, 200ms, etc..
             ImagingTask s = new ImagingTask(
-				controller.core, 
-				controller.app, 
-				timePtNano, 
-				imageSaveDirectory, 
-				curFrameIndex, 
+				controller.core,
+				controller.app,
+				timePtNano,
+				imageSaveDirectory,
+				curFrameIndex,
 				stimStrengthFrameData,
 				stagePosFrameData,
 				controller,
@@ -211,7 +214,7 @@ class Imager {
 		PrintWriter p = null;
 		try {
 			p = new PrintWriter(directory + "/" + "temp" + String.valueOf(controller.currentJobId) + "_" + "stim-strength.csv");
-			
+
 			String stimStrengthCSVHeader = "frame, timestamp(ms), stimulator signal";
 			p.println(stimStrengthCSVHeader);
 
@@ -228,7 +231,7 @@ class Imager {
 			}
 		}
 	}
-	
+
 	// take all the stage pos data per frame and save it to a file
 	private void saveStagePosDataToFile(String directory){
 		PrintWriter p = null;

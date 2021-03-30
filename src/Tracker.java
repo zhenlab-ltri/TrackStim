@@ -4,7 +4,6 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ByteProcessor;
 import ij.gui.ImageWindow;
-import ij.gui.OvalRoi;
 
 import ij.plugin.filter.RankFilters;
 
@@ -13,6 +12,7 @@ import ij.measure.Measurements;
 import java.util.ArrayList;
 
 import java.awt.geom.Point2D;
+import java.awt.Rectangle;
 
 
 import mmcorej.CharVector;
@@ -37,11 +37,11 @@ class TrackingTask implements Runnable {
     // return an estimate of the worm position in a processed image
     // uses center of mass to detect position
     public static double[] detectWormPosition(ImagePlus processedImage){
-        ImageProcessor ip = processedmage.getProcessor();
+        Rectangle imageROI = processedImage.getProcessor().getRoi();
         ImageStatistics stats = processedImage.getStatistics(Measurements.CENTROID + Measurements.CENTER_OF_MASS);
 
         // shift the center of mass by the position of the region of interest
-        double[] position = { stats.xCenterOfMass + ip.roiX, stats.yCenterOfMass + ip.roiY };
+        double[] position = { stats.xCenterOfMass + imageROI.getX(), stats.yCenterOfMass + imageROI.getY() };
 
         return position;
     }
