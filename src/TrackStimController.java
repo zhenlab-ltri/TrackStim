@@ -208,12 +208,13 @@ class TrackStimController {
                     Double wormPosX = new Double(wormPosition[0]);
                     Double wormPosY = new Double(wormPosition[1]);
 
+
+                    trackerViewImage.setProcessor(liveModeImage.getProcessor());
                     if(!wormPosX.isNaN() && !wormPosY.isNaN()){
                         PointRoi centerOfMassRoi = new PointRoi(wormPosX, wormPosY);
                         trackerViewImage.setRoi(centerOfMassRoi);
                     }
 
-                    trackerViewImage.setProcessor(binarized.getProcessor());
                     trackerViewImage.show("Tracker View");
                 }
             }

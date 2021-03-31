@@ -19,6 +19,7 @@ ipBgSubtracted = imgCropped.getProcessor().duplicate();
 //ipBgSubtracted.add(-mean * 0.5);
 rf = new ij.plugin.filter.RankFilters();
 rf.rank(ipBgSubtracted, 0.0, ij.plugin.filter.RankFilters.MEDIAN);
+ipBgSubtracted.autoThreshold();
 
 
 // show segmented image
@@ -35,7 +36,11 @@ imgBgSubtracted.show();
 
 // show image center point
 //centerOfMassPtTranslated = new ij.gui.PointRoi(bgSubtractedImgStats.xCenterOfMass + ( img.getWidth() * (1/2)) , bgSubtractedImgStats.yCenterOfMass + (img.getHeight() / 2));
-centerOfMassPtTranslated = new ij.gui.PointRoi(bgSubtractedImgStats.xCenterOfMass + ip.roiX, bgSubtractedImgStats.yCenterOfMass + ip.roiY);
+
+r = ip.getRoi();
+print(r.getX());
+print(r.getY());
+centerOfMassPtTranslated = new ij.gui.PointRoi(bgSubtractedImgStats.xCenterOfMass + r.getX(), bgSubtractedImgStats.yCenterOfMass + r.getY());
 
 //centerPt = new ij.gui.PointRoi(centerX, centerY);
 img.setRoi(centerOfMassPtTranslated);
