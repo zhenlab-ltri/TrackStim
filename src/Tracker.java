@@ -61,6 +61,8 @@ class TrackingTask implements Runnable {
         RankFilters rf = new RankFilters();
         rf.rank(ip, 0.0, RankFilters.MEDIAN);
 
+        ip.autoThreshold();
+
         processedImage.setProcessor(ip);
 
         return processedImage;
