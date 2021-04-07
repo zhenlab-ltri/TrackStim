@@ -80,8 +80,8 @@ class TrackingTask implements Runnable {
         // determine which channel to track by comparing the worm x position
         // if worm pos x < half width track the left channel
         // otherwise track the right channel
-        double centerX = wormPosX <= width / 2 ? width / 3 : width * (2 / 3);
-        double centerY = height / 2;
+        double centerX = wormPosX <= width / 2.0 ? width / 3.0 : width * (2.0 / 3.0);
+        double centerY = height / 2.0;
 
         String stageVelocityCommand = null;
 

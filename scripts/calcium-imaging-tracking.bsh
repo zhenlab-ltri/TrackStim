@@ -2,14 +2,12 @@
 
 
 img = ij.IJ.getImage();
+width = img.getWidth();
+height = img.getHeight();
 roi = img.getRoi();
 ip = img.getProcessor();
 ipCropped = ip.crop();
 imgCropped = new ij.ImagePlus("cropped", ipCropped);
-centerX = img.getWidth() * ( 1 / 3);
-centerY = img.getHeight() / 2;
-
-
 
 
 // segmentation
@@ -26,8 +24,7 @@ ipBgSubtracted.autoThreshold();
 imgBgSubtracted = new ij.ImagePlus("subtracted", ipBgSubtracted);
 bgSubtractedImgStats = imgBgSubtracted.getStatistics(ij.measure.Measurements.CENTROID + ij.measure.Measurements.CENTER_OF_MASS);
 
-print(bgSubtractedImgStats.xCenterOfMass);
-print(bgSubtractedImgStats.yCenterOfMass);
+
 centerOfMassPt = new ij.gui.PointRoi(bgSubtractedImgStats.xCenterOfMass, bgSubtractedImgStats.yCenterOfMass);
 imgBgSubtracted.setRoi(centerOfMassPt);
 imgBgSubtracted.show();
@@ -35,12 +32,30 @@ imgBgSubtracted.show();
 
 
 // show image center point
-//centerOfMassPtTranslated = new ij.gui.PointRoi(bgSubtractedImgStats.xCenterOfMass + ( img.getWidth() * (1/2)) , bgSubtractedImgStats.yCenterOfMass + (img.getHeight() / 2));
-
 r = ip.getRoi();
-print(r.getX());
-print(r.getY());
-centerOfMassPtTranslated = new ij.gui.PointRoi(bgSubtractedImgStats.xCenterOfMass + r.getX(), bgSubtractedImgStats.yCenterOfMass + r.getY());
+pos = new ij.gui.PointRoi(bgSubtractedImgStats.xCenterOfMass + r.getX(), bgSubtractedImgStats.yCenterOfMass + r.getY());
+img.setRoi(pos);
 
-//centerPt = new ij.gui.PointRoi(centerX, centerY);
-img.setRoi(centerOfMassPtTranslated);
+// stage command logic
+centerX = pos.getXBase() <= width / 2.0 ? width / 3 : width * (2.0 /3.0); 
+centerY = height / 2.0;
+print("CENTER");
+print(centerX);
+print(centerY);
+
+
+xDistFromCenter = centerX - pos.getXBase();
+yDistFromCenter = centerY - pos.getYBase();
+
+print("DIST FROM CENTER");
+print(xDistFromCenter);
+print(yDistFromCenter);
+distScalar = Math.sqrt((xDistFromCenter * xDistFromCenter) + (yDistFromCenter * yDistFromCenter));
+
+int accelerationFactor = 1;
+xVelocity = Math.round(-xDistFromCenter * accelerationFactor * 0.0018 * 1000.0) / 1000.0;
+yVelocity = Math.round(yDistFromCenter * accelerationFactor * 0.0018 * 1000.0) / 1000.0;
+
+stageVelocityCommand = "VECTOR X=" + String.valueOf(xVelocity) + " Y=" + String.valueOf(yVelocity);
+
+print(stageVelocityCommand);
