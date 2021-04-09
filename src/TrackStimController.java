@@ -14,6 +14,7 @@ import ij.gui.ImageWindow;
 import ij.gui.PointRoi;
 
 import ij.measure.Measurements;
+import java.awt.Rectangle;
 
 import java.io.PrintWriter;
 
@@ -201,9 +202,10 @@ class TrackStimController {
                 if (app.isLiveModeOn()){
                     // take the current live mode image, binarize it and show the result
                     ImagePlus liveModeImage = app.getSnapLiveWin().getImagePlus();
+                    Rectangle roi = liveModeImage.getProcessor().getRoi();
 
                     ImagePlus binarized = TrackingTask.processCalciumImage(liveModeImage);
-                    double[] wormPosition = TrackingTask.detectWormPosition(binarized);
+                    double[] wormPosition = TrackingTask.detectWormPosition(binarized, roi);
 
                     Double wormPosX = new Double(wormPosition[0]);
                     Double wormPosY = new Double(wormPosition[1]);

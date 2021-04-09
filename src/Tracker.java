@@ -36,12 +36,11 @@ class TrackingTask implements Runnable {
 
     // return an estimate of the worm position in a processed image
     // uses center of mass to detect position
-    public static double[] detectWormPosition(ImagePlus processedImage){
-        Rectangle imageROI = processedImage.getProcessor().getRoi();
+    public static double[] detectWormPosition(ImagePlus processedImage, Rectangle imageRoi){
         ImageStatistics stats = processedImage.getStatistics(Measurements.CENTROID + Measurements.CENTER_OF_MASS);
 
         // shift the center of mass by the position of the region of interest
-        double[] position = { stats.xCenterOfMass + imageROI.getX(), stats.yCenterOfMass + imageROI.getY() };
+        double[] position = { stats.xCenterOfMass + imageRoi.getX(), stats.yCenterOfMass + imageRoi.getY() };
 
         return position;
     }
@@ -68,12 +67,9 @@ class TrackingTask implements Runnable {
         return processedImage;
     }
 
-    private String translateWormPosToStageCommandVelocity(ImagePlus binarizedImage, double wormPosX, double wormPosY){
+    private String translateWormPosToStageCommandVelocity(ImagePlus binarizedImage, int width, int height, double wormPosX, double wormPosY){
         Double wPosX = new Double(wormPosX);
         Double wPosY = new Double(wormPosY);
-
-        int width = binarizedImage.getWidth();
-        int height = binarizedImage.getHeight();
 
         // calcium imaging images are split in the middle to show two channels
         // the user may want to track the left or right channel
@@ -82,6 +78,13 @@ class TrackingTask implements Runnable {
         // otherwise track the right channel
         double centerX = wormPosX <= width / 2.0 ? width / 3.0 : width * (2.0 / 3.0);
         double centerY = height / 2.0;
+
+        // IJ.log("wormposX: " + String.valueOf(wormPosX));
+        // IJ.log("wormposy: " + String.valueOf(wormPosY));
+        // IJ.log("width: " + String.valueOf(width));
+        // IJ.log("height: " + String.valueOf(height));
+        // IJ.log("centerX: " + String.valueOf(centerX));
+        // IJ.log("centerY: " + String.valueOf(centerY));
 
         String stageVelocityCommand = null;
 
@@ -96,8 +99,8 @@ class TrackingTask implements Runnable {
             // dont know what 0.0018 is
             // acceleration factor is injected from the controller, and modified via the UI
             int accelerationFactor = controller.trackerSpeedFactor;
-            double xVelocity = Math.round(-xDistFromCenter * accelerationFactor * 0.0018 * 1000.0) / 1000.0;
-            double yVelocity = Math.round(yDistFromCenter * accelerationFactor * 0.0018 * 1000.0) / 1000.0;
+            double xVelocity = Math.round(-xDistFromCenter * accelerationFactor * 0.0001 * 1000.0) / 1000.0;
+            double yVelocity = Math.round(yDistFromCenter * accelerationFactor * 0.0001 * 1000.0) / 1000.0;
 
             stageVelocityCommand = "VECTOR X=" + String.valueOf(xVelocity) + " Y=" + String.valueOf(yVelocity);
         } else {
@@ -136,15 +139,18 @@ class TrackingTask implements Runnable {
         if (controller.app.isLiveModeOn()){
             // get the image from micro manager live mode window
             ImagePlus liveModeImage = controller.app.getSnapLiveWin().getImagePlus();
-
+            Rectangle roi = liveModeImage.getProcessor().getRoi();
             // process the image
             ImagePlus processedImage = processCalciumImage(liveModeImage);
 
             // get an estimate of the worm position from the processed image
-            double[] wormPosition = detectWormPosition(processedImage);
+            double[] wormPosition = detectWormPosition(processedImage, roi);
 
-
-            String stageCommand = translateWormPosToStageCommandVelocity(processedImage, wormPosition[0], wormPosition[1]);
+            // hard code the image height and width because I don't know how to access them from the liveModeImage
+            // this will break if the user doesn't use 4x binning
+            int IMG_WIDTH = 336;
+            int IMG_HEIGHT = 256;
+            String stageCommand = translateWormPosToStageCommandVelocity(processedImage, IMG_WIDTH, IMG_HEIGHT, wormPosition[0], wormPosition[1]);
 
             setXYStageVelocity(stageCommand);
         }
