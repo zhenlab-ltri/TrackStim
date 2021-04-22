@@ -37,24 +37,24 @@ pos = new ij.gui.PointRoi(bgSubtractedImgStats.xCenterOfMass + r.getX(), bgSubtr
 img.setRoi(pos);
 
 // stage command logic
-centerX = pos.getXBase() <= width / 2.0 ? width / 3 : width * (2.0 /3.0); 
+centerX = pos.getXBase() <= width / 2.0 ? width / 4.0 : width * (3.0 / 4.0); 
 centerY = height / 2.0;
 print("CENTER");
 print(centerX);
 print(centerY);
 
-
+print(pos.getXBase());
+print(pos.getYBase());
 xDistFromCenter = centerX - pos.getXBase();
 yDistFromCenter = centerY - pos.getYBase();
 
 print("DIST FROM CENTER");
 print(xDistFromCenter);
 print(yDistFromCenter);
-distScalar = Math.sqrt((xDistFromCenter * xDistFromCenter) + (yDistFromCenter * yDistFromCenter));
 
 int accelerationFactor = 1;
-xVelocity = Math.round(-xDistFromCenter * accelerationFactor * 0.0018 * 1000.0) / 1000.0;
-yVelocity = Math.round(yDistFromCenter * accelerationFactor * 0.0018 * 1000.0) / 1000.0;
+xVelocity = Math.round(-xDistFromCenter) / 1000.0;
+yVelocity = Math.round(yDistFromCenter) / 1000.0;
 
 stageVelocityCommand = "VECTOR X=" + String.valueOf(xVelocity) + " Y=" + String.valueOf(yVelocity);
 

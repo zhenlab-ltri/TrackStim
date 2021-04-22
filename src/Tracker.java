@@ -76,7 +76,7 @@ class TrackingTask implements Runnable {
         // determine which channel to track by comparing the worm x position
         // if worm pos x < half width track the left channel
         // otherwise track the right channel
-        double centerX = wormPosX <= width / 2.0 ? width / 3.0 : width * (2.0 / 3.0);
+        double centerX = wormPosX <= width / 2.0 ? width / 4.0 : width * (3.0 / 4.0);
         double centerY = height / 2.0;
 
         // IJ.log("wormposX: " + String.valueOf(wormPosX));
